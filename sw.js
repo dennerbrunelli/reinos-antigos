@@ -1,6 +1,6 @@
 // Guarda o jogo no celular para funcionar sem internet.
 // Ao atualizar o jogo, troque o número da versão abaixo (v1 -> v2 ...).
-const CACHE = 'reinos-v1';
+const CACHE = 'reinos-v2';
 const FILES = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
