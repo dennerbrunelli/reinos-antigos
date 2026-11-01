@@ -26,5 +26,5 @@ Jogo de estratégia em tempo real para celular, com visão em diagonal e clima d
 
 ## Arquivos
 - `index.html` — o jogo inteiro (desenhos, regras, inteligência do inimigo, sons e música)
-- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `reinos-v2` → `reinos-v3`)
+- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `reinos-v3` → `reinos-v4`)
 - `manifest.json` e ícones — instalação como app
