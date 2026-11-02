@@ -83,6 +83,21 @@ button{font-family:inherit;color:inherit}
 .mb{min-width:230px;height:38px;font-size:16px;font-weight:700;color:#f8ebc8;text-shadow:0 1px 0 #000;background:linear-gradient(#806a48,#4a3a24 55%,#3a2c19);border:2px solid;border-color:#d8b46a #6b4f26 #5a4220 #c9a35a;border-radius:3px;box-shadow:0 3px 6px #000c}
 .mb:active{filter:brightness(1.25)}
 .mb.f{outline:3px solid #fff1b8;outline-offset:1px}
+/* tela inicial moderna: painel lateral, como nos jogos de estratégia dos anos 2000 */
+#menu{align-items:stretch;justify-content:flex-start;padding:0}
+#menu .mpanel{height:100%;width:min(400px,46vw);display:flex;flex-direction:column;justify-content:center;gap:6px;padding:12px 18px 10px max(18px,env(safe-area-inset-left));text-align:left;background:linear-gradient(90deg,rgba(9,6,2,.92),rgba(9,6,2,.78) 70%,rgba(9,6,2,0));box-shadow:inset -1px 0 0 rgba(232,196,106,.0)}
+#menu .mlogo{border-bottom:1px solid rgba(232,196,106,.45);padding-bottom:6px;margin-bottom:2px}
+#menu .ttl{font-size:46px;letter-spacing:9px;text-indent:0;text-align:left;line-height:1}
+#menu .sub{text-align:left;font-size:12px;margin:3px 0 0;opacity:.9}
+#menu .mlist{display:flex;flex-direction:column;gap:2px}
+#menu .mi{min-width:0;width:100%;height:auto;min-height:36px;display:flex;align-items:center;gap:10px;padding:4px 10px;background:none;border:none;border-left:3px solid transparent;border-radius:0;box-shadow:none;text-align:left;font-size:16px;color:#f3e3bd;border-bottom:1px solid rgba(232,196,106,.14);transition:background .15s,border-color .15s,padding .15s}
+#menu .mi b{width:24px;text-align:center;font-size:17px;flex:none}
+#menu .mi small{display:block;font-size:10.5px;font-weight:400;font-style:italic;color:#d9c79c;opacity:.8;margin-top:1px}
+#menu .mi:hover,#menu .mi.f,#menu .mi:active{background:linear-gradient(90deg,rgba(232,196,106,.32),rgba(232,196,106,0));border-left-color:#f0c860;padding-left:14px;outline:none;filter:none;color:#fff6d8}
+#menu .mi.lock{color:#bfb08c}#menu .mi.lock b{filter:grayscale(.6)}
+#menu .tag{font-style:normal;font-size:8.5px;font-weight:700;letter-spacing:1px;color:#2a1a04;background:linear-gradient(#f6d77a,#c9952e);border-radius:3px;padding:1px 5px;margin-left:6px;vertical-align:2px}
+#menu .mfoot{font-size:10px;opacity:.7;margin-top:4px;color:#e9d9b0}
+
 .mb.on{background:linear-gradient(#c9a25a,#8a6326);color:#1d1205;text-shadow:0 1px 0 #f3d9a0}
 .row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 .row .mb{min-width:118px}
@@ -125,14 +140,19 @@ button{font-family:inherit;color:inherit}
 </div>
 
 <div id="menu" class="screen art on">
-  <h1 class="ttl">IMPÉRIO</h1>
-  <p class="sub">Do barro ao bronze, do bronze à glória.</p>
-  <button class="mb" id="bcont" style="display:none">▶ Continuar a jornada</button>
-  <button class="mb" id="bnew">⚔ Nova partida</button>
-  <button class="mb" id="bhelp">📜 Como jogar</button>
-  <button class="mb" id="bmus">🎵 Música: Ligada</button>
-  <button class="mb" id="bexit">🚪 Sair do jogo</button>
-  <p style="font-size:11px;opacity:.8;margin-top:6px">Controle Xbox: ligue pelo Bluetooth e aperte qualquer botão</p>
+  <div class="mpanel">
+    <div class="mlogo"><h1 class="ttl">IMPÉRIO</h1><p class="sub">Do barro ao bronze, do bronze à glória.</p></div>
+    <nav class="mlist">
+      <button class="mb mi" id="bcont" style="display:none"><b>▶</b><span>Continuar a jornada<small>Volte para a partida salva</small></span></button>
+      <button class="mb mi" id="bnew"><b>⚔</b><span>Nova partida<small>Escolha o povo, o mapa e o inimigo</small></span></button>
+      <button class="mb mi lock" id="bmulti"><b>👥</b><span>Multijogador <em class="tag">VERSÃO COMPLETA</em><small id="multit">Jogue contra amigos · chega numa atualização futura</small></span></button>
+      <button class="mb mi" id="bhelp"><b>📜</b><span>Como jogar<small>Regras, toque e controle Xbox</small></span></button>
+      <button class="mb mi" id="bmus"><b>🎵</b><span id="bmust">Música: Ligada</span></button>
+      <button class="mb mi" id="bupd"><b>🔄</b><span>Atualizar o jogo<small id="updt">Baixa a versão mais nova (precisa de internet)</small></span></button>
+      <button class="mb mi" id="bexit"><b>🚪</b><span>Sair do jogo</span></button>
+    </nav>
+    <div class="mfoot"><span id="ver"></span> · Controle Xbox: ligue pelo Bluetooth e aperte qualquer botão</div>
+  </div>
 </div>
 
 <div id="setup" class="screen art">
@@ -2638,8 +2658,8 @@ $('bfps').onclick=()=>{OPT.eco=OPT.eco?0:1;saveOpt();updOptBtns()};
 $('bsnd').onclick=()=>{OPT.snd=OPT.snd?0:1;saveOpt();updOptBtns();snd('click')};
 const togMus=()=>{OPT.mus=OPT.mus?0:1;saveOpt();if(OPT.mus)musicStart();else musicStop();updOptBtns()};
 $('bmus').onclick=togMus;$('bmus2').onclick=togMus;
-$('bquit').onclick=()=>{saveGame();running=false;$('hud').style.display='none';$('bcont').style.display=hasSave()?'block':'none';show('menu')};
-$('bend').onclick=()=>{$('bcont').style.display=hasSave()?'block':'none';show('menu')};
+$('bquit').onclick=()=>{saveGame();running=false;$('hud').style.display='none';$('bcont').style.display=hasSave()?'flex':'none';show('menu')};
+$('bend').onclick=()=>{$('bcont').style.display=hasSave()?'flex':'none';show('menu')};
 // sair do jogo: salva, para a música e fecha o app
 let quitFrom='menu';
 $('bexit').onclick=()=>{quitFrom='menu';snd('click');show('quitc')};
@@ -2653,9 +2673,9 @@ function quitGame(){
   try{window.close()}catch(e){}
   setTimeout(()=>show('bye'),400);// se o celular não deixar fechar sozinho
 }
-$('bbyeback').onclick=()=>{$('bcont').style.display=hasSave()?'block':'none';try{if(AC&&OPT.mus)AC.resume()}catch(e){}if(OPT.mus)musicStart();show('menu')};
+$('bbyeback').onclick=()=>{$('bcont').style.display=hasSave()?'flex':'none';try{if(AC&&OPT.mus)AC.resume()}catch(e){}if(OPT.mus)musicStart();show('menu')};
 function updOptBtns(){$('bspd').textContent='⏩ Velocidade: '+OPT.spd+'x';$('bqual').textContent='🖼 Gráfico: '+(OPT.qual?'Bonito':'Leve');$('bfps').textContent='🔋 Economia de bateria: '+(OPT.eco?'Ligada':'Desligada');
-  $('bsnd').textContent=OPT.snd?'🔊 Sons':'🔇 Sons';$('bmus2').textContent=OPT.mus?'🎵 Música':'🔇 Música';$('bmus').textContent='🎵 Música: '+(OPT.mus?'Ligada':'Desligada')}
+  $('bsnd').textContent=OPT.snd?'🔊 Sons':'🔇 Sons';$('bmus2').textContent=OPT.mus?'🎵 Música':'🔇 Música';$('bmust').textContent='Música: '+(OPT.mus?'Ligada':'Desligada')}
 updOptBtns();
 function endGame(win,msg){
   G.over=true;running=false;try{localStorage.removeItem(SAVEK)}catch(e){}
@@ -2723,10 +2743,21 @@ function frame(ts){
 buildResIcons();
 resize();show('menu');
 requestAnimationFrame(frame);
-$('bcont').style.display=hasSave()?'block':'none';
+$('bcont').style.display=hasSave()?'flex':'none';
 if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
+// ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
+const VERSAO='Versão 9';$('ver').textContent=VERSAO;
+$('bupd').onclick=async()=>{snd('click');const t=$('updt');
+  if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
+  t.textContent='🔄 Procurando a versão nova...';
+  try{const r=await fetch('sw.js?'+Date.now(),{cache:'no-store'});if(!r.ok)throw 0}catch(e){t.textContent='📶 Não consegui falar com o servidor. Tente de novo com internet.';return}
+  try{if(running)saveGame();if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations){for(const g of await navigator.serviceWorker.getRegistrations())await g.unregister()}if(window.caches)for(const k of await caches.keys())await caches.delete(k)}catch(e){}
+  t.textContent='✅ Atualizando...';setTimeout(()=>location.reload(),300)};
+
+// ---------- multijogador: ainda trancado (virá na versão completa) ----------
+$('bmulti').onclick=()=>{snd('click');$('multit').textContent='🔒 Será liberado numa atualização futura, na versão completa (paga). Por enquanto: jogue contra o computador!'};
 </script>
 </body>
 </html>

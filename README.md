@@ -8,7 +8,7 @@ Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*),
 1. Abra o link acima no Chrome (com internet).
 2. Toque no menu **⋮** → **Adicionar à tela inicial** (ou **Instalar app**).
 3. Pronto: o ícone aparece na tela inicial e o jogo abre mesmo sem internet.
-4. Quando sair uma versão nova: abra o jogo com internet, feche e abra de novo.
+4. Quando sair uma versão nova: na tela inicial, toque em **🔄 Atualizar o jogo** (precisa de internet). O jogo salvo não se perde.
 
 ## O jogo
 - 12 povos com 4 estilos de arquitetura (egípcia, grega, babilônica e oriental), cada um com vantagens próprias
@@ -30,5 +30,5 @@ Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*),
 
 ## Arquivos
 - `index.html` — o jogo inteiro (desenhos, regras, inteligência do inimigo, sons e música)
-- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `imperio-v8` → `imperio-v9`)
+- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `imperio-v9` → `imperio-v10`)
 - `manifest.json` e ícones — instalação como app
