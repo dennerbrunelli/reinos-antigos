@@ -12,7 +12,7 @@ Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*),
 
 ## O jogo
 - 12 povos com 4 estilos de arquitetura (egípcia, grega, babilônica e oriental), cada um com vantagens próprias
-- 7 eras: Pedra, Ferramentas, Bronze, Ferro, Pólvora, Industrial e Inteligência Artificial (petróleo, Fábrica, Silo com Bomba nuclear, Pulso EMP e o Relógio do Armagedom)
+- 8 eras como no Rise: Antiga, Clássica, Medieval, Pólvora, Iluminismo, Industrial, Moderna e Informação (avança na Biblioteca; petróleo, Fábrica, Silo com Bomba nuclear, Pulso EMP e o Relógio do Armagedom)
 - Formações (Livre, Linha, Caixa, Espaçada, Flanco; o grupo anda no passo do mais lento) e posturas (Agressiva, Defensiva, Firme, Sem ataque)
 - Economia igual ao Rise: sem carregar, recursos infinitos com limite de trabalhadores, Acampamento de lenhadores, 5 fazendas por cidade, Celeiro/Serraria/Fundição/Refinaria
 - **Fronteiras:** cada cidade tem o seu território. Casas, fazendas e quartéis só dentro dele; torres e cidades novas aumentam a fronteira
@@ -32,5 +32,5 @@ Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*),
 
 ## Arquivos
 - `index.html` — o jogo inteiro (desenhos, regras, inteligência do inimigo, sons e música)
-- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `imperio-v29` → `imperio-v30`)
+- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `imperio-v30` → `imperio-v31`)
 - `manifest.json` e ícones — instalação como app

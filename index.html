@@ -389,9 +389,9 @@ button{font-family:inherit;color:inherit}
   <h2>📜 Como jogar</h2>
   <div class="cols">
     <div>
-      <p><b>OBJETIVO</b><br>Faça sua vila crescer, avance pelas 7 eras e derrote o reino vermelho. Ou construa a Maravilha e mantenha ela de pé por 5 minutos. Ou domine 65% da terra por 3 minutos.</p>
+      <p><b>OBJETIVO</b><br>Faça sua vila crescer, avance pelas 8 eras e derrote o reino vermelho. Ou construa a Maravilha e mantenha ela de pé por 5 minutos. Ou domine 65% da terra por 3 minutos.</p>
       <p><b>RECURSOS</b><br>Comida: arbustos, caça (gazela, elefante), peixes e fazendas · Madeira: árvores · Ouro e Pedra: minas.<br>Aldeões levam tudo ao Centro Urbano, Celeiro (comida) ou Depósito. Barcos pesqueiros levam peixe para a Doca.</p>
-      <p><b>AS 7 ERAS</b><br>🪨 Pedra → 🔨 Ferramentas → 🛡 Bronze → ⚔ Ferro → 💥 Pólvora → ⚙ Industrial → 🤖 Inteligência Artificial. Para avançar, construa 2 prédios da lista da próxima era e pague no Centro Urbano.<br>💥 <b>Pólvora</b>: Mosqueteiro (Quartel), Canhão (Oficina), Galeão (Doca).<br>⚙ <b>Industrial</b>: 🛢 Petróleo (aldeões coletam nas poças pretas), 🏭 Fábrica (Artilharia e, na era seguinte, Tanque), Fuzileiro, Encouraçado.<br>🤖 <b>Inteligência Artificial</b>: Soldado de Assalto, Tanque e 🚀 Silo de Mísseis. No Silo você fabrica a ☢️ Bomba nuclear (destrói tudo em volta, até as suas tropas) e o ⚡ Pulso EMP (para unidades e prédios por 20 s). Depois toque em “Lançar” e no lugar do mapa.<br>☢️ <b>Relógio do Armagedom</b>: cada bomba lançada (sua ou do inimigo) avança o relógio. Na 6ª bomba o mundo acaba e <b>ninguém vence</b>.</p>
+      <p><b>AS 8 ERAS (como no Rise)</b><br>🏺 Antiga → 🏛 Clássica → 🏰 Medieval → 💥 Pólvora → 📜 Iluminismo → ⚙ Industrial → ✈ Moderna → 🤖 Informação. Avance de era na <b>Biblioteca</b> (precisa de comida, riqueza e conhecimento; nas eras altas também metal e petróleo).<br>💥 Pólvora: Mosqueteiro, Canhão, Galeão · 📜 Iluminismo: Fuzileiro · ⚙ Industrial: 🛢 Petróleo, 🏭 Fábrica, Artilharia, Encouraçado · ✈ Moderna: Tanque, Soldado de Assalto · 🤖 Informação: 🚀 Silo de Mísseis (☢️ Bomba nuclear e ⚡ Pulso EMP).<br>☢️ <b>Relógio do Armagedom</b>: cada bomba lançada (sua ou do inimigo) avança o relógio. Na 6ª bomba o mundo acaba e <b>ninguém vence</b>.</p>
       <p><b>FRONTEIRAS E CIDADES</b><br>A linha azul marca o seu território. Casas, fazendas, mercado e prédios militares só dentro dela; depósito, celeiro, doca, torre e muralha também na terra neutra. Torres e cidades novas (Centro Urbano, a partir da era das Ferramentas) aumentam a fronteira. Centro Urbano não é destruído: com 0 de vida ele cai, e quem ficar perto com soldados, sem defensores, toma a cidade em 30 segundos. Tropas no território inimigo perdem vida aos poucos.</p>
       <p><b>POPULAÇÃO (como no Rise)</b><br>Não precisa de casas: começa em 50. Cada nível da linha Militar (na Biblioteca) dá +25, até 200. A Maravilha pronta dá mais 50: até 250.</p>
       <p><b>BIBLIOTECA (linhas de pesquisa)</b><br>🏛️ Cívica: +1 cidade no limite (começa com 3), fronteira maior e impostos em ouro de cada cidade. ⚖️ Comércio: coleta +5% por nível e caravanas melhores. 🔭 Ciência: pesquisas e eras 10% mais rápidas por nível.</p>
@@ -495,7 +495,7 @@ button{font-family:inherit;color:inherit}
 const TS=32,TOPH=30;let MW=72,MH=72,N=MW*MH;   // tamanho do mapa muda por partida (setMapSize)
 // população como no Rise of Nations: sem casas; começa em 50, cada Organização Militar dá +25 (até 200) e a Maravilha dá +50 (até 250)
 const POP_BASE=50,POP_STEP=25,POP_MIL=200,POP_WONDER=50,MAXPOP=250;
-const MIL_N=6,MILAGE=[0,1,1,2,2,3],MILTIME=[30,35,40,45,50,60],ROMAN=['','I','II','III','IV','V','VI','VII'];
+const MIL_N=6,MILAGE=[0,1,1,2,2,3],MILTIME=[30,35,40,45,50,60],ROMAN=['','I','II','III','IV','V','VI','VII','VIII'];
 const MILCOST=[{food:100,wood:50},{food:150,gold:50},{food:200,gold:100},{food:300,gold:150},{food:400,gold:250},{food:500,gold:350}];
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -505,10 +505,10 @@ const hyp=Math.hypot;
 // os 6 recursos do Rise: comida, madeira, metal (chave interna 'gold'), riqueza, conhecimento e petróleo (eras industriais)
 const RES=['food','wood','gold','wealth','know','oil'];
 const RNM={food:'comida',wood:'madeira',gold:'metal',wealth:'riqueza',know:'conhecimento',oil:'petróleo',stone:'metal'};
-const AGES=['Era da Pedra','Era das Ferramentas','Era do Bronze','Era do Ferro','Era da Pólvora','Era Industrial','Era da Inteligência Artificial'];
-const MAXAGE=6;
-const AGECOST=[null,{food:500},{food:800,gold:120,know:60},{food:1000,gold:600,know:200},{food:1400,gold:900,know:400},{food:1800,gold:1200,know:700,wealth:400},{food:2400,gold:1600,know:1100,wealth:800,oil:400}];
-const AGETIME=[0,50,70,90,110,130,150];
+const AGES=['Era Antiga','Era Clássica','Era Medieval','Era da Pólvora','Era do Iluminismo','Era Industrial','Era Moderna','Era da Informação'];
+const MAXAGE=7;
+const AGECOST=[null,{food:350,wealth:60},{food:700,wealth:150,know:100},{food:1000,gold:400,wealth:250,know:250},{food:1300,gold:700,wealth:400,know:450},{food:1700,gold:1000,wealth:600,know:700},{food:2200,gold:1300,wealth:900,know:1000,oil:300},{food:2800,gold:1700,wealth:1200,know:1400,oil:600}];
+const AGETIME=[0,50,65,80,95,110,130,150];
 // para avançar de era: ter 2 prédios diferentes desta lista (da era atual)
 const AGEREQ=[null,['celeiro','deposito','quartel','doca'],['mercado','arquearia','estabulo'],['templo','academia','oficina']];
 const COL=[{m:'#2f6fd8',d:'#1b438c',l:'#a7c8ff'},{m:'#cf3328',d:'#86201a',l:'#ffab9f'},{m:'#c8b890',d:'#8a7a5a',l:'#eee'}];
@@ -614,9 +614,9 @@ const civOf=p=>CIVS.find(c=>c.id===G.P[p].civ)||CIVS[0];
 const styOf=p=>STY[civOf(p).st];
 
 const DIFF={
-  facil:{n:'Fácil',gm:.8,vt:18,first:720,wave:4,inc:1,int:270,ageV:[11,15,20,24,28,32],fish:3,navy:1},
-  normal:{n:'Normal',gm:1,vt:30,first:480,wave:6,inc:2,int:220,ageV:[10,14,18,22,26,30],fish:4,navy:2},
-  dificil:{n:'Difícil',gm:1.25,vt:40,first:330,wave:8,inc:2,int:170,ageV:[9,13,17,21,25,29],fish:6,navy:3},
+  facil:{n:'Fácil',gm:.8,vt:18,first:720,wave:4,inc:1,int:270,ageV:[11,15,20,24,28,32,35,38],fish:3,navy:1},
+  normal:{n:'Normal',gm:1,vt:30,first:480,wave:6,inc:2,int:220,ageV:[10,14,18,22,26,30,33,36],fish:4,navy:2},
+  dificil:{n:'Difícil',gm:1.25,vt:40,first:330,wave:8,inc:2,int:170,ageV:[9,13,17,21,25,29,32,35],fish:6,navy:3},
 };
 // coleta por segundo
 const GATH={food:.62,hunt:.9,fish:.55,fishb:.75,farm:.5,wood:.6,gold:.52,stone:.52,oil:.45};
@@ -1736,7 +1736,7 @@ function aiTick(p){
     if(got<2&&vills.length>=6){for(const t of need){if(any(t))continue;if(t==='doca')continue;
       const near=t==='celeiro'?(findRes('berry',hb.x,hb.y,14,p)||{tx:htx,ty:hty}):t==='deposito'?(findRes('tree',hb.x,hb.y,20,p)||{tx:htx,ty:hty}):{tx:htx+(G.starts[0][0]-htx)*.1,ty:hty+(G.starts[0][1]-hty)*.1};
       if(build(t,near.tx,near.ty,t==='celeiro'||t==='deposito'?1:4,t==='celeiro'||t==='deposito'?6:12))break;break}}
-    if(tc&&ageGoal&&got>=2&&!tc.q.includes('age')&&afford(p,nextAge)){pay(p,nextAge);tc.q.push('age')}
+    {const lb=blds.find(b=>b.type==='biblioteca'&&b.done>=1);if(lb&&ageGoal&&got>=2&&!blds.some(b=>b.q.includes('age'))&&lb.q.length<2&&afford(p,nextAge)){pay(p,nextAge);lb.q.push('age')}}
   }
   const toward={x:htx+(G.starts[0][0]-htx)*.12,y:hty+(G.starts[0][1]-hty)*.12};
   if(vills.length>=7&&!any('quartel'))build('quartel',toward.x,toward.y,4,12);
@@ -1778,7 +1778,7 @@ function aiTick(p){
     const fishLeft=G.R.some(r=>!r.dead&&r.sub==='fish'&&hyp((r.tx+.5)*TS-ctr(dock).x,(r.ty+.5)*TS-ctr(dock).y)<26*TS);
     if(fishLeft&&fishers.length+dock.q.filter(q=>q==='pesc').length<D.fish&&dock.q.length<2&&afford(p,costOf(p,'pesc'))&&P.pop+queued<P.cap){pay(p,costOf(p,'pesc'));dock.q.push('pesc')}
     const foeNav=G.U.some(u=>!u.dead&&u.o!==p&&u.o<2&&isNav(u))||G.B.some(b=>!b.dead&&b.o!==p&&b.type==='doca');
-    const nt=P.age>=5?'encour':P.age>=4?'galeao':P.age>=2?'trir':'bguer';
+    const nt=P.age>=UT.encour.age?'encour':P.age>=UT.galeao.age?'galeao':P.age>=UT.trir.age?'trir':'bguer';
     if(P.age>=1&&foeNav&&navy.length+dock.q.filter(q=>UT[q]&&UT[q].war).length<D.navy+P.age&&dock.q.length<2&&afford(p,costOf(p,nt))&&P.pop+queued<P.cap){pay(p,costOf(p,nt));dock.q.push(nt)}
   }
   for(const f of fishers){if(f.st==='idle'){const c=dock?ctr(dock):hb;const r=findRes('fish',c.x,c.y,30,p);if(r)orderGather(f,r)}}
@@ -3166,7 +3166,7 @@ function getCmds(){
     if(b.done>=1){
       for(const t of BT[b.type].train||[]){const r=canTrain(b,t);const T=STAT[0][t];out.push({img:THUMB['u'+(t==='guer'&&T.axe?'guerA':t)],nm:T.n,cost:costOf(0,t),dis:r,lock:G.P[0].age<UT[t].age,cnt:b.q.filter(q=>q===t).length,
         act:n=>{for(let i=0;i<(n||1);i++){const w=canTrain(b,t);if(w){if(i===0)toast(w);break}pay(0,costOf(0,t));b.q.push(t)}}})}
-      if(b.type==='tc'&&G.P[0].age<MAXAGE){const a=G.P[0].age+1,c=AGECOST[a];const busy=G.B.some(x=>!x.dead&&x.o===0&&x.q.includes('age'));const rq=ageReqMsg(0);
+      if(b.type==='biblioteca'&&G.P[0].age<MAXAGE){const a=G.P[0].age+1,c=AGECOST[a];const busy=G.B.some(x=>!x.dead&&x.o===0&&x.q.includes('age'));const rq=ageReqMsg(0);
         out.push({ic:'⬆️',nm:'Avançar: '+AGES[a],cost:c,dis:busy?'Já está avançando':rq?rq:!afford(0,c)?'Faltam recursos: '+costTxt(c):null,cnt:b.q.includes('age')?1:0,act:()=>{pay(0,c);b.q.push('age')}})}
       if(b.type==='biblioteca'&&(G.P[0].mil||0)<MIL_N){const P=G.P[0],ml=P.mil||0,c=MILCOST[ml],ra=MILAGE[ml],busy=G.B.some(x=>!x.dead&&x.o===0&&x.q.includes('mil'));
         out.push({ic:'🎖️',nm:'Organização Militar '+ROMAN[ml+1],d:'População máxima +'+POP_STEP+' (agora '+P.cap+')',cost:c,dis:busy?'Já está pesquisando':P.age<ra?'Requer '+AGES[ra]:!afford(0,c)?'Faltam recursos: '+costTxt(c):null,lock:P.age<ra,cnt:b.q.includes('mil')?1:0,act:()=>{pay(0,c);b.q.push('mil')}})}
@@ -3584,7 +3584,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 29';$('ver').textContent=VERSAO;
+const VERSAO='Versão 30';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -3759,9 +3759,9 @@ function objList(){
   const nv=G.U.filter(u=>!u.dead&&u.o===0&&u.type==='vill').length,vt=[16,24,32,40][a]||40;
   out.push({t:'Tenha '+vt+' aldeões ('+Math.min(nv,vt)+'/'+vt+')',ok:nv>=vt,go:quickTC});
   if(a<MAXAGE){const need=AGEREQ[a+1],got=need.filter(t=>hasReq(0,t)),miss=need.filter(t=>!hasReq(0,t));
-    out.push({t:got.length>=2?'Prédios para a próxima era (2/2)':'Construa '+(2-got.length)+' destes: '+miss.map(t=>BT[t].n).join(', '),ok:got.length>=2,go:selVill});
+    out.push({t:got.length>=2?'Biblioteca pronta para pesquisar a era':'Construa uma Biblioteca (lá se avança de era)',ok:got.length>=2,go:selVill});
     const ab=G.B.find(b=>!b.dead&&b.o===0&&b.q[0]==='age');
-    out.push({t:'Avance para a '+AGES[a+1]+(ab?' ('+Math.floor(ab.qt/AGETIME[a+1]*100)+'%)':''),ok:false,go:quickTC})}
+    out.push({t:'Avance para a '+AGES[a+1]+' na Biblioteca'+(ab?' ('+Math.floor(ab.qt/AGETIME[a+1]*100)+'%)':''),ok:false,go:quickLib})}
   else{const w=G.B.find(b=>!b.dead&&b.o===0&&b.type==='maravilha');out.push({t:w?(w.done<1?'Termine a Maravilha ('+Math.floor(w.done*100)+'%)':'Proteja a Maravilha ('+fmtT(WONDER_T-G.won[0])+')'):'Construa uma Maravilha',ok:false,go:selVill})}
   if(a>=1&&hasReq(0,'biblioteca')&&!hasReq(0,'universidade'))out.push({t:'Construa uma Universidade e treine Eruditos (conhecimento)',ok:false,go:selVill});
   if(a>=1&&!hasReq(0,'biblioteca'))out.push({t:'Construa uma Biblioteca (linhas Cívica, Comércio e Ciência)',ok:false,go:selVill});
@@ -3923,7 +3923,7 @@ function cardInfo(c){
     return{t:T.n,sub:'Unidade · '+AGES[U.age],txt:ROLE[c.key]||ROLE[U.cls]||'',stats:'❤️ '+T.hp+(T.atk?' · ⚔️ '+T.atk:'')+(T.arm?' · 🛡️ '+T.arm:'')+(T.rng?' · 🎯 '+T.rng:'')+' · 👟 '+(+T.spd.toFixed(1)),time:T.t,btn:'✔ Treinar',multi:1}}
   if(c.kind==='t'){const T=TECH[c.key];return{t:T.n,sub:'Pesquisa · '+AGES[T.age]+(T.req?' · precisa de '+TECH[T.req].n:''),txt:T.d,time:T.t,btn:'📜 Pesquisar'}}
   if(c.kind==='age'){const a=P.age+1,nu=Object.keys(UT).filter(t=>UT[t].age===a&&UT[t].cls!=='animal').map(t=>STAT[0][t].n),nb=Object.keys(BT).filter(t=>BT[t].age===a).map(t=>BT[t].n);
-    return{t:'Avançar para a '+AGES[a]+' ('+ROMAN[a+1]+')',sub:'Você está na '+AGES[P.age]+' ('+ROMAN[P.age+1]+')',txt:'Precisa de 2 destes prédios: '+AGEREQ[a].map(t=>(hasReq(0,t)?'✅':'⬜')+' '+BT[t].n).join(' · ')+(nb.length?'<br><b>Libera prédios:</b> '+nb.join(', '):'')+(nu.length?'<br><b>Libera tropas:</b> '+nu.join(', '):''),time:AGETIME[a],btn:'🎺 Avançar de era'}}
+    return{t:'Avançar para a '+AGES[a]+' ('+ROMAN[a+1]+')',sub:'Você está na '+AGES[P.age]+' ('+ROMAN[P.age+1]+')',txt:'Pesquisado na Biblioteca (como no Rise).'+(nb.length?'<br><b>Libera prédios:</b> '+nb.join(', '):'')+(nu.length?'<br><b>Libera tropas:</b> '+nu.join(', '):''),time:AGETIME[a],btn:'🎺 Avançar de era'}}
   if(c.kind==='mil'){const ml=P.mil||0;return{t:'Organização Militar '+ROMAN[ml+1],sub:'Linha Militar da Biblioteca · nível '+(ml+1)+' de '+MIL_N,txt:'Diminui o atrito das tropas em terra inimiga (−12% por nível). Aumenta a população máxima em +'+POP_STEP+' (agora '+P.cap+', máximo '+POP_MIL+' sem Maravilha).',time:MILTIME[ml],btn:'🎖️ Pesquisar'}}
   return{t:c.nm,sub:'',txt:c.d||'',btn:'✔ Fazer'}
 }
@@ -4255,7 +4255,7 @@ const SOPT={
   partida:[
     {k:'diff',n:'Inimigo',v:[['facil','🙂 Fácil'],['normal','😐 Normal'],['dificil','😠 Difícil']]},
     {k:'res',n:'Recursos iniciais',v:[['pouco','Pouco'],['normal','Normal'],['muito','Muito']]},
-    {k:'era',n:'Era inicial',v:[['0','🪨 Pedra'],['1','🔨 Ferram.'],['2','🛡 Bronze']]},
+    {k:'era',n:'Era inicial',v:[['0','🏺 Antiga'],['1','🏛 Clássica'],['2','🏰 Medieval'],['3','💥 Pólvora']]},
     {k:'vic',n:'Vitória',v:[['padrao','🏆 Padrão','conquista, território ou Maravilha'],['conq','⚔ Conquista','só derrotando o inimigo']]},
     {k:'vel',n:'Velocidade',v:[['1','1x'],['1.5','1,5x'],['2','2x']]}],
   amb:[
@@ -4469,7 +4469,7 @@ ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){ronAI3(p,blds
   if(P.age>=3&&P.age<MAXAGE&&blds.some(b=>b.type==='mercado'&&b.done>=1)){const need=AGECOST[P.age+1];capInit();
     for(const k of TRADE_K){if(need[k]&&res[k]<need[k]&&res.wealth>buyPrice(p,k)+(need.wealth||0)+150){trade(p,k,1);break}}}
   if(P.age>=5&&!any('fabrica'))build('fabrica',htx,hty,5,15);
-  if(P.age>=6&&!any('silo')&&G.diff!=='facil')build('silo',htx,hty,5,14);
+  if(P.age>=BT.silo.age&&!any('silo')&&G.diff!=='facil')build('silo',htx,hty,5,14);
   // petróleo: até 5 aldeões no petróleo dentro da fronteira
   if(P.age>=OIL_AGE&&res.oil<(P.age>=6?2200:900)){const on=vills.filter(v=>v.lsub==='oil'&&(v.st==='gather'||v.st==='return')).length;
     if(on<Math.min(P.age>=6?9:5,vills.length/(P.age>=6?4:7)|0)){const v=vills.find(x=>x.st==='idle'||(x.lsub==='tree'&&x.st==='gather'&&x.carry<3));if(v){let best=null,bd=40*TS;for(const r of G.R){if(r.dead||r.sub!=='oil')continue;const c=ctr(r);if(DOM[idx(r.tx,r.ty)]!==p&&!blds.some(b=>b.type==='tc'&&hyp(ctr(b).x-c.x,ctr(b).y-c.y)<16*TS))continue;const d=hyp(c.x-v.x,c.y-v.y);if(d<bd){bd=d;best=r}}if(best)orderGather(v,best)}}}
@@ -4754,6 +4754,41 @@ paintBld=function(g,P,type,st,C,S){const m=C.m;
 // ajuda
 {const p=[...document.querySelectorAll('p')].find(e=>/^OS 6 RECURSOS/.test(e.textContent));if(p){const n=document.createElement('p');
   n.innerHTML='<b>ECONOMIA (como no Rise)</b><br>O aldeão não carrega: trabalha no lugar e o recurso entra direto. Florestas, minas, petróleo, peixes e fazendas não acabam (caça e frutas acabam).<br>🪓 Madeira só perto de um <b>Acampamento de lenhadores</b> (2 a 10 lenhadores, conforme as árvores) ou do Centro da cidade (3).<br>🌾 Até <b>5 fazendas por cidade</b>, 1 aldeão em cada: para ter mais comida, funde mais cidades.<br>⛏ Cada mina aceita 2 mineiros.<br>Reforço de +30% na cidade: Celeiro (comida), Serraria (madeira), Fundição (metal), Refinaria (petróleo).';p.after(n)}}
+
+// =========================================================
+//   AS 8 ERAS (como no Rise of Nations)
+//   Antiga · Clássica · Medieval · Pólvora · Iluminismo · Industrial · Moderna · Informação
+//   avança na Biblioteca, sem exigir outros prédios
+// =========================================================
+// era antiga (0..6 de antes) -> era nova (0..7)
+const AGE_MAP=[0,0,1,2,3,5,6];
+for(const t in UT)if(UT[t].age!=null)UT[t].age=AGE_MAP[UT[t].age];
+for(const t in BT)if(BT[t].age!=null)BT[t].age=AGE_MAP[BT[t].age];
+for(const t in TECH)if(TECH[t].age!=null)TECH[t].age=AGE_MAP[TECH[t].age];
+for(let i=0;i<MILAGE.length;i++)MILAGE[i]=AGE_MAP[MILAGE[i]];
+// ajustes para encher as eras novas
+UT.fuzil.age=4;                       // Iluminismo: fuzileiro
+UT.tanque.age=6;UT.assalto.age=6;     // Moderna
+BT.silo.age=7;                        // Informação: Silo de Mísseis
+BT.refinaria.age=5;BT.fabrica.age=5;UT.artilharia.age=5;UT.encour.age=5;
+// Rise: a era se pesquisa na Biblioteca (o requisito vira "ter uma Biblioteca")
+for(let a=1;a<=MAXAGE;a++)AGEREQ[a]=['biblioteca','biblioteca'];
+ageReqMsg=function(p){const P=G.P[p];if(P.age>=MAXAGE)return null;return hasReq(p,'biblioteca')?null:'Requer uma Biblioteca'};
+// caça: faca na Antiga, arco a partir da Clássica, arma a partir da Pólvora
+huntTier=function(o){const a=G.P[o].age;return a>=3?2:a>=1?1:0};
+// ícones das eras: reaproveita os antigos e cria Iluminismo e Moderna
+{const E=ERA_ART.slice(),emo=(c1,c2,ch)=>g=>{medal(g,c1,c2);g.font='34px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(ch,40,42)};
+  const NEW=[E[0],E[2],E[3],E[4],emo('#d8c08a','#4a3418','📜'),E[5],emo('#8aa8c8','#1a2a3a','✈️'),E[6]];
+  for(let i=0;i<NEW.length;i++)ERA_ART[i]=NEW[i]||E[0];for(const k in ICO)if(/^era/.test(k))delete ICO[k]}
+// partidas salvas antes: as eras antigas viram as novas
+const loadGame8=loadGame;
+loadGame=function(){const ok=loadGame8();if(ok&&G&&!G.era8){for(const P of G.P)if(P&&P.age!=null)P.age=AGE_MAP[Math.min(6,P.age)];G.era8=1}return ok};
+const newGame8=newGame;
+newGame=function(o){newGame8(o);G.era8=1};
+window.__RA.newGame=newGame;
+// atalho: seleciona a Biblioteca (onde se avança de era)
+function quickLib(){const t=G.B.filter(b=>!b.dead&&b.o===0&&b.type==='biblioteca'&&b.done>=1);if(!t.length){toast('📚 Construa uma Biblioteca: é nela que se avança de era');return}
+  const b=t[UI.idleIdx++%t.length];SEL=[b.id];const c=ctr(b);centerOn(c.x,c.y);UI.sig='';updHUD(true)}
 </script>
 </body>
 </html>
