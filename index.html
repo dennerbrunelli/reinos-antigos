@@ -164,7 +164,8 @@ button{font-family:inherit;color:inherit}
       <p><b>RECURSOS</b><br>Comida: arbustos, caça (gazela, elefante), peixes e fazendas · Madeira: árvores · Ouro e Pedra: minas.<br>Aldeões levam tudo ao Centro Urbano, Celeiro (comida) ou Depósito. Barcos pesqueiros levam peixe para a Doca.</p>
       <p><b>ERAS</b><br>Pedra → Ferramentas → Bronze → Ferro. Para avançar, construa 2 prédios diferentes da era atual e pague no Centro Urbano.</p>
       <p><b>FRONTEIRAS E CIDADES</b><br>A linha azul marca o seu território. Casas, fazendas, mercado e prédios militares só dentro dela; depósito, celeiro, doca, torre e muralha também na terra neutra. Torres e cidades novas (Centro Urbano, a partir da era das Ferramentas) aumentam a fronteira. Centro Urbano não é destruído: com 0 de vida ele cai, e quem ficar perto com soldados, sem defensores, toma a cidade em 30 segundos. Tropas no território inimigo perdem vida aos poucos.</p>
-      <p><b>DICAS</b><br>Casas dão +4 de população (máx. 50). O Mercado libera fazendas. Cuidado com leões e elefantes selvagens! O sacerdote converte inimigos e cura os seus.</p>
+      <p><b>POPULAÇÃO (como no Rise)</b><br>Não precisa de casas: começa em 50. Cada Organização Militar (no Centro Urbano) dá +25, até 200. A Maravilha pronta dá mais 50: até 250.</p>
+      <p><b>DICAS</b><br> O Mercado libera fazendas. Cuidado com leões e elefantes selvagens! O sacerdote converte inimigos e cura os seus.</p>
     </div>
     <div>
       <p><b>👆 TOQUE NA TELA</b><br>
@@ -232,7 +233,11 @@ button{font-family:inherit;color:inherit}
    Tudo (desenhos, sons e música) é gerado pelo próprio código.
    Feito para rodar leve no celular (Galaxy A05s).
    ========================================================= */
-const TS=32,MW=72,MH=72,N=MW*MH,MAXPOP=50,TOPH=30;
+const TS=32,MW=72,MH=72,N=MW*MH,TOPH=30;
+// população como no Rise of Nations: sem casas; começa em 50, cada Organização Militar dá +25 (até 200) e a Maravilha dá +50 (até 250)
+const POP_BASE=50,POP_STEP=25,POP_MIL=200,POP_WONDER=50,MAXPOP=250;
+const MIL_N=6,MILAGE=[0,1,1,2,2,3],MILTIME=[30,35,40,45,50,60],ROMAN=['','I','II','III','IV','V','VI'];
+const MILCOST=[{food:100,wood:50},{food:150,gold:50},{food:200,gold:100},{food:300,gold:150},{food:400,gold:250},{food:500,gold:350}];
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const idx=(x,y)=>y*MW+x;
@@ -293,7 +298,7 @@ const BT={
   torre:{n:'Torre',sz:1,hp:250,cost:{stone:150},t:40,age:1,los:7,pg:1,shoot:{atk:3,rng:6,cd:2},h:100},
   muralha:{n:'Muralha',sz:1,hp:200,cost:{stone:5},t:6,age:1,los:1,pg:1,wall:1,h:34},
 };
-const ECO=['casa','celeiro','deposito','doca','mercado','fazenda','tc','maravilha'];
+const ECO=['celeiro','deposito','doca','mercado','fazenda','tc','maravilha'];
 const MIL=['quartel','arquearia','estabulo','academia','templo','oficina','torre','muralha'];
 
 // ---------- TECNOLOGIAS ----------
@@ -348,9 +353,9 @@ const civOf=p=>CIVS.find(c=>c.id===G.P[p].civ)||CIVS[0];
 const styOf=p=>STY[civOf(p).st];
 
 const DIFF={
-  facil:{n:'Fácil',gm:.8,vt:14,first:720,wave:4,inc:1,int:270,ageV:[11,15,20],fish:3,navy:1},
-  normal:{n:'Normal',gm:1,vt:22,first:480,wave:6,inc:2,int:220,ageV:[10,14,18],fish:4,navy:2},
-  dificil:{n:'Difícil',gm:1.25,vt:28,first:330,wave:8,inc:2,int:170,ageV:[9,13,17],fish:6,navy:3},
+  facil:{n:'Fácil',gm:.8,vt:18,first:720,wave:4,inc:1,int:270,ageV:[11,15,20],fish:3,navy:1},
+  normal:{n:'Normal',gm:1,vt:30,first:480,wave:6,inc:2,int:220,ageV:[10,14,18],fish:4,navy:2},
+  dificil:{n:'Difícil',gm:1.25,vt:40,first:330,wave:8,inc:2,int:170,ageV:[9,13,17],fish:6,navy:3},
 };
 // coleta por segundo
 const GATH={food:.62,hunt:.9,fish:.55,fishb:.75,farm:.5,wood:.6,gold:.52,stone:.52};
@@ -405,7 +410,7 @@ function blob(cx,cy,r,fn){
   }
 }
 const SPIRAL=(()=>{const a=[];for(let y=-20;y<=20;y++)for(let x=-20;x<=20;x++)a.push([x,y,x*x+y*y]);a.sort((p,q)=>p[2]-q[2]);return a})();
-function mkPlayer(civ){return{civ,res:{food:200,wood:200,gold:100,stone:150},age:0,cap:0,pop:0,techs:[],ai:null}}
+function mkPlayer(civ){return{civ,res:{food:200,wood:200,gold:100,stone:150},age:0,mil:0,cap:0,pop:0,techs:[],ai:null}}
 function newGame(o){
   const seed=(Math.random()*1e9)|0;RNG=mulberry32(seed);
   const aiCiv=CIVS[(RNG()*CIVS.length)|0].id;
@@ -538,8 +543,9 @@ function kill(e,by){
   if(e.k==='b'){markBld(e,false);if(e.type==='tc'||e.type==='torre')domDirty=true;G.fx.push({k:'rubble',x:e.tx*TS,y:e.ty*TS,s:e.sz,t:0,w:!!BT[e.type].water});if(by!=null&&by<2&&by!==e.o)G.st.kill[by]++;mmDirty=true;recountPop()}
   if(e.k==='r'&&!e.walk){const i=idx(e.tx,e.ty);occ[i]=0;if(!G.terr[i])pass[i]=1;mmDirty=true;if(e.sub==='tree')stumpAt(e.tx,e.ty)}
 }
+function popCap(p){const P=G.P[p];return Math.min(POP_MIL,POP_BASE+POP_STEP*(P.mil||0))+(G.B.some(b=>!b.dead&&b.o===p&&b.type==='maravilha'&&b.done>=1)?POP_WONDER:0)}
 function recountPop(){
-  for(let p=0;p<2;p++){let cap=0;for(const b of G.B)if(!b.dead&&b.o===p&&b.done>=1&&BT[b.type].pop)cap+=BT[b.type].pop+(b.type==='tc'&&b.id!==G.P[p].capId?5:0);G.P[p].cap=Math.min(MAXPOP,cap);let pop=0;for(const u of G.U)if(!u.dead&&u.o===p)pop++;G.P[p].pop=pop}
+  for(let p=0;p<2;p++){G.P[p].cap=popCap(p);let pop=0;for(const u of G.U)if(!u.dead&&u.o===p)pop++;G.P[p].pop=pop}
 }
 
 // =========================================================
@@ -970,14 +976,16 @@ function updBld(b,dt){
   if(b.qt<tt)b.qt+=dt;
   if(b.qt<tt)return;
   if(it==='age'){P.age=Math.min(3,P.age+1);b.q.shift();b.qt=0;b.wait=false;if(b.o===0){toast('🎺 Glória! Você chegou na '+AGES[P.age]+'!');snd('age')}else toast('O inimigo chegou na '+AGES[P.age]);return}
+  if(it==='mil'){P.mil=(P.mil||0)+1;b.q.shift();b.qt=0;recountPop();if(b.o===0){toast('🎖️ Organização Militar '+ROMAN[P.mil]+': população máxima '+P.cap+'!');snd('done')}return}
   if(it.startsWith('t:')){const id=it.slice(2);if(!P.techs.includes(id))P.techs.push(id);recompute(b.o);b.q.shift();b.qt=0;if(b.o===0){toast('📜 Pesquisa concluída: '+TECH[id].n);snd('done')}return}
   if(P.pop<P.cap){const nav=!!UT[it].naval;const p=freeAround(b,b.rally||{x:(b.tx+b.sz/2)*TS,y:(b.ty+b.sz+2)*TS},nav);const u=spawnUnit(it,b.o,p.x,p.y);P.pop++;b.q.shift();b.qt=0;b.wait=false;
     if(b.o===0)snd('unit');
     if(b.rally){const rt=b.rally.id&&E.get(b.rally.id);if(rt&&canGather(u,rt))orderGather(u,rt);else if(passFor(u)[tileOf(b.rally.x,b.rally.y)])orderMove(u,b.rally.x,b.rally.y)}}
-  else{if(!b.wait&&b.o===0)toast('🏠 Precisa de mais casas!');b.wait=true}
+  else{const k=b.q.findIndex(x=>x==='mil'||x==='age'||x.startsWith('t:'));if(k>0){b.q.unshift(b.q.splice(k,1)[0]);b.qt=0;b.wait=false;return} // pesquisa na fila passa na frente quando a população está cheia
+    if(!b.wait&&b.o===0)toast((P.mil||0)<MIL_N?'👥 População no limite! Pesquise Organização Militar no Centro Urbano.':'👥 População no máximo.');b.wait=true}
 }
-function itemTime(b,it){if(it==='age')return AGETIME[G.P[b.o].age+1];if(it.startsWith('t:'))return TECH[it.slice(2)].t;return ST({o:b.o,type:it}).t}
-function itemCost(p,it){if(it==='age')return AGECOST[G.P[p].age+1];if(it.startsWith('t:'))return TECH[it.slice(2)].cost;return costOf(p,it)}
+function itemTime(b,it){if(it==='age')return AGETIME[G.P[b.o].age+1];if(it==='mil')return MILTIME[G.P[b.o].mil||0];if(it.startsWith('t:'))return TECH[it.slice(2)].t;return ST({o:b.o,type:it}).t}
+function itemCost(p,it){if(it==='age')return AGECOST[G.P[p].age+1];if(it==='mil')return MILCOST[G.P[p].mil||0];if(it.startsWith('t:'))return TECH[it.slice(2)].cost;return costOf(p,it)}
 function updProj(dt){
   for(const p of G.pj){
     p.t+=dt;
@@ -1156,17 +1164,18 @@ function aiTick(p){
   const pick=near=>{let best=null,bd=1e9;for(const v of vills){if(busy.has(v.id)||v.st==='build')continue;const d=hyp(v.x-near.x,v.y-near.y)*(v.st==='idle'?.5:1)*(v.ct==='food'?1.5:1);if(d<bd){bd=d;best=v}}if(best)busy.add(best.id);return best};
   // prédios que só podem ficar dentro da fronteira: se não couber perto, tenta perto das outras cidades
   const nearCities=type=>{for(const c of blds){if(c.type!=='tc'||c.done<1||c.down)continue;const cc=ctr(c);const s=findSite(type,cc.x/TS,cc.y/TS,3,10);if(s)return s}return null};
-  const build=(type,cx,cy,minR,maxR)=>{if(!afford(p,BT[type].cost)||G.P[p].age<BT[type].age)return false;const s=findSite(type,cx,cy,minR,maxR)||findSite(type,cx,cy,maxR,maxR+8)||(!NEUTRAL_OK[type]?nearCities(type):null);if(!s){if(!NEUTRAL_OK[type])AI.noSite=G.t;return false}
+  const build=(type,cx,cy,minR,maxR)=>{if(!afford(p,BT[type].cost)||G.P[p].age<BT[type].age)return false;if(AI.nsT&&G.t-(AI.nsT[type]||-99)<20)return false;const s=findSite(type,cx,cy,minR,maxR)||findSite(type,cx,cy,maxR,maxR+8)||(!NEUTRAL_OK[type]?nearCities(type):null);if(!s){if(!NEUTRAL_OK[type])AI.noSite=G.t;(AI.nsT=AI.nsT||{})[type]=G.t;return false}
     const v=pick({x:(s[0]+1)*TS,y:(s[1]+1)*TS});if(!v)return false;pay(p,BT[type].cost);const b=placeBld(type,p,s[0],s[1],false);blds.push(b);orderBuild(v,b);return b};
   for(const b of blds){if(b.done<1){if((b.stuck||0)>=3&&b.done<.05){refund(p,BT[b.type].cost);kill(b);continue}
     const n=vills.filter(v=>v.st==='build'&&v.tg===b.id).length;if(n===0){const v=pick(ctr(b));if(v)orderBuild(v,b)}}}
   const queued=blds.reduce((s,b)=>s+b.q.filter(q=>q!=='age'&&!q.startsWith('t:')).length,0);
   // casas
-  if(P.cap<MAXPOP&&P.pop+queued+2>=P.cap&&!blds.some(b=>b.type==='casa'&&b.done<1))build('casa',htx,hty,4,11);
+  // população (como no Rise): Organização Militar no Centro Urbano quando chega perto do limite
+  {const ml=P.mil||0;if(tc&&ml<MIL_N&&P.age>=MILAGE[ml]&&P.pop+queued+6>=P.cap&&!blds.some(b=>b.q.includes('mil'))&&afford(p,MILCOST[ml])){pay(p,MILCOST[ml]);tc.q.push('mil')}}
   // aldeões
   const nextAge=P.age<3?AGECOST[P.age+1]:null;
   const ageGoal=P.age<3&&vills.length>=D.ageV[P.age];
-  if(tc&&tc.q.length<2&&!tc.q.includes('age')&&vills.length+tc.q.length<D.vt&&afford(p,costOf(p,'vill'))&&!(ageGoal&&res.food>=nextAge.food*.6&&res.food<nextAge.food+50&&vills.length>8)){pay(p,costOf(p,'vill'));tc.q.push('vill')}
+  if(tc&&tc.q.length<2&&!tc.q.includes('age')&&vills.length+tc.q.length<(P.age===0?Math.min(D.vt,22):D.vt)&&afford(p,costOf(p,'vill'))&&!(ageGoal&&res.food>=nextAge.food*.6&&res.food<nextAge.food+50&&vills.length>8)){pay(p,costOf(p,'vill'));tc.q.push('vill')}
   // requisitos de era: 2 prédios diferentes da era atual
   if(P.age<3){const need=AGEREQ[P.age+1];const got=need.filter(t=>has(t)).length;
     if(got<2&&vills.length>=6){for(const t of need){if(any(t))continue;if(t==='doca')continue;
@@ -1253,7 +1262,7 @@ function aiTick(p){
   const saving=ageGoal&&nextAge&&res.food>=nextAge.food*.5&&!intrNear();
   const spend=c=>army.length+queued<minArmy&&!saving?afford(p,c):canSpend(c);
   const prefer={quartel:['espa','guer'],arquearia:['arqcav','arqc','arq'],estabulo:['elef','cav','carro','bat'],academia:['hopl'],oficina:['pedra','bal'],templo:['sac']};
-  const maxArmy={facil:10,normal:20,dificil:30}[G.diff];
+  const maxArmy={facil:20,normal:45,dificil:75}[G.diff];
   for(const b of blds){if(b.done<1||b.q.length>=2||!prefer[b.type])continue;if(P.pop+queued>=P.cap||army.length+queued>=maxArmy)break;
     if(b.type==='templo'&&priests.length+b.q.length>=(G.diff==='facil'?1:2))continue;
     if(b.type==='oficina'&&army.filter(u=>UT[u.type].cls==='cerco').length>=3)continue;
@@ -2251,6 +2260,8 @@ function getCmds(){
         act:n=>{for(let i=0;i<(n||1);i++){const w=canTrain(b,t);if(w){if(i===0)toast(w);break}pay(0,costOf(0,t));b.q.push(t)}}})}
       if(b.type==='tc'&&G.P[0].age<3){const a=G.P[0].age+1,c=AGECOST[a];const busy=G.B.some(x=>!x.dead&&x.o===0&&x.q.includes('age'));const rq=ageReqMsg(0);
         out.push({ic:'⬆️',nm:'Avançar: '+AGES[a],cost:c,dis:busy?'Já está avançando':rq?rq:!afford(0,c)?'Faltam recursos: '+costTxt(c):null,cnt:b.q.includes('age')?1:0,act:()=>{pay(0,c);b.q.push('age')}})}
+      if(b.type==='tc'&&(G.P[0].mil||0)<MIL_N){const P=G.P[0],ml=P.mil||0,c=MILCOST[ml],ra=MILAGE[ml],busy=G.B.some(x=>!x.dead&&x.o===0&&x.q.includes('mil'));
+        out.push({ic:'🎖️',nm:'Organização Militar '+ROMAN[ml+1],d:'População máxima +'+POP_STEP+' (agora '+P.cap+')',cost:c,dis:busy?'Já está pesquisando':P.age<ra?'Requer '+AGES[ra]:!afford(0,c)?'Faltam recursos: '+costTxt(c):null,lock:P.age<ra,cnt:b.q.includes('mil')?1:0,act:()=>{pay(0,c);b.q.push('mil')}})}
       for(const id of BT[b.type].res||[]){if(G.P[0].techs.includes(id))continue;const T=TECH[id];const r=canResearch(b,id);
         out.push({tech:T.ic,nm:T.n,d:T.d,cost:T.cost,dis:r,lock:G.P[0].age<T.age,cnt:b.q.includes('t:'+id)?1:0,act:()=>{pay(0,T.cost);b.q.push('t:'+id)}})}
     }
@@ -2304,8 +2315,8 @@ function infoHTML(s){
   if(e.type==='fazenda')return h+rimg('food')+' '+Math.ceil(e.food)+' de comida</div></div>';
   h+='❤️'+Math.ceil(e.hp)+'/'+e.mhp;
   if(e.type==='tc'){h+=' · '+(e.id===G.P[e.o].capId?'👑 Capital':'🏘 Cidade');if(e.down)h+='<br><span style="color:#ff8a7a">Derrubado'+(e.cp>0?': '+(e.cpo===0?'você está tomando':'sendo tomado')+' '+Math.floor(e.cp/CAPT_T*100)+'%':'')+'</span>'}
-  if(e.o===0&&e.q.length){const it=e.q[0],tt=itemTime(e,it);h+=' · '+(e.wait?'<span style="color:#ff8a7a">Precisa de casas!</span>':Math.floor(e.qt/tt*100)+'%')+'</div><div class="qq">'+
-    e.q.map((q,i)=>'<span data-qi="'+i+'">'+(q==='age'?'⬆️':q.startsWith('t:')?TECH[q.slice(2)].ic:'<img src="'+THUMB['u'+q]+'">')+'</span>').join('')+'</div></div>'}
+  if(e.o===0&&e.q.length){const it=e.q[0],tt=itemTime(e,it);h+=' · '+(e.wait?'<span style="color:#ff8a7a">População no limite!</span>':Math.floor(e.qt/tt*100)+'%')+'</div><div class="qq">'+
+    e.q.map((q,i)=>'<span data-qi="'+i+'">'+(q==='age'?'⬆️':q==='mil'?'🎖️':q.startsWith('t:')?TECH[q.slice(2)].ic:'<img src="'+THUMB['u'+q]+'">')+'</span>').join('')+'</div></div>'}
   else h+=(T.train&&e.o===0?'<br>Toque no chão: ponto de encontro':T.drop&&e.o===0?'<br>Recebe: '+T.drop.map(k=>rimg(k)).join(' '):'')+'</div></div>';
   return h;
 }
@@ -2522,7 +2533,7 @@ function loadGame(){
 function startGame(){
   RNG=mulberry32(G.seed+G.t|0);
   STAT=[null,null];recompute(0);recompute(1);
-  G.tw=G.tw||[0,0];G.st.city=G.st.city||[0,0];ensureCapital(0);ensureCapital(1);calcDom();
+  G.tw=G.tw||[0,0];G.st.city=G.st.city||[0,0];for(const P of G.P)P.mil=P.mil||0;ensureCapital(0);ensureCapital(1);calcDom();
   buildSprites();buildTerrain();mmDirty=true;
   SEL=[];placing=null;UI.sig='';UI.lastAlert=null;UI.page=0;
   const tc=G.B.find(b=>b.o===0&&b.type==='tc');const c=tc?ctr(tc):{x:G.starts[0][0]*TS,y:G.starts[0][1]*TS};
