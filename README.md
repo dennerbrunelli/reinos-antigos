@@ -1,6 +1,6 @@
-# ⚔️ Reinos Antigos
+# ⚔️ Império
 
-Jogo de estratégia em tempo real para celular, com visão em diagonal e clima de jogo clássico dos anos 90. Funciona **sem internet** depois de aberto uma vez. Todos os desenhos, sons e a música são gerados pelo próprio código.
+Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*), com visão em diagonal e clima de jogo clássico dos anos 90. Funciona **sem internet** depois de aberto uma vez. Todos os desenhos, sons e a música são gerados pelo próprio código.
 
 **Jogar:** https://dennerbrunelli.github.io/reinos-antigos/
 
@@ -26,5 +26,5 @@ Jogo de estratégia em tempo real para celular, com visão em diagonal e clima d
 
 ## Arquivos
 - `index.html` — o jogo inteiro (desenhos, regras, inteligência do inimigo, sons e música)
-- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `reinos-v3` → `reinos-v4`)
+- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `imperio-v4` → `imperio-v5`)
 - `manifest.json` e ícones — instalação como app
