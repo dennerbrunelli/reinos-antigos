@@ -20,6 +20,7 @@ Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*),
 - **Várias cidades:** até 4 Centros Urbanos. Centro Urbano derrubado não some: quem cercar com soldados toma a cidade inteira
 - **Exército do Rise:** espião (quartel; perto de uma base inimiga mostra o que ela tem), 🔁 patrulha (vai e volta entre dois pontos até você dar outra ordem) e tropas que ficam +6% mais fortes a cada era
 - **Guarnecer:** cidadãos e tropas entram nos prédios (toque no prédio com as unidades selecionadas). Eruditos estudam dentro da Universidade; soldados na Torre e no Forte dão mais flechas; ao destruir um prédio, quem estava dentro sai vivo
+- **Poder de cada povo** (⚡ no Centro Urbano, com tempo de espera): Bênção do Nilo, Carros de Assur, Zigurate, Falange, Rota Comercial, Labirinto, Jardins Suspensos, Carga Persa, Forja de Cerco, Bushido, Oráculo e Hino de Guerra
 - **Atrito:** tropas paradas no território inimigo perdem vida aos poucos
 - **População como no Rise:** sem casas; começa em 50 e cada Organização Militar (no Centro Urbano) dá +25, até 200; com a Maravilha de pé, até 250
 - Comida de arbustos, caça (gazelas, elefantes selvagens, leões), peixes e fazendas
@@ -35,5 +36,5 @@ Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*),
 
 ## Arquivos
 - `index.html` — o jogo inteiro (desenhos, regras, inteligência do inimigo, sons e música)
-- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `imperio-v35` → `imperio-v36`)
+- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `imperio-v36` → `imperio-v37`)
 - `manifest.json` e ícones — instalação como app
