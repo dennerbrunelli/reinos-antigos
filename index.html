@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#1c140c">
+<meta name="theme-color" content="#173a7c">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
@@ -190,7 +190,32 @@ button{font-family:inherit;color:inherit}
 #top .rv b{color:#fffaf0;text-shadow:0 1px 1px #000}
 #top .rv small{color:#b6ff96;text-shadow:0 1px 1px #000}
 #top .rpop small{color:#e2ecff}
-#wx{font-size:11px;color:#e8f0ff;white-space:nowrap;text-shadow:0 1px 1px #000;background:#0006;border:1px solid #ffffff2a;border-radius:10px;padding:2px 7px;margin-left:auto}
+#wx{font-size:11px;color:#e8f0ff;white-space:nowrap;text-shadow:0 1px 1px #000;background:#0006;border:1px solid #ffffff2a;border-radius:10px;padding:2px 7px;cursor:pointer}
+#top .tl,#top .tr{display:flex;align-items:center;gap:6px;min-width:0}#top .tr{margin-left:auto}
+/* ===== modo Moderno: limpo, estilo dos RTS atuais ===== */
+.clean #top{background:none;border:none;box-shadow:none;pointer-events:none;height:34px;padding:4px calc(6px + env(safe-area-inset-right)) 0 calc(6px + env(safe-area-inset-left))}
+.clean #top .tl,.clean #top .tr{pointer-events:auto;background:rgba(6,14,34,.74);border:1px solid #f0c55a70;border-radius:18px;padding:2px 8px 2px 4px;box-shadow:0 2px 8px #0009;height:30px}
+.clean #top .r{background:none!important;border:none;box-shadow:none;padding:0 5px 0 2px;height:26px}
+.clean #top .r+.r{border-left:1px solid #ffffff1c!important;border-radius:0}
+.clean #wx{background:none;border:none;font-size:14px;padding:0 2px}
+.clean #age{font-size:11px}
+.clean #top .tb{width:28px;height:24px;border-radius:12px;font-size:13px}
+.clean .pn{background:rgba(6,14,34,.76);border:1px solid #f0c55a60;border-radius:12px;box-shadow:0 3px 12px #000a}
+.clean #pSel>.ph,.clean #pCmd>.ph,.clean #pMap>.ph{display:none}
+.clean #pObj .pbn,.clean #pAl .pbn{display:none}
+.clean #pObj>.ph,.clean #pAl>.ph{background:none;border:none;height:28px;border-radius:12px;padding:0 10px;font-size:12px}
+.clean #pObj>.ph .pt::before,.clean #pAl>.ph .pt::before{content:''}
+.clean #pObj{width:auto;max-width:240px}.clean #pObj:not(.min){width:236px}
+.clean #pSel.empty,.clean #pCmd.empty,.clean #pAl.calm{display:none!important}
+.clean #info{background:none;border:none;height:66px;box-shadow:none}
+.clean #mmw{background:none;border:none}
+.clean #pCmd #cmds{grid-template-columns:repeat(5,42px);grid-template-rows:repeat(2,42px);gap:4px}
+.clean #pCmd .cb{width:42px;height:42px;border-radius:10px}
+.clean #pCmd .cb img{width:38px;height:38px}
+.clean #quick{flex-direction:row;gap:6px}
+.clean #quick .cb{border-radius:50%;width:42px;height:42px;background:rgba(6,14,34,.78);border:1.5px solid #f0c55a90}
+.clean .mzb .cb{border-radius:8px}
+.clean #all .al{border-radius:8px}
 #era{margin-left:6px}
 #era,#age{color:#ffe08a;text-shadow:0 1px 1px #000}
 #clock{color:#e8f0ff}
@@ -237,24 +262,24 @@ button{font-family:inherit;color:inherit}
 <canvas id="art"></canvas>
 <div id="hud" style="display:none">
   <div id="dock"></div>
-  <div id="top">
+  <div id="top"><div class="tl">
     <span class="r"><img data-ri="food"><span class="rv"><b id="rf">0</b><small id="rtf"></small></span></span>
     <span class="r"><img data-ri="wood"><span class="rv"><b id="rw">0</b><small id="rtw"></small></span></span>
     <span class="r"><img data-ri="gold"><span class="rv"><b id="rg">0</b><small id="rtg"></small></span></span>
     <span class="r"><img data-ri="stone"><span class="rv"><b id="rs">0</b><small id="rts"></small></span></span>
     <span class="r rpop">👥<span class="rv"><b id="rp">0/0</b><small>população</small></span></span>
-    <span id="won"></span><span id="civn" style="display:none"></span>
-    <span id="wx"></span><span id="era"><b id="eran">I</b><span id="age"></span></span>
+    <span id="won"></span><span id="civn" style="display:none"></span></div>
+    <div class="tr"><span id="wx"></span><span id="era"><b id="eran">I</b><span id="age"></span></span>
     <span id="clock"></span>
     <button id="bui" class="tb" aria-label="Interface">🧩</button>
-    <button id="bmenu" class="tb" aria-label="Pausa">⏸</button>
+    <button id="bmenu" class="tb" aria-label="Pausa">⏸</button></div>
   </div>
   <div id="quick">
     <button id="qidle" class="cb">💤<i id="nidle"></i></button>
     <button id="qarmy" class="cb">⚔️</button>
     <button id="qtc" class="cb">🏰</button>
   </div>
-  <div class="pn" id="pObj" data-p="obj"><div class="ph"><span class="pt">🎯 Objetivos</span><button class="pbn" data-a="min">—</button><button class="pbn" data-a="hide">✕</button></div><div class="pc" id="objl"></div></div>
+  <div class="pn" id="pObj" data-p="obj"><div class="ph"><span class="pt" id="objt">🎯 Objetivos</span><button class="pbn" data-a="min">—</button><button class="pbn" data-a="hide">✕</button></div><div class="pc" id="objl"></div></div>
   <div class="pn" id="pAl" data-p="al"><div class="ph"><span class="pt" id="alt">⚠️ Alertas</span><button class="pbn" data-a="min">—</button><button class="pbn" data-a="hide">✕</button></div><div class="pc" id="all"></div></div>
   <div class="pn" id="pSel" data-p="sel"><div class="ph"><span class="pt" id="selt">Seleção</span><button class="pbn" data-a="min">—</button><button class="pbn" data-a="hide">✕</button></div><div class="pc"><div id="info"></div></div></div>
   <div class="pn" id="pCmd" data-p="cmd"><div class="ph"><span class="pt" id="cmdt">Comandos</span><button class="pbn" data-a="min">—</button><button class="pbn" data-a="hide">✕</button></div><div class="pc"><div id="cmds"></div></div></div>
@@ -342,7 +367,7 @@ button{font-family:inherit;color:inherit}
 <div id="uiset" class="screen">
   <h2>🧩 Interface</h2>
   <div class="lbl2">Modo pronto (toque para usar)</div>
-  <div class="row"><button class="mb" data-pre="classic">🏛 Clássico<small>tudo à mostra</small></button><button class="mb" data-pre="equil">⚖️ Equilibrado<small>padrão · painéis soltos</small></button><button class="mb" data-pre="battle">⚔️ Campo de Batalha<small>só o essencial</small></button></div>
+  <div class="row"><button class="mb" data-pre="modern">📱 Moderno<small>limpo · padrão</small></button><button class="mb" data-pre="classic">🏛 Clássico<small>tudo à mostra</small></button><button class="mb" data-pre="equil">⚖️ Equilibrado<small>padrão · painéis soltos</small></button><button class="mb" data-pre="battle">⚔️ Campo de Batalha<small>só o essencial</small></button></div>
   <div class="lbl2">Painéis (toque para mostrar ou esconder)</div>
   <div class="row" id="uipn"></div>
   <div class="lbl2">Tamanho dos painéis</div>
@@ -848,7 +873,7 @@ function moveAlong(u,dt){
   if(u.np){if(pathBudget<=0)return false;pathBudget--;u.np=false;computePath(u)}
   if(!u.path)return true;
   u.stt+=dt;if(u.stt>1){if(hyp(u.x-u.lpx,u.y-u.lpy)<5){u.stk++;if(u.stk>3)return true;u.np=true}u.stt=0;u.lpx=u.x;u.lpy=u.y}
-  let step=ST(u).spd*TS*dt*(u.fleeT>0?1.8:1);
+  let step=ST(u).spd*TS*dt*(u.fleeT>0?1.8:1)*seasonSpd(u);
   while(step>0){
     if(u.pi>=u.path.length)return true;
     const tx=u.path[u.pi],ty=u.path[u.pi+1];const dx=tx-u.x,dy=ty-u.y,d=hyp(dx,dy);
@@ -926,7 +951,7 @@ function idleThink(u,T,dt){
     let best=null,bd=4*TS;for(const v of G.U){if(v.dead||v.inT||v.o!==u.o||v===u||isNav(v)||UT[v.type].cls==='cerco')continue;if(v.hp>=ST(v).hp)continue;const d=hyp(v.x-u.x,v.y-u.y);if(d<bd){bd=d;best=v}}
     if(best)orderHeal(u,best);return;
   }
-  const en=nearestEnemy(u,T.los*TS+(T.rng?TS:0),u.o===1);if(en)orderAttack(u,en);
+  const en=nearestEnemy(u,T.los*losMul()*TS+(T.rng?TS:0),u.o===1);if(en)orderAttack(u,en);
 }
 function doGather(u,T,dt){
   let r=E.get(u.tg);
@@ -958,7 +983,7 @@ function doGather(u,T,dt){
   u.work=true;u.an+=dt*8;
   const c=ctr(r);faceTo(u,c.x,c.y);
   const cat=gatherCat(u,r);
-  const rate=GATH[cat]*(u.o<2?MODS[u.o].gath[cat]:1)*gmult(u.o);
+  const rate=GATH[cat]*(u.o<2?MODS[u.o].gath[cat]:1)*gmult(u.o)*seasonGath(cat);
   let a=Math.min(rate*dt,cap-u.carry);
   if(r.k==='r'){a=Math.min(a,r.amt);r.amt-=a;if(r.amt<=.001)kill(r)}
   else{a=Math.min(a,r.food);r.food-=a;if(r.food<=.001){kill(r);
@@ -997,7 +1022,7 @@ function doBuild(u,T,dt){
 function doAttack(u,T,dt){
   const t=E.get(u.tg);
   if(!t||t.dead||u.fail>4||t.inT||(t.k==='u'&&t.o===u.o)){u.st='idle';u.scan=0;u.mv=false;return}
-  if(u.o===0&&t.k==='u'&&!vis[tileOf(t.x,t.y)]&&distTo(u,t)>T.los*TS){u.st='idle';return}
+  if(u.o===0&&t.k==='u'&&!vis[tileOf(t.x,t.y)]&&distTo(u,t)>T.los*losMul()*TS){u.st='idle';return}
   if(u.o===2&&(hyp(u.x-u.hx,u.y-u.hy)>8*TS||distTo(u,t)>6*TS)){u.hx=u.x;u.hy=u.y;u.st='idle';return}
   if(isNav(u)&&!T.war){u.st='idle';return}
   const reach=T.rng?T.rng*TS:(t.k==='u'?(T.cls==='elef'?26:20):24);
@@ -1791,7 +1816,7 @@ function circOff(r){if(circCache[r])return circCache[r];const a=[];for(let y=-r;
 function updVis(){
   vis.fill(0);
   const mark=(cx,cy,r)=>{const o=circOff(r);for(let i=0;i<o.length;i+=2){const x=cx+o[i],y=cy+o[i+1];if(x>=0&&y>=0&&x<MW&&y<MH){const j=y*MW+x;vis[j]=1;G.exp[j]=1}}};
-  for(const u of G.U)if(!u.dead&&!u.inT&&u.o===0)mark(u.x/TS|0,u.y/TS|0,ST(u).los);
+  for(const u of G.U)if(!u.dead&&!u.inT&&u.o===0)mark(u.x/TS|0,u.y/TS|0,Math.max(2,Math.round(ST(u).los*losMul())));
   for(const b of G.B)if(!b.dead&&b.o===0)mark(b.tx+(b.sz>>1),b.ty+(b.sz>>1),BT[b.type].los+(b.sz>>1));
   if(G.revealAI)for(const b of G.B)if(!b.dead&&b.o===1)for(let y=b.ty;y<b.ty+b.sz;y++)for(let x=b.tx;x<b.tx+b.sz;x++)G.exp[idx(x,y)]=1;
   fogDirty=true;
@@ -2490,13 +2515,35 @@ function rainSound(i){
 function thunder(){if(!OPT.snd||!audio())return;const o=voice((Math.random()-.5)*.8,1,.6);const d=.4+Math.random()*1.2;
   noise(1.8,.9,140,.5,d,o,'lowpass',60);noise(.5,.5,500,.6,d,o,'lowpass',150);tone(48,1.6,'sine',.3,30,d,o)}
 
+// ---------- efeitos das estações, do tempo e da noite no jogo (valem para os dois lados) ----------
+const SEFX=['frutas, caça e fazendas +10%','madeira +10%','colheita! fazendas +20%','fazendas −40%, frutas −30%, tropas 12% mais lentas'];
+const WXFX={rain:'🌧 Chuva: tropas 8% mais lentas',storm:'⛈ Tempestade: tropas 15% e barcos 20% mais lentos',snow:'❄️ Nevasca: tropas mais 10% lentas'};
+function nightAmt(){return G?1-daylight():0}
+function losMul(){return 1-.3*nightAmt()}                 // à noite as tropas enxergam até 30% menos
+function seasonGath(cat){const s=seasonIdx();let m=1;
+  if(s===0&&(cat==='food'||cat==='hunt'||cat==='farm'))m=1.1;
+  else if(s===1&&cat==='wood')m=1.1;
+  else if(s===2&&cat==='farm')m=1.2;
+  else if(s===3){if(cat==='farm')m=.6;else if(cat==='food')m=.7}
+  return m}
+function seasonSpd(u){const W=G.wx;const nav=!!UT[u.type].naval;let m=1;
+  if(!nav&&seasonIdx()===3)m*=.88;
+  if(W&&W.i>.3){if(W.k==='snow'){if(!nav)m*=.9}else if(W.k==='storm')m*=nav?.8:.85;else if(W.k==='rain'&&!nav)m*=.92}
+  return m}
+// avisos quando muda a estação, começa o mau tempo ou cai a noite
+function seasonCheck(){const si=seasonIdx(),S=SEASONS[si],W=G.wx||{k:'clear'},nt=nightAmt()>.6;
+  if(G.sShow!==si){if(G.sShow!=null&&running)toast(S.ic+' Chegou '+(si?'o ':'a ')+S.n+': '+SEFX[si]);G.sShow=si}
+  const wk=W.k!=='clear'&&W.i>.3?W.k:'clear';if(G.wShow!==wk){if(wk!=='clear'&&running)toast(WXFX[wk]);G.wShow=wk}
+  if(G.nShow!==nt){if(nt&&running)toast('🌙 Anoiteceu: as tropas enxergam menos até o dia raiar');G.nShow=nt}}
+function seasonInfo(){const si=seasonIdx(),S=SEASONS[si],W=G.wx||{k:'clear',i:0};
+  return S.ic+' <b>'+S.n+'</b>: '+SEFX[si]+(W.k!=='clear'&&W.i>.3?'<br>'+WXFX[W.k]:'')+'<br>'+dayIcon()+' '+hourTxt()+(nightAmt()>.3?' · 🌙 visão das tropas −'+Math.round(30*nightAmt())+'%':' · dia claro')}
+
 // ---------- partículas e luzes (tudo em coordenadas da tela) ----------
 const LIGHTB={tc:90,torre:46,templo:70,maravilha:120,doca:50,mercado:44,quartel:40,academia:44};
 let atmLast=0,FLASH=0,BIRDS=null;
 function hsh(i){const x=Math.sin(i*127.1+311.7)*43758.5453;return x-Math.floor(x)}
 function drawAtmos(){
   if(!G)return;const now=performance.now()/1000,rdt=Math.min(.1,now-(atmLast||now));atmLast=now;
-  if(running&&!paused)wxTick(rdt*OPT.spd);
   const W=G.wx||{k:'clear',i:0},si=seasonIdx(),S=SEASONS[si],dl=daylight(),dk=duskAmt(),night=1-dl,hi=OPT.qual;
   const g=ctx;g.save();
   // estação: cor do ar (no gráfico Leve vira um véu simples)
@@ -3044,7 +3091,7 @@ document.addEventListener('pointerdown',()=>{if(!running&&OPT.mus)musicStart()},
 // =========================================================
 let last=0,acc={vis:0,ai:0,hud:0,end:0,save:0,mm:0,city:0};
 function step(dt){
-  G.t+=dt;pathBudget=6;
+  G.t+=dt;pathBudget=6;wxTick(dt);seasonCheck();
   rebuildBuckets();
   for(const u of G.U)if(!u.dead)updUnit(u,dt);
   separate();
@@ -3082,7 +3129,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 11';$('ver').textContent=VERSAO;
+const VERSAO='Versão 12';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -3100,14 +3147,15 @@ $('bmulti').onclick=()=>{snd('click');$('multit').textContent='🔒 Será libera
 //   3 modos prontos; tudo fica salvo no celular; "Restaurar" volta ao padrão.
 //   Esconder um painel não para nada no jogo: só tira da tela.
 // =========================================================
-const HUDK='imperio_ui1',PNL=['obj','al','sel','cmd','map'];
+const HUDK='imperio_ui2',PNL=['obj','al','sel','cmd','map'];
 const PNAME={obj:'🎯 Objetivos',al:'⚠️ Alertas',sel:'👤 Seleção',cmd:'⚡ Comandos',map:'🗺 Mapa'};
 const PEL={obj:'pObj',al:'pAl',sel:'pSel',cmd:'pCmd',map:'pMap'};
 const PRESET={
+  modern:{nm:'Moderno',p:{obj:[1,1],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0]},dock:0,big:0,one:0,clean:1},
   equil:{nm:'Equilibrado',p:{obj:[1,0],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0]},dock:0,big:0,one:0},
   classic:{nm:'Clássico',p:{obj:[1,0],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0]},dock:1,big:1,one:0},
   battle:{nm:'Campo de Batalha',p:{obj:[1,1],al:[1,0],sel:[0,0],cmd:[1,0],map:[1,1]},dock:0,big:0,one:1}};
-function hudDefault(pre){pre=pre||'equil';const P=PRESET[pre],o={v:1,pre,size:1,p:{}};for(const k of PNL)o.p[k]={v:P.p[k][0],m:P.p[k][1],pos:null};return o}
+function hudDefault(pre){pre=pre||'modern';const P=PRESET[pre],o={v:1,pre,size:1,p:{}};for(const k of PNL)o.p[k]={v:P.p[k][0],m:P.p[k][1],pos:null};return o}
 let HS=hudDefault();
 try{const s=JSON.parse(localStorage.getItem(HUDK)||'null');if(s&&s.v===1&&PRESET[s.pre]){HS=s;for(const k of PNL)if(!HS.p[k])HS.p[k]={v:1,m:0,pos:null}}}catch(e){}
 function hudSave(){try{localStorage.setItem(HUDK,JSON.stringify(HS))}catch(e){}}
@@ -3117,6 +3165,12 @@ const hudScale=()=>HS.size*clamp(Math.min(innerWidth/914,innerHeight/411),.8,1.3
 // pos = {ax:'l'|'c'|'r', ay:'t'|'b', dx, dy} em pixels da tela, medidos a partir da borda escolhida
 function defPos(k){
   const pre=HS.pre,s=hudScale();
+  if(pre==='modern'){
+    if(k==='obj')return{ax:'l',ay:'t',dx:6,dy:TOPH+10};
+    if(k==='al'){const o=$('pObj');const below=HS.p.obj.v&&!HS.p.obj.pos&&o.offsetParent;return{ax:'l',ay:'t',dx:6,dy:below?o.getBoundingClientRect().bottom+6:TOPH+10}}
+    if(k==='map')return{ax:'l',ay:'b',dx:4,dy:4};
+    if(k==='cmd')return{ax:'r',ay:'b',dx:4,dy:4};
+    return{ax:'c',ay:'b',dx:0,dy:4}}
   if(k==='obj')return{ax:'l',ay:'t',dx:52,dy:TOPH+6};
   if(k==='al'){const o=$('pObj');const below=HS.p.obj.v&&!HS.p.obj.pos&&o.offsetParent;return{ax:'l',ay:'t',dx:52,dy:below?o.getBoundingClientRect().bottom+6:TOPH+6}}
   if(k==='map')return{ax:'r',ay:'b',dx:4,dy:4};
@@ -3134,22 +3188,24 @@ function placeEl(el,p){const s=hudScale(),w=el.offsetWidth*s,h=el.offsetHeight*s
 function layoutHUD(){
   if(!G||$('hud').style.display==='none')return;
   const P=PRESET[HS.pre],s=hudScale();
-  document.body.classList.toggle('big-cls',!!P.big);
+  document.body.classList.toggle('big-cls',!!P.big);document.body.classList.toggle('clean',!!P.clean);
   $('pCmd').classList.toggle('one',!!P.one);
   for(const k of PNL){const el=$(PEL[k]),st=HS.p[k];
     el.classList.toggle('hide',!st.v);el.classList.toggle('min',!!st.m);
-    const pos=st.pos||defPos(k);el.classList.toggle('tab',pos.ay==='b'&&k!=='obj'&&k!=='al');
+    const pos=st.pos||defPos(k);el.classList.toggle('tab',!P.clean&&pos.ay==='b'&&k!=='obj'&&k!=='al');
     el.querySelector('[data-a="min"]').textContent=st.m?'□':'—'}
   // seleção: ocupa o espaço que sobra até os comandos (no Clássico enche tudo)
   const si=$('info');si.style.width='';
   if(HS.p.sel.v&&!HS.p.sel.pos){const c=$('pCmd'),cw=HS.p.cmd.v?c.offsetWidth*s:0,mw=HS.p.map.v?$('pMap').offsetWidth*s:0;
-    const free=(innerWidth-(HS.pre==='battle'?0:cw+mw)-24)/s;si.style.width=Math.round(clamp(P.big?free:Math.min(free,300),170,560))+'px'}
+    const free=(innerWidth-(HS.pre==='battle'?0:cw+mw)-24)/s;si.style.width=Math.round(clamp(P.big?free:Math.min(free,P.clean?360:300),170,560))+'px'}
   for(const k of['obj','al','map','cmd','sel']){const el=$(PEL[k]);if(!HS.p[k].v)continue;placeEl(el,HS.p[k].pos||defPos(k))}
   // altura livre embaixo: o centro da câmera fica no meio da parte que sobra do mapa
   let low=0;for(const k of['sel','cmd','map']){const el=$(PEL[k]);if(!HS.p[k].v||HS.p[k].m||el.classList.contains('big'))continue;const r=el.getBoundingClientRect();if(r.top>innerHeight*.45)low=Math.max(low,innerHeight-r.top+(el.classList.contains('tab')?22*s:0))}
   PANH=Math.round(clamp(low,0,innerHeight*.34));
   const dk=$('dock');dk.style.display=P.dock?'block':'none';dk.style.height=Math.max(0,PANH-14*s)+'px';
   $('placebar').style.bottom=(PANH+12)+'px';
+  // botões rápidos: no Moderno ficam numa fileira em cima do minimapa
+  const q=$('quick');if(P.clean&&HS.p.map.v){const r=$('pMap').getBoundingClientRect();q.style.left=Math.max(4,r.left)+'px';q.style.top=Math.max(TOPH+40,r.top-48)+'px'}else{q.style.left='';q.style.top=''}
 }
 addEventListener('resize',()=>setTimeout(layoutHUD,60));
 
@@ -3170,7 +3226,7 @@ for(const k of PNL){const el=$(PEL[k]),ph=el.querySelector('.ph');
       const ax=cx<innerWidth/3?'l':cx>innerWidth*2/3?'r':'c',ay=cy<innerHeight/2?'t':'b';
       HS.p[k].pos={ax,ay,dx:ax==='l'?r.left:ax==='r'?innerWidth-r.right:cx-innerWidth/2,dy:ay==='t'?r.top:innerHeight-r.bottom};
       hudSave();layoutHUD()}
-    else if(!ev.target.closest('.pbn')&&HS.p[k].m){HS.p[k].m=0;hudSave();layoutHUD();snd('click')}
+    else if(!ev.target.closest('.pbn')&&(HS.p[k].m||PRESET[HS.pre].clean)&&(k==='obj'||k==='al'||HS.p[k].m)){HS.p[k].m=HS.p[k].m?0:1;hudSave();layoutHUD();snd('click')}
     d=null};
   ph.addEventListener('pointerup',up);ph.addEventListener('pointercancel',up);
 }
@@ -3270,7 +3326,10 @@ getCmds=function(){const out=getCmds0();const us=selEnts().filter(e=>e.k==='u'&&
 // ---------- atualização dos painéis ----------
 function hudExtra(){
   if(!G)return;const P=G.P[0];
-  const r=incRates();for(const[k,id]of[['food','rtf'],['wood','rtw'],['gold','rtg'],['stone','rts']])$(id).textContent=r[k]?'+'+r[k]+'/min':'';
+  const r=incRates(),vc={food:0,wood:0,gold:0,stone:0};
+  for(const u of G.U){if(u.dead||u.o!==0)continue;if(u.type==='pesc'&&(u.st==='gather'||u.st==='return')){vc.food++;continue}
+    if(u.type!=='vill'||(u.st!=='gather'&&u.st!=='return'))continue;const s=u.lsub;vc[s==='tree'?'wood':s==='gold'?'gold':s==='stone'?'stone':'food']++}
+  for(const[k,id]of[['food','rtf'],['wood','rtw'],['gold','rtg'],['stone','rts']]){const t=(vc[k]?'👷'+vc[k]+' ':'')+(r[k]?'+'+r[k]+'/min':'');if($(id).textContent!==t)$(id).textContent=t}
   // objetivos
   OBJ=objList();const oh=OBJ.map((o,i)=>'<div class="ob'+(o.ok?' ok':'')+(o.go?' go':'')+'" data-oi="'+i+'"><i>'+(o.ok?'✔':'')+'</i><span>'+o.t+'</span></div>').join('');
   let relay=false;const ol=$('objl');if(oh!==ol._h){ol._h=oh;ol.innerHTML=oh;relay=true}
@@ -3285,6 +3344,8 @@ function hudExtra(){
   const s=selEnts();const mil=s.filter(e=>e.k==='u'&&e.o===0&&isMil(e)).length;
   $('selt').textContent=!s.length?'👤 Seleção':s.length===1?(s[0].k==='u'?ST(s[0]).n:s[0].k==='b'?BT[s[0].type].n:'Recurso'):(mil===s.length?'⚔️ Soldados selecionados ('+s.length+')':'👥 Selecionados ('+s.length+')');
   $('cmdt').textContent=s.length?'⚡ Comandos':'⚡ Comandos · selecione algo';
+  const ns=!s.length;if(ns!==$('pSel').classList.contains('empty')){$('pSel').classList.toggle('empty',ns);relay=true}
+  const nd=OBJ.filter(o=>o.ok).length;$('objt').textContent='🎯 Objetivos '+nd+'/'+OBJ.length;
   const emp=!$('cmds').children.length;if(emp!==$('pCmd').classList.contains('empty')){$('pCmd').classList.toggle('empty',emp);relay=true}
   if(relay)layoutHUD();
 }
@@ -3432,13 +3493,16 @@ const updHUD1=updHUD;
 updHUD=function(force){if(G&&UI.milS!==G.P[0].mil){UI.milS=G.P[0].mil;UI.sig=''}updHUD1(force);if(!G)return;
   const box=$('cmds');[...box.children].forEach((b,i)=>{if(b._v10)return;b._v10=1;b.onclick=()=>cmdTap(i)});
   if(UI.card)cardDraw();
-  if(typeof seasonIdx==='function'){const S=SEASONS[seasonIdx()],W=G.wx||{i:0};const t=S.ic+' '+S.n+' · '+dayIcon()+' '+hourTxt()+(W.i>.2?(W.k==='snow'?' · ❄️ neve':W.k==='storm'?' · ⛈ tempestade':' · 🌧 chuva'):'');if($('wx').textContent!==t)$('wx').textContent=t}
+  if(typeof seasonIdx==='function'){const S=SEASONS[seasonIdx()],W=G.wx||{i:0};const cl=document.body.classList.contains('clean'),wi=W.i>.2?(W.k==='snow'?'❄️':W.k==='storm'?'⛈':'🌧'):'';const t=cl?S.ic+dayIcon()+wi:S.ic+' '+S.n+' · '+dayIcon()+' '+hourTxt()+(wi?' · '+wi+({snow:' neve',storm:' tempestade',rain:' chuva'}[W.k]||''):'');if($('wx').textContent!==t)$('wx').textContent=t}
   const P=G.P[0];if(UI.eraShown!==P.age){UI.eraShown=P.age;$('eran').innerHTML='<img src="'+eraIcon(P.age)+'">'}};
 // botões rápidos com ícones desenhados
 function quickIcons(){$('qidle').innerHTML='<img src="'+cmdIcon('idle')+'"><i id="nidle"></i>';$('qarmy').innerHTML='<img src="'+cmdIcon('army')+'">';if(THUMB.btc)$('qtc').innerHTML='<img src="'+THUMB.btc+'">'}
 const startGame1=startGame;
 startGame=function(){cardClose();UI.eraShown=-1;startGame1();quickIcons()};
 window.__RA.startGame=startGame;
+
+// tocar no tempo/estação mostra o que ela muda no jogo
+$('wx').onclick=()=>{if(G){snd('click');toast(seasonInfo())}};
 </script>
 </body>
 </html>
