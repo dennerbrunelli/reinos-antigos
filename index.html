@@ -535,7 +535,7 @@ function kill(e,by){
   e.dead=true;E.delete(e.id);G.dirty=true;
   if(e.k==='u'){
     if(e.o<2){G.st.lost[e.o]++;if(by!=null&&by<2&&by!==e.o)G.st.kill[by]++}
-    G.fx.push({k:'corpse',x:e.x,y:e.y,t:0,o:e.o,ty:e.type});releaseFarm(e);
+    G.fx.push({k:'corpse',x:e.x,y:e.y,t:0,o:e.o,ty:e.type,sk:(e.type==='guer'&&ST(e).axe?'guerA':e.type),fc:e.face});releaseFarm(e);
     if(e.cargo)for(const id of e.cargo){const c=E.get(id);if(c){c.inT=0;kill(c,by)}}
     if(e.o===2&&UT[e.type].food){const c={id:G.nid++,k:'r',rt:'food',sub:'carc',walk:1,x:e.x,y:e.y,tx:e.x/TS|0,ty:e.y/TS|0,amt:UT[e.type].food,of:e.type};G.R.push(c);E.set(c.id,c);G.carc[e.id]=c.id}
     if(isNav(e))G.fx.push({k:'splash',x:e.x,y:e.y,t:0});
@@ -1694,7 +1694,7 @@ function render(){
   ctx.globalAlpha=1;ctx.lineCap='butt';
   // coisas no chão
   for(const f of G.fx){if(!inV(f.x,f.y))continue;
-    if(f.k==='corpse'&&f.o<2){ctx.globalAlpha=Math.max(0,1-f.t/12)*.7;ctx.fillStyle='#5a1a10';ctx.beginPath();ctx.arc(f.x+3,f.y+2,5,0,7);ctx.fill()}
+    if(f.k==='corpse'&&f.o<2&&!(SHEET[(f.sk||f.ty)+f.o]||{}).dead){ctx.globalAlpha=Math.max(0,1-f.t/12)*.6;ctx.fillStyle='#3a2a1c';ctx.beginPath();ctx.arc(f.x+3,f.y+2,5,0,7);ctx.fill()}
     if(f.k==='rubble'&&!f.w){ctx.globalAlpha=Math.max(0,1-f.t/25)*.9;for(let i=0;i<f.s*f.s*4;i++){ctx.fillStyle=i%2?'#5a4a3a':'#3a2e22';ctx.fillRect(f.x+((i*37)%(f.s*TS)),f.y+((i*53)%(f.s*TS)),5,4)}}}
   ctx.globalAlpha=1;
   for(const b of G.B){if(b.dead||b.type!=='fazenda')continue;if(b.o!==0&&!G.exp[idx(b.tx,b.ty)])continue;const X=b.tx*TS,Y=b.ty*TS,W=b.sz*TS;if(!inV(X+W/2,Y+W/2))continue;
@@ -1714,6 +1714,10 @@ function render(){
   if(fogDirty)drawFogTex();ctx.drawImage(fogC,0,0,MW*TS,MH*TS);
   // ----- desenhos em pé (sem inclinação)
   ctx.setTransform(s,0,0,s,ox,oy);
+  // corpos caídos (arte do GPT), por baixo de tudo
+  for(const f of G.fx){if(f.k!=='corpse'||f.o>1)continue;const S=SHEET[(f.sk||f.ty)+f.o];if(!S||!S.dead||!inV(f.x,f.y))continue;if(f.o!==0&&!vis[tileOf(f.x,f.y)])continue;
+    const I=f.x-f.y,J=(f.x+f.y)/2;ctx.globalAlpha=clamp(1.4-f.t/9,0,1);ctx.save();ctx.translate(I,J);if(f.fc<0)ctx.scale(-1,1);ctx.drawImage(S.c,8*S.w*SS,0,S.w*SS,S.h*SS,-S.ax,-S.ay,S.w,S.h);ctx.restore()}
+  ctx.globalAlpha=1;
   drawList.length=0;
   for(const r of G.R){if(r.dead)continue;const c=r.walk?r:{x:(r.tx+.5)*TS,y:(r.ty+.5)*TS};if(!inV(c.x,c.y))continue;if(!G.exp[r.walk?tileOf(r.x,r.y):idx(r.tx,r.ty)])continue;r._d=depthOf(r);drawList.push(r)}
   for(const b of G.B){if(b.dead||b.type==='fazenda')continue;const c=ctr(b);if(!inV(c.x,c.y))continue;if(b.o!==0&&!G.exp[idx(b.tx,b.ty)])continue;b._d=depthOf(b);drawList.push(b)}
@@ -1721,14 +1725,15 @@ function render(){
   drawList.sort((a,b)=>a._d-b._d);
   for(const e of drawList){
     if(e.k==='r'){const lit=vis[e.walk?tileOf(e.x,e.y):idx(e.tx,e.ty)];
-      if(e.walk){const sp=SPR.carc;const I=e.x-e.y,J=(e.x+e.y)/2;ctx.drawImage(lit?sp.c:sp.dk,I-sp.ax,J-sp.ay,sp.w,sp.h);continue}
+      if(e.walk){const sp=SPR[e.of==='elfs'&&SPR.carcE?'carcE':'carc'];const I=e.x-e.y,J=(e.x+e.y)/2;ctx.drawImage(lit?sp.c:sp.dk,I-sp.ax,J-sp.ay,sp.w,sp.h);continue}
       const I=(e.tx-e.ty)*TS,J=(e.tx+e.ty+1)*TS/2;
       const sp=e.sub==='tree'?SPR['tree'+(e.tv!=null?e.tv:(e.tv=treeVar(e)))]:e.sub==='fish'?SPR['fish'+(e.deep?1:0)]:SPR[e.sub];
       ctx.drawImage(lit?sp.c:sp.dk,I-sp.ax,J+(e.sub==='fish'?-4:5)-sp.ay,sp.w,sp.h)}
     else if(e.k==='b'){const sp=SPR['b'+e.type+e.o],I0=(e.tx-e.ty)*TS,J0=(e.tx+e.ty)*TS/2;const lit=vis[idx(e.tx+(e.sz>>1),e.ty+(e.sz>>1))];const img=lit?sp.c:sp.dk;
-      if(e.done<1){const cut=sp.H*(1-e.done)*.85+sp.H*.15*(e.done<.05?1:0);const top=Math.max(0,sp.top-8);const cc=Math.max(cut,0);
+      if(e.done<1){if(SPR.alic&&e.type!=='muralha'){const a=SPR.alic,k=e.sz*64/a.dw;ctx.drawImage(a.c,I0-a.W*k/2,J0-a.top*k,a.W*k,a.H*k)}
+        const cut=sp.H*(1-e.done)*.85+sp.H*.15*(e.done<.05?1:0);const top=Math.max(0,sp.top-8);const cc=Math.max(cut,0);
         if(e.done>0)ctx.drawImage(img,0,cc*SS,img.width,img.height-cc*SS,I0-sp.W/2,J0-sp.top+cc,sp.W,sp.H-cc);
-        ctx.strokeStyle='#8a6a3a';ctx.lineWidth=1.4;const h=(BT[e.type].h*e.done)+6;for(const[a,b]of[[0,0],[e.sz,0],[0,e.sz],[e.sz,e.sz]]){const I=I0+(a-b)*TS,J=J0+(a+b)*TS/2;ctx.beginPath();ctx.moveTo(I,J);ctx.lineTo(I,J-h);ctx.stroke()}}
+        if(!SPR.alic||e.type==='muralha'){ctx.strokeStyle='#8a6a3a';ctx.lineWidth=1.4;}const h=(BT[e.type].h*e.done)+6;if(!SPR.alic||e.type==='muralha')for(const[a,b]of[[0,0],[e.sz,0],[0,e.sz],[e.sz,e.sz]]){const I=I0+(a-b)*TS,J=J0+(a+b)*TS/2;ctx.beginPath();ctx.moveTo(I,J);ctx.lineTo(I,J-h);ctx.stroke()}}
       else ctx.drawImage(img,I0-sp.W/2,J0-sp.top,sp.W,sp.H);
       if(e.hp<e.mhp*.5&&e.done>=1&&lit){const t=performance.now()/170;for(let i=0;i<3;i++){const fx=I0+(i-1)*e.sz*12,fy=J0+e.sz*TS*.35-BT[e.type].h*.5;ctx.fillStyle='rgba(255,'+(120+i*30)+',0,.75)';ctx.beginPath();ctx.arc(fx,fy-Math.abs(Math.sin(t+i))*7,4,0,7);ctx.fill();ctx.fillStyle='rgba(60,50,40,.35)';ctx.beginPath();ctx.arc(fx+3,fy-14-Math.abs(Math.sin(t*.7+i))*10,6,0,7);ctx.fill()}}}
     else drawUnit(e,selSet);
@@ -2139,6 +2144,7 @@ function buildTerrain(){
   const n1=tnoise(64),n2=tnoise(16);
   const NT=new Float32Array(65536),NM=new Float32Array(65536);for(let y=0;y<256;y++)for(let x=0;x<256;x++){NT[y*256+x]=n1(x/4,y/4)*.65+n1(x/1.6+17,y/1.6+5)*.35;NM[y*256+x]=n2(x/16,y/16)}
   const img=g.createImageData(W,W),d=img.data;
+  const TX=typeof gaTexAll==='function'?gaTexAll():null,TM=.72; // texturas do GPT misturadas com as cores do código
   const smp=(A,tx,ty)=>{const X=clamp(tx,0,MW-1.001),Y=clamp(ty,0,MH-1.001),xi=X|0,yi=Y|0,xf=X-xi,yf=Y-yi,i0=yi*MW+xi,i1=Math.min(MW-1,xi+1)+yi*MW,i2=xi+Math.min(MH-1,yi+1)*MW,i3=Math.min(MW-1,xi+1)+Math.min(MH-1,yi+1)*MW;return(A[i0]*(1-xf)+A[i1]*xf)*(1-yf)+(A[i2]*(1-xf)+A[i3]*xf)*yf};
   for(let py=0;py<W;py++){const ty=py/PX-.5;for(let px=0;px<W;px++){const tx=px/PX-.5;
     const n=NT[(py&255)*256+(px&255)],nm=NM[((py>>1)&255)*256+((px>>1)&255)];
@@ -2150,6 +2156,13 @@ function buildTerrain(){
     else{const lush=clamp(1.15-dr*1.2+(nm-.5)*.6,0,1);r=128-lush*62+n*30;gg=134-lush*8+n*30;b=60-lush*22+n*14;
       const dirt=clamp((nm-.62)*5,0,1)*clamp(dr*1.6-.3,0,1);r=r*(1-dirt)+(146+n*22)*dirt;gg=gg*(1-dirt)+(116+n*18)*dirt;b=b*(1-dirt)+(74+n*12)*dirt;
       if(f>0){r=r*(1-f*.42)+42*f*.42;gg=gg*(1-f*.3)+64*f*.3;b=b*(1-f*.4)+24*f*.4}}
+    if(TX){const q=(((((py*3)>>2)+37)&255)*256+((((px*3)>>2)+91)&255))*4;let A,tr,tg,tb;
+      if(w<-.05){const t=clamp(-w/3,0,1),B=TX.fundo;A=TX.raso;tr=A[q]*(1-t)+B[q]*t;tg=A[q+1]*(1-t)+B[q+1]*t;tb=A[q+2]*(1-t)+B[q+2]*t;if(w>-.55){const kk=(w+.55)/.5;tr+=kk*24;tg+=kk*20;tb+=kk*10}}
+      else if(w<1){A=TX.areia;const wet=w<.3?.8:1;tr=A[q]*wet;tg=A[q+1]*wet;tb=A[q+2]*wet}
+      else{const lush=clamp(1.15-dr*1.2+(nm-.5)*.6,0,1),B=TX.seca;A=TX.grama;tr=B[q]+(A[q]-B[q])*lush;tg=B[q+1]+(A[q+1]-B[q+1])*lush;tb=B[q+2]+(A[q+2]-B[q+2])*lush;
+        const dirt=clamp((nm-.62)*5,0,1)*clamp(dr*1.6-.3,0,1),D=TX.terra;tr=tr*(1-dirt)+D[q]*dirt;tg=tg*(1-dirt)+D[q+1]*dirt;tb=tb*(1-dirt)+D[q+2]*dirt;
+        if(f>0){tr=tr*(1-f*.42)+42*f*.42;tg=tg*(1-f*.3)+64*f*.3;tb=tb*(1-f*.4)+24*f*.4}}
+      r=tr*TM+r*(1-TM);gg=tg*TM+gg*(1-TM);b=tb*TM+b*(1-TM)}
     const k=(py*W+px)*4,ss=w<-.05?1:s;d[k]=r*ss;d[k+1]=gg*ss;d[k+2]=b*ss;d[k+3]=255}}
   g.putImageData(img,0,0);
   const R=mulberry32(G.seed+5);
@@ -2164,6 +2177,55 @@ function buildTerrain(){
 function stumpAt(tx,ty){if(!stumpG)return;const PX=24,x=tx*PX+12,y=ty*PX+13;stumpG.fillStyle='rgba(60,40,18,.45)';stumpG.beginPath();stumpG.ellipse(x+1,y+1,3.4,2.2,0,0,7);stumpG.fill();stumpG.fillStyle='#8a6236';stumpG.beginPath();stumpG.ellipse(x,y,2.4,1.7,0,0,7);stumpG.fill();stumpG.fillStyle='#c8a070';stumpG.beginPath();stumpG.ellipse(x,y-.3,1.6,1.1,0,0,7);stumpG.fill()}
 
 function treeVar(r){if(r.v===3)return 5+(r.id&1);const h=hash2(r.tx*3+1,r.ty*7+2);if(h<.3)return 3+(r.id&1);if(h>.92)return 7;return r.v%3}
+
+// ---------- arte do GPT: medidas geradas pelo recorta.py ----------
+const GPTART={"u":{"vill":{"w":42.07,"h":63.84,"ax":19.67,"ay":61.81,"dead":true,"team":true},"guer":{"w":41.61,"h":64.23,"ax":19.07,"ay":61.68,"dead":true,"team":true},"guerA":{"w":41.42,"h":66.79,"ax":19.13,"ay":62.96,"dead":true,"team":true},"espa":{"w":40.52,"h":61.66,"ax":17.35,"ay":55.26,"dead":true,"team":true},"gaz":{"w":33.73,"h":40.38,"ax":14.59,"ay":38.59,"dead":false,"team":false},"elfs":{"w":89.6,"h":94.0,"ax":36.36,"ay":89.2,"dead":false,"team":false},"leao":{"w":44.3,"h":45.13,"ax":23.65,"ay":43.48,"dead":false,"team":false}},"b":{"grego":{"tc":{"W":194.57,"H":192.51,"xc":97.03,"top":94.46,"cy":142.46,"bt":1.54,"dw":192.0,"r":[0,0,389,385],"at":"P1"},"casa":{"W":130.77,"H":105.86,"xc":65.38,"top":40.48,"cy":72.48,"bt":1.04,"dw":128.0,"r":[391,0,262,212],"at":"P1"},"celeiro":{"W":133.27,"H":107.25,"xc":67.52,"top":41.85,"cy":73.85,"bt":1.05,"dw":128.0,"r":[655,0,267,215],"at":"P1"},"deposito":{"W":129.72,"H":109.13,"xc":65.03,"top":43.75,"cy":75.75,"bt":1.03,"dw":128.0,"r":[924,0,259,218],"at":"P1"},"mercado":{"W":192.51,"H":176.72,"xc":96.0,"top":78.18,"cy":126.18,"bt":1.53,"dw":192.0,"r":[1185,0,385,353],"at":"P1"},"doca":{"W":132.25,"H":107.79,"xc":66.13,"top":42.02,"cy":74.02,"bt":1.06,"dw":128.0,"r":[1572,0,265,216],"at":"P1"},"torre":{"W":74.62,"H":91.23,"xc":37.31,"top":54.55,"cy":72.47,"bt":0.63,"dw":71.68,"r":[1839,0,149,182],"at":"P1"},"muralha":{"W":69.52,"H":66.76,"xc":37.15,"top":34.02,"cy":50.02,"bt":0.55,"dw":64.0,"r":[1990,0,139,134],"at":"P1"},"quartel":{"W":192.51,"H":169.08,"xc":96.0,"top":71.05,"cy":119.05,"bt":1.53,"dw":192.0,"r":[0,0,385,338],"at":"P2"},"arquearia":{"W":196.67,"H":158.27,"xc":100.15,"top":60.19,"cy":108.19,"bt":1.56,"dw":192.0,"r":[387,0,393,317],"at":"P2"},"estabulo":{"W":192.51,"H":165.59,"xc":96.0,"top":67.05,"cy":115.05,"bt":1.52,"dw":192.0,"r":[782,0,385,331],"at":"P2"},"academia":{"W":192.51,"H":164.5,"xc":96.0,"top":66.46,"cy":114.46,"bt":1.53,"dw":192.0,"r":[1169,0,385,329],"at":"P2"},"templo":{"W":194.57,"H":194.06,"xc":98.06,"top":96.0,"cy":144.0,"bt":1.54,"dw":192.0,"r":[1556,0,389,388],"at":"P2"},"oficina":{"W":192.51,"H":170.67,"xc":96.0,"top":72.13,"cy":120.13,"bt":1.52,"dw":192.0,"r":[1947,0,385,341],"at":"P2"},"maravilha":{"W":256.68,"H":327.11,"xc":128.0,"top":197.08,"cy":261.08,"bt":2.03,"dw":256.0,"r":[2334,0,513,654],"at":"P2"},"alicerce":{"W":128.34,"H":120.87,"xc":64.0,"top":55.51,"cy":87.51,"bt":1.02,"dw":128.0,"r":[2849,0,257,242],"at":"P2"}}},"n":{"tree0":{"W":78.5,"H":85.21,"xc":39.25,"top":49.31,"cy":66.81,"bt":0.67,"dw":70.0,"r":[0,0,157,170],"at":"N1"},"tree1":{"W":82.17,"H":92.36,"xc":41.3,"top":51.27,"cy":71.27,"bt":0.65,"dw":80.0,"r":[159,0,164,185],"at":"N1"},"tree3":{"W":81.59,"H":103.26,"xc":40.79,"top":69.29,"cy":85.79,"bt":0.73,"dw":66.0,"r":[325,0,163,207],"at":"N1"},"tree4":{"W":64.16,"H":90.42,"xc":32.08,"top":62.58,"cy":76.08,"bt":0.64,"dw":54.0,"r":[490,0,128,181],"at":"N1"},"tree5":{"W":80.34,"H":102.58,"xc":40.17,"top":68.6,"cy":85.1,"bt":0.74,"dw":66.0,"r":[620,0,161,205],"at":"N1"},"tree6":{"W":95.33,"H":110.81,"xc":40.6,"top":76.73,"cy":93.23,"bt":0.81,"dw":66.0,"r":[783,0,191,222],"at":"N1"},"tree7":{"W":100.45,"H":90.08,"xc":46.5,"top":51.02,"cy":70.02,"bt":0.8,"dw":76.0,"r":[976,0,201,180],"at":"N1"},"berry":{"W":66.01,"H":55.26,"xc":33.01,"top":26.33,"cy":40.33,"bt":0.56,"dw":56.0,"r":[1179,0,132,111],"at":"N1"},"gold":{"W":60.97,"H":40.43,"xc":30.49,"top":9.78,"cy":24.78,"bt":0.49,"dw":60.0,"r":[0,0,122,81],"at":"N2"},"mina":{"W":97.28,"H":85.99,"xc":49.03,"top":36.96,"cy":60.96,"bt":0.77,"dw":96.0,"r":[124,0,195,172],"at":"N2"},"stone":{"W":61.3,"H":41.68,"xc":30.65,"top":11.03,"cy":26.03,"bt":0.49,"dw":60.0,"r":[321,0,123,83],"at":"N2"},"pedreira":{"W":97.29,"H":89.29,"xc":49.03,"top":40.26,"cy":64.26,"bt":0.77,"dw":96.0,"r":[446,0,195,179],"at":"N2"},"fish":{"W":62.86,"H":42.1,"xc":31.43,"top":13.33,"cy":27.33,"bt":0.57,"dw":56.0,"r":[643,0,126,84],"at":"N2"},"carc":{"W":59.25,"H":34.02,"xc":29.63,"top":4.23,"cy":18.73,"bt":0.47,"dw":58.0,"r":[771,0,119,68],"at":"N2"},"carcE":{"W":83.55,"H":58.35,"xc":41.66,"top":16.25,"cy":36.75,"bt":0.66,"dw":82.0,"r":[892,0,167,117],"at":"N2"},"toco":{"W":40.98,"H":25.5,"xc":20.33,"top":4.96,"cy":14.96,"bt":0.33,"dw":40.0,"r":[1061,0,82,51],"at":"N2"}}};
+
+// =========================================================
+//   ARTE DO GPT: imagens prontas no lugar dos desenhos do código
+//   (o que ainda não chegou continua desenhado pelo código)
+// =========================================================
+const GA={};
+const GA_TEX=['grama','seca','terra','areia','raso','fundo'];
+// pixels das texturas do chão (256x256) para o terreno; null se alguma faltar
+function gaTexAll(){const o={};for(const t of GA_TEX){const im=GA['t_'+t];if(!im)return null;const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');g.drawImage(im,0,0,256,256);o[t]=g.getImageData(0,0,256,256).data}return o}
+const GA_FILES=(()=>{const f=[];for(const k in GPTART.u)for(const v of GPTART.u[k].team?[0,1]:[2])f.push('u_'+k+'_'+v);
+  for(const at of['P1','P2'])for(const v of[0,1])f.push('b_grego_'+at+'_'+v);f.push('n_N1','n_N2');for(const t of GA_TEX)f.push('t_'+t);return f})();
+// carrega tudo em segundo plano; o jogo espera isto antes de começar uma partida
+const ARTP=Promise.all(GA_FILES.map(f=>new Promise(res=>{const im=new Image();im.onload=()=>{GA[f]=im;res()};im.onerror=()=>res();im.src='assets/gpt/'+f+'.webp'})));
+function gaCut(img,r){const c=document.createElement('canvas');c.width=r[2];c.height=r[3];c.getContext('2d').drawImage(img,r[0],r[1],r[2],r[3],0,0,r[2],r[3]);return c}
+function gaFlip(src){const c=document.createElement('canvas');c.width=src.width;c.height=src.height;const g=c.getContext('2d');g.translate(c.width,0);g.scale(-1,1);g.drawImage(src,0,0);return c}
+function gaThumb(src,size){const bb=bbox(src);const c=document.createElement('canvas');c.width=c.height=size*2;const g=c.getContext('2d');const s=Math.min(size*2/bb.w,size*2/bb.h)*.94;g.drawImage(src,bb.x,bb.y,bb.w,bb.h,(c.width-bb.w*s)/2,(c.height-bb.h*s)/2,bb.w*s,bb.h*s);return c.toDataURL()}
+const GA_NOWALL={muralha:1,alicerce:1};
+function applyGPTArt(){
+  // unidades: folha 8 (ou 9 com o caído) colunas x 2 linhas, igual às do código
+  for(const k in GPTART.u){const m=GPTART.u[k];
+    for(const v of m.team?[0,1]:[2]){const img=GA['u_'+k+'_'+v];if(!img)continue;const nc=m.dead?9:8;
+      const w=img.width/nc/SS,h=img.height/2/SS,kx=w/m.w,ky=h/m.h;
+      SHEET[k+v]={c:img,w,h,ax:m.ax*kx,ay:m.ay*ky,gpt:1,dead:m.dead};delete META[k+v]}}
+  // prédios gregos (azul para o jogador, vermelho para o inimigo)
+  const B=GPTART.b.grego;
+  for(let o=0;o<2;o++){if(civOf(o).st!=='grego')continue;
+    for(const t in B){if(GA_NOWALL[t]||!BT[t])continue;const m=B[t],img=GA['b_grego_'+m.at+'_'+o];if(!img)continue;
+      const c=gaCut(img,m.r);SPR['b'+t+o]={c,dk:o===0?c:darkCopy(c),W:m.W,H:m.H,top:m.top,bt:m.bt,gpt:1}}}
+  // alicerce (obra) para todos os estilos
+  {const m=B.alicerce,img=GA['b_grego_'+m.at+'_0'];if(img){const c=gaCut(img,m.r);SPR.alic={c,W:m.W,H:m.H,top:m.top,dw:m.dw}}}
+  // árvores e recursos
+  const N=GPTART.n,nat=(nm,flip)=>{const m=N[nm],img=GA['n_'+m.at];if(!img)return null;let c=gaCut(img,m.r);if(flip)c=gaFlip(c);return{c,dk:darkCopy(c),m}};
+  const TREES=['tree0','tree1','tree0','tree3','tree4','tree5','tree6','tree7'];
+  TREES.forEach((nm,v)=>{const s=nat(nm,v===2);if(s)SPR['tree'+v]={c:s.c,dk:s.dk,w:s.m.W,h:s.m.H,ax:s.m.xc,ay:s.m.cy+5}});
+  for(const nm of['berry','gold','stone']){const s=nat(nm);if(s)SPR[nm]={c:s.c,dk:s.dk,w:s.m.W,h:s.m.H,ax:s.m.xc,ay:s.m.cy+5}}
+  {const s=nat('fish');if(s){const f={c:s.c,dk:s.dk,w:s.m.W,h:s.m.H,ax:s.m.W/2,ay:s.m.H/2-4};SPR.fish0=f;SPR.fish1=f}}
+  for(const nm of['carc','carcE']){const s=nat(nm);if(s)SPR[nm]={c:s.c,dk:s.dk,w:s.m.W,h:s.m.H,ax:s.m.xc,ay:s.m.cy}}
+  // miniaturas dos botões e do painel
+  for(const k in GPTART.u){const o=GPTART.u[k].team?0:2;if(!SHEET[k+o]||!SHEET[k+o].gpt)continue;const t=k==='guerA'?'guerA':k;THUMB['u'+t]=gaThumb(frameCanvas(k+o,0,0),40)}
+  for(const t in B){if(GA_NOWALL[t]||!BT[t])continue;const s=SPR['b'+t+'0'];if(s&&s.gpt)THUMB['b'+t]=gaThumb(s.c,40)}
+  for(const k of['berry','gold','stone','carc'])if(SPR[k])THUMB['r'+k]=gaThumb(SPR[k].c,40);
+  if(SPR.fish1)THUMB.rfish1=gaThumb(SPR.fish1.c,40);if(SPR.tree0)THUMB.rtree=gaThumb(SPR.tree0.c,40);
+}
+// as folhas do GPT entram logo depois dos desenhos do código
+const buildSpritesProc=buildSprites;
+buildSprites=function(){buildSpritesProc();applyGPTArt()};
 
 // =========================================================
 //   SONS E MÚSICA (gerados na hora, sem arquivos)
@@ -2560,7 +2622,7 @@ function updSetup(){
 }
 $('bnew').onclick=()=>{musicStart();snd('click');buildSetup();show('setup')};
 $('bback').onclick=()=>show('menu');
-function loading(fn){$('load').style.display='flex';setTimeout(()=>{try{fn()}finally{$('load').style.display='none'}},60)}
+function loading(fn){$('load').style.display='flex';ARTP.then(()=>new Promise(r=>setTimeout(r,60))).then(()=>{try{fn()}finally{$('load').style.display='none'}})}
 $('bstart').onclick=()=>{OPT.civ=SETUP.civ;OPT.map=SETUP.map;OPT.diff=SETUP.diff;saveOpt();loading(()=>{newGame(SETUP);startGame();toast('Dica: selecione os aldeões e mande coletar frutas, caçar e cortar madeira!')})};
 $('bcont').onclick=()=>{musicStart();loading(()=>{if(loadGame())startGame()})};
 let helpFrom='menu';
