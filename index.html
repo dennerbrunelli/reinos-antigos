@@ -299,6 +299,16 @@ button{font-family:inherit;color:inherit}
 .screen .sheet.pz .mb.go{width:100%;height:40px;min-width:0}
 .pzg{display:grid;grid-template-columns:1fr 1fr;gap:6px}.pzg:last-child{grid-template-columns:1fr 1fr 1fr}
 .screen .pzg .mb{min-width:0;width:100%;height:auto;min-height:36px;padding:4px 8px;font-size:14px}
+.tabs{display:flex;gap:5px}.screen .tabs .mb.tab{flex:1;min-width:0;height:32px;font-size:13.5px;padding:0 4px}
+.tabc{display:none;flex:1;min-height:0;overflow:auto;touch-action:pan-y}.tabc.on{display:flex;flex-direction:column;gap:5px}
+.optg{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+#optA{grid-template-columns:1fr}.screen #optA .seg .mb{font-size:12.5px;flex-direction:row;gap:4px}
+.setp{grid-template-columns:minmax(0,1.12fr) minmax(0,1fr)!important}
+.optg .sht{margin:0 0 2px}.screen .optg .seg .mb{font-size:11.5px;min-height:30px;padding:2px 3px}
+.optg .seg .mb small{font-size:8.5px}
+.sumr{display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;font-size:11px;background:#0a1530;border:1px solid #4a78c8;border-radius:9px;padding:5px 8px}
+.sumr div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sumr b{color:#9cc0ff;font-weight:400}
+#setup #civd{max-height:150px}
 </style>
 </head>
 <body>
@@ -355,15 +365,15 @@ button{font-family:inherit;color:inherit}
 <div id="setup" class="screen art">
   <div class="setp">
     <div class="spl">
-      <div class="shh"><div><b>⚔ Nova partida</b><small>1 · Escolha o seu povo</small></div></div>
-      <div id="civg"></div>
+      <div class="shh"><div><b>⚔ Partida solo</b><small>Escolha o povo, as regras e o ambiente · tudo fica salvo</small></div></div>
+      <div class="tabs"><button class="mb tab on" data-tab="povo">👑 Povo</button><button class="mb tab" data-tab="partida">🗺 Partida</button><button class="mb tab" data-tab="amb">🌤 Ambiente</button></div>
+      <div class="tabc on" data-tc="povo"><div id="civg"></div></div>
+      <div class="tabc" data-tc="partida"><div class="optg" id="optP"></div></div>
+      <div class="tabc" data-tc="amb"><div class="optg" id="optA"></div><div class="tip" id="ambtip"></div></div>
     </div>
     <div class="spr">
       <div id="civd"></div>
-      <div class="sht">2 · Mapa</div>
-      <div class="seg" id="mapg"><button class="mb" data-map="mar">🌊 Mar Interior<small>barcos, pesca e praias</small></button><button class="mb" data-map="terra">🌳 Continente<small>só terra, rotas longas</small></button></div>
-      <div class="sht">3 · Inimigo</div>
-      <div class="seg" id="difg"><button class="mb" data-diff="facil">🙂 Fácil</button><button class="mb" data-diff="normal">😐 Normal</button><button class="mb" data-diff="dificil">😠 Difícil</button></div>
+      <div class="sumr" id="sumr"></div>
       <div class="shf"><button class="mb" id="bback" data-back="1">↩ Voltar</button><button class="mb go" id="bstart">⚔ Começar</button></div>
     </div>
   </div>
@@ -2789,8 +2799,10 @@ const SEASONS=[
   {n:'Verão',ic:'☀️',tint:'#ffd070',ta:.17,sat:0,wx:{rain:.15,storm:.2}},
   {n:'Outono',ic:'🍂',tint:'#ff8a3a',ta:.26,sat:0,wx:{rain:.45,storm:.1}},
   {n:'Inverno',ic:'❄️',tint:'#dce8ff',ta:.3,sat:.38,wx:{snow:.55}}];
-function dayPhase(){return((G.t/DAY_T)+.28)%1}           // 0 = meia-noite, .25 = 6h, .5 = meio-dia
-function seasonIdx(){return Math.floor(G.t/(DAY_T*SEASON_DAYS))%4}
+// hora, estação e clima são escolhidos antes da partida e ficam fixos (G.cfg)
+const CFG_HORA={aman:.27,dia:.5,tarde:.75,noite:0};
+function dayPhase(){if(G&&G.cfg)return CFG_HORA[G.cfg.hora]??.5;return((G.t/DAY_T)+.28)%1}           // 0 = meia-noite, .25 = 6h, .5 = meio-dia
+function seasonIdx(){if(G&&G.cfg)return G.cfg.est|0;return Math.floor(G.t/(DAY_T*SEASON_DAYS))%4}
 function hourTxt(){const h=dayPhase()*24;return(h|0)+'h'}
 // claridade do dia: 1 de dia, ~0 de noite, com amanhecer e entardecer suaves
 function daylight(){const p=dayPhase();const s=Math.sin((p-.25)*Math.PI*2);return clamp(s*1.8+.35,0,1)}
@@ -2799,6 +2811,7 @@ function dayIcon(){const d=daylight(),k=duskAmt();return k>.35?(dayPhase()<.5?'�
 
 // ---------- tempo (clima) ----------
 function wxTick(dt){
+  if(G.cfg){const k=G.cfg.clima;if(!G.wx||G.wx.k!==k)G.wx={k,t:0,dur:1e12,i:k==='clear'?0:1,next:1e12,lt:G.t+6};else G.wx.i=k==='clear'?0:1;return}
   if(!G.wx)G.wx={k:'clear',t:0,dur:60,i:0,next:G.t+40};
   const W=G.wx,S=SEASONS[seasonIdx()];
   if(W.k==='clear'){W.i=Math.max(0,W.i-dt/8);
@@ -3391,9 +3404,10 @@ function checkEnd(){
   if(out[1])return endGame(true,'Você derrotou o reino dos '+civOf(1).n+'!');
   if(out[0])return endGame(false,'Seu reino caiu.');
   G.revealAI=!G.B.some(b=>!b.dead&&b.o===1&&b.type==='tc')&&!G.U.some(u=>!u.dead&&u.o===1&&u.type==='vill');
-  for(let o=0;o<2;o++){const w=G.B.find(b=>!b.dead&&b.o===o&&b.type==='maravilha'&&b.done>=1);if(w){G.won[o]+=1;if(G.won[o]>=WONDER_T)return endGame(o===0,o===0?'Sua Maravilha resistiu ao tempo!':'A Maravilha inimiga resistiu 5 minutos.')}else G.won[o]=0}
+  const conq=G.cfg&&G.cfg.vic==='conq';
+  for(let o=0;o<2&&!conq;o++){const w=G.B.find(b=>!b.dead&&b.o===o&&b.type==='maravilha'&&b.done>=1);if(w){G.won[o]+=1;if(G.won[o]>=WONDER_T)return endGame(o===0,o===0?'Sua Maravilha resistiu ao tempo!':'A Maravilha inimiga resistiu 5 minutos.')}else G.won[o]=0}
   // vitória por território: 65% da terra por 3 minutos
-  for(let o=0;o<2;o++){if(domShare(o)>=TERR_WIN){G.tw[o]=(G.tw[o]||0)+1;if(G.tw[o]===1&&running)toast(o===0?'🗺 Você domina 65% da terra! Segure por 3 minutos.':'⚠️ O inimigo domina 65% da terra! Tome cidades dele em 3 minutos.');
+  for(let o=0;o<2&&!conq;o++){if(domShare(o)>=TERR_WIN){G.tw[o]=(G.tw[o]||0)+1;if(G.tw[o]===1&&running)toast(o===0?'🗺 Você domina 65% da terra! Segure por 3 minutos.':'⚠️ O inimigo domina 65% da terra! Tome cidades dele em 3 minutos.');
     if(G.tw[o]>=TERR_T)return endGame(o===0,o===0?'Seu império dominou a terra!':'O império inimigo dominou a terra.')}else G.tw[o]=0}
 }
 function goFull(){try{const d=document.documentElement;if(!document.fullscreenElement&&d.requestFullscreen)d.requestFullscreen({navigationUI:'hide'}).then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}).catch(()=>{})}catch(e){}
@@ -3445,7 +3459,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 20';$('ver').textContent=VERSAO;
+const VERSAO='Versão 21';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -4105,6 +4119,66 @@ function autoIcon(k,on){const key='auto_'+k+(on?1:0);if(!ICO[key]){const[c,g]=ic
 const cardInfo1=cardInfo;
 cardInfo=function(c){return cardInfo1(c)};
 window.__RA.autoTick=autoTick;
+
+// =========================================================
+//   PARTIDA SOLO (como os menus de escaramuça do Rise e do Age)
+//   Povo · Partida (mapa, inimigo, recursos, era inicial, vitória, velocidade) · Ambiente (hora, estação, clima)
+//   Hora, estação e clima ficam FIXOS a partida inteira (sem ciclo de dia/noite e sem chuva aleatória).
+// =========================================================
+const SOPT={
+  partida:[
+    {k:'map',n:'Mapa',v:[['mar','🌊 Mar Interior','barcos e pesca'],['terra','🌳 Continente','só terra']]},
+    {k:'diff',n:'Inimigo',v:[['facil','🙂 Fácil'],['normal','😐 Normal'],['dificil','😠 Difícil']]},
+    {k:'res',n:'Recursos iniciais',v:[['pouco','Pouco'],['normal','Normal'],['muito','Muito']]},
+    {k:'era',n:'Era inicial',v:[['0','🪨 Pedra'],['1','🔨 Ferram.'],['2','🛡 Bronze']]},
+    {k:'vic',n:'Vitória',v:[['padrao','🏆 Padrão','conquista, território ou Maravilha'],['conq','⚔ Conquista','só derrotando o inimigo']]},
+    {k:'vel',n:'Velocidade',v:[['1','1x'],['1.5','1,5x'],['2','2x']]}],
+  amb:[
+    {k:'hora',n:'Hora do dia',v:[['aman','🌅 Amanhecer'],['dia','☀️ Dia'],['tarde','🌇 Entardecer'],['noite','🌙 Noite'],['rand','🎲']]},
+    {k:'est',n:'Estação',v:[['0','🌸 Primavera'],['1','☀️ Verão'],['2','🍂 Outono'],['3','❄️ Inverno'],['rand','🎲']]},
+    {k:'clima',n:'Clima',v:[['clear','🌤 Limpo'],['rain','🌧 Chuva'],['storm','⛈ Tempestade'],['snow','🌨 Neve'],['rand','🎲']]}]};
+const SDEF={map:'mar',diff:'normal',res:'normal',era:'0',vic:'padrao',vel:'1',hora:'dia',est:'0',clima:'clear'};
+SETUP=Object.assign({civ:'gregos'},SDEF,OPT.setup||{},{civ:OPT.civ||'gregos',map:OPT.map||'mar',diff:OPT.diff||'normal'});
+const SRES={pouco:{food:100,wood:100,gold:50,wealth:20,know:0},normal:null,muito:{food:600,wood:600,gold:300,wealth:200,know:100}};
+const optLbl=(k,v)=>{for(const g of[...SOPT.partida,...SOPT.amb])if(g.k===k){const c=g.v.find(x=>x[0]===v);return c?c[1]+(v==='rand'?' Aleatório':''):v}return v};
+function buildOpts(box,list){box.innerHTML='';for(const g of list){const d=document.createElement('div');
+    d.innerHTML='<div class="sht">'+g.n+'</div><div class="seg">'+g.v.map(c=>'<button class="mb" data-ok="'+g.k+'" data-ov="'+c[0]+'">'+c[1]+(c[2]?'<small>'+c[2]+'</small>':'')+'</button>').join('')+'</div>';box.appendChild(d)}}
+buildSetup=function(){
+  const g=$('civg');g.innerHTML='';
+  for(const c of CIVS){const b=document.createElement('button');b.className='mb';b.dataset.civ=c.id;b.innerHTML='<i style="background:'+STY[c.st].sw+'"></i><span>'+c.n+'<small>arquitetura '+STY[c.st].nm.toLowerCase()+'</small></span>';b.onclick=()=>{SETUP.civ=c.id;updSetup();snd('click')};g.appendChild(b)}
+  buildOpts($('optP'),SOPT.partida);buildOpts($('optA'),SOPT.amb);
+  document.querySelectorAll('#setup [data-ok]').forEach(b=>b.onclick=()=>{const k=b.dataset.ok,v=b.dataset.ov;SETUP[k]=v;
+    // neve só no inverno; estação que não é inverno tira a neve
+    if(k==='clima'&&v==='snow')SETUP.est='3';if(k==='est'&&v!=='3'&&v!=='rand'&&SETUP.clima==='snow')SETUP.clima='clear';
+    updSetup();snd('click')});
+  document.querySelectorAll('#setup [data-tab]').forEach(b=>b.onclick=()=>{setTab(b.dataset.tab);snd('click')});
+  setTab('povo');updSetup();ARTP.then(updSetup)};
+function setTab(t){document.querySelectorAll('#setup [data-tab]').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));document.querySelectorAll('#setup [data-tc]').forEach(c=>c.classList.toggle('on',c.dataset.tc===t))}
+const updSetup0=updSetup;
+updSetup=function(){updSetup0();
+  document.querySelectorAll('#setup [data-ok]').forEach(b=>b.classList.toggle('on',String(SETUP[b.dataset.ok])===b.dataset.ov));
+  const sum=[['🗺','map'],['😐','diff'],['💰','res'],['📜','era'],['🏆','vic'],['⏩','vel'],['🕐','hora'],['🍃','est'],['🌤','clima']];
+  $('sumr').innerHTML=sum.map(([ic,k])=>'<div><b>'+{map:'Mapa',diff:'Inimigo',res:'Recursos',era:'Era',vic:'Vitória',vel:'Velocidade',hora:'Hora',est:'Estação',clima:'Clima'}[k]+':</b> '+optLbl(k,String(SETUP[k]))+'</div>').join('');
+  const S=SEASONS[SETUP.est==='rand'?0:+SETUP.est],tip=[];
+  if(SETUP.est!=='rand')tip.push(S.ic+' '+S.n+': '+SEFX[+SETUP.est]);
+  if(SETUP.clima!=='clear'&&SETUP.clima!=='rand')tip.push(WXFX[SETUP.clima]);
+  if(SETUP.hora==='noite')tip.push('🌙 Noite: tropas enxergam 30% menos');
+  $('ambtip').innerHTML=tip.length?'Na partida: '+tip.join(' · '):'Ambiente sem efeito especial nas regras.'};
+// aplica as escolhas na partida nova
+function rollCfg(){const pick=(k,list)=>SETUP[k]==='rand'?list[(Math.random()*list.length)|0]:SETUP[k];
+  const est=+pick('est',['0','1','2','3']);let clima=pick('clima',est===3?['clear','snow','snow','storm']:['clear','clear','rain','storm']);
+  if(clima==='snow'&&est!==3)clima='clear';
+  return{hora:pick('hora',['aman','dia','dia','tarde','noite']),est,clima,vic:SETUP.vic,era:+SETUP.era,res:SETUP.res}}
+const newGame3=newGame;
+newGame=function(o){newGame3(o);G.cfg=o.cfg||rollCfg();
+  const R=SRES[G.cfg.res];for(const P of G.P){if(R)Object.assign(P.res,R);P.age=Math.max(P.age,G.cfg.era|0)}};
+window.__RA.newGame=newGame;
+const loadGame2=loadGame;
+loadGame=function(){const ok=loadGame2();if(ok&&!G.cfg)G.cfg={hora:'dia',est:0,clima:'clear',vic:'padrao',era:0,res:'normal'};return ok};
+$('bstart').onclick=()=>{OPT.civ=SETUP.civ;OPT.map=SETUP.map;OPT.diff=SETUP.diff;OPT.setup=Object.assign({},SETUP);OPT.spd=+SETUP.vel||1;saveOpt();updOptBtns();
+  loading(()=>{newGame(SETUP);startGame();const c=G.cfg,S=SEASONS[c.est];
+    toast(S.ic+' '+S.n+' · '+{aman:'🌅 amanhecer',dia:'☀️ dia',tarde:'🌇 entardecer',noite:'🌙 noite'}[c.hora]+(c.clima!=='clear'?' · '+{rain:'🌧 chuva',storm:'⛈ tempestade',snow:'🌨 neve'}[c.clima]:'')+'<br>Dica: selecione os aldeões e mande coletar!')})};
+// o ícone do tempo no topo: estação + hora + clima (fixos)
 </script>
 </body>
 </html>
