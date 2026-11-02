@@ -2188,7 +2188,8 @@ const GPTART={"u":{"vill":{"w":42.07,"h":63.84,"ax":19.67,"ay":61.81,"dead":true
 const GA={};
 const GA_TEX=['grama','seca','terra','areia','raso','fundo'];
 // pixels das texturas do chão (256x256) para o terreno; null se alguma faltar
-function gaTexAll(){const o={};for(const t of GA_TEX){const im=GA['t_'+t];if(!im)return null;const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');g.drawImage(im,0,0,256,256);o[t]=g.getImageData(0,0,256,256).data}return o}
+function gaTexAll(){try{return gaTexAll0()}catch(e){return null}}
+function gaTexAll0(){const o={};for(const t of GA_TEX){const im=GA['t_'+t];if(!im)return null;const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');g.drawImage(im,0,0,256,256);o[t]=g.getImageData(0,0,256,256).data}return o}
 const GA_FILES=(()=>{const f=[];for(const k in GPTART.u)for(const v of GPTART.u[k].team?[0,1]:[2])f.push('u_'+k+'_'+v);
   for(const at of['P1','P2'])for(const v of[0,1])f.push('b_grego_'+at+'_'+v);f.push('n_N1','n_N2');for(const t of GA_TEX)f.push('t_'+t);return f})();
 // carrega tudo em segundo plano; o jogo espera isto antes de começar uma partida
@@ -2225,7 +2226,7 @@ function applyGPTArt(){
 }
 // as folhas do GPT entram logo depois dos desenhos do código
 const buildSpritesProc=buildSprites;
-buildSprites=function(){buildSpritesProc();applyGPTArt()};
+buildSprites=function(){buildSpritesProc();try{applyGPTArt()}catch(e){console.warn('arte',e)}};
 
 // =========================================================
 //   SONS E MÚSICA (gerados na hora, sem arquivos)
