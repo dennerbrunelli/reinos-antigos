@@ -681,7 +681,7 @@ const SPIRAL=(()=>{const a=[];for(let y=-20;y<=20;y++)for(let x=-20;x<=20;x++)a.
 function mkPlayer(civ){return{civ,res:{food:200,wood:200,gold:100,wealth:50,know:0,oil:0},age:0,mil:0,cap:0,pop:0,techs:[],ai:null}}
 function newGame(o){
   const seed=(Math.random()*1e9)|0;RNG=mulberry32(seed);
-  if(o.map==='rand'||!MAPS[o.map])o=Object.assign({},o,{map:MAP_ORD[(Math.random()*MAP_ORD.length)|0]});
+  if(o.map==='rand'||!MAPS[o.map]){const L=MAP_ORD.filter(k=>k!=='arena');o=Object.assign({},o,{map:L[(Math.random()*L.length)|0]})}
   setMapSize((MAPSZ[o.size]||MAPSZ.med).s);const MP=mapSpec(o.map),S=MW/72,A=S*S;
   const aiR=CIVS[(RNG()*CIVS.length)|0].id,aiCiv=o.ai&&o.ai!=='rand'&&CIVS.some(c=>c.id===o.ai)?o.ai:aiR;
   G={v:2,seed,diff:o.diff,map:o.map,t:0,nid:1,U:[],B:[],R:[],pj:[],fx:[],carc:{},terr:new Array(N).fill(0),exp:new Array(N).fill(0),
@@ -3584,7 +3584,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 31';$('ver').textContent=VERSAO;
+const VERSAO='Versão 32';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -4855,6 +4855,19 @@ newGame=function(o){newGame9(o);if(!G.cfg)G.cfg={};const f=o&&o.fim!=null?+o.fim
 window.__RA.newGame=newGame;
 const ageReqMsg9=ageReqMsg;
 ageReqMsg=function(p){if(G.P[p].age>=ENDAGE())return'Era final desta partida: '+AGES[ENDAGE()];return ageReqMsg9(p)};
+// ---------- muralhas do mapa (Arena): nada embaixo nem colado nelas ----------
+function wallClean(){const W=G.B.filter(b=>!b.dead&&b.type==='muralha');if(!W.length)return;
+  const near=new Uint8Array(N);for(const b of W)for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const x=b.tx+dx,y=b.ty+dy;if(!inMap(x,y))continue;const d=Math.max(Math.abs(dx),Math.abs(dy));const i=idx(x,y);near[i]=Math.max(near[i],3-d)}
+  // recursos no muro ou a 1 quadrado dele saem (o desenho deles é maior que o quadrado)
+  for(const r of G.R){if(r.dead||r.walk||r.sub==='fish')continue;const i=idx(r.tx,r.ty);if(near[i]>=2){r.dead=true;E.delete(r.id);if(occ[i]===r.id){occ[i]=0;if(!G.terr[i])pass[i]=1}}}
+  G.R=G.R.filter(r=>!r.dead);
+  // raros e ruínas a menos de 2 quadrados do muro mudam de lugar
+  const ok=(x,y)=>inMap(x,y)&&x>2&&y>2&&x<MW-3&&y<MH-3&&!G.terr[idx(x,y)]&&!occ[idx(x,y)]&&pass[idx(x,y)]&&!near[idx(x,y)]&&!(G.rare||[]).concat(G.ruins||[]).some(p=>p.x===x&&p.y===y);
+  for(const p of(G.rare||[]).concat(G.ruins||[])){if(!inMap(p.x,p.y)||!near[idx(p.x,p.y)])continue;for(const[a,b]of SPIRAL){if(ok(p.x+a,p.y+b)){p.x+=a;p.y+=b;break}}}
+  mmDirty=true}
+const newGameW=newGame;
+newGame=function(o){newGameW(o);try{wallClean()}catch(e){}};
+window.__RA.newGame=newGame;
 </script>
 </body>
 </html>
