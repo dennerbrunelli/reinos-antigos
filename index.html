@@ -181,7 +181,10 @@ button{font-family:inherit;color:inherit}
 #top .r:nth-child(1){background:linear-gradient(#b4442e,#6a1c10)}
 #top .r:nth-child(2){background:linear-gradient(#8a6a3a,#4a3216)}
 #top .r:nth-child(3){background:linear-gradient(#c8961e,#7a5208)}
-#top .r:nth-child(4){background:linear-gradient(#7c8796,#3f4855)}
+#top .r:nth-child(4){background:linear-gradient(#c8961e,#7a5208)}
+#top .r:nth-child(3){background:linear-gradient(#7c8ea6,#3a4658)!important}
+#top .r.rk{background:linear-gradient(#5aa0d0,#1d4a78)}
+#top .r.ro{background:linear-gradient(#3a3a3a,#111)}
 #top .r.rpop{background:linear-gradient(#3f7fd8,#1d4790)}
 #top .rv b{color:#fffaf0;text-shadow:0 1px 1px #000}
 #top .rv small{color:#b6ff96;text-shadow:0 1px 1px #000}
@@ -307,7 +310,9 @@ button{font-family:inherit;color:inherit}
     <span class="r"><img data-ri="food"><span class="rv"><b id="rf">0</b><small id="rtf"></small></span></span>
     <span class="r"><img data-ri="wood"><span class="rv"><b id="rw">0</b><small id="rtw"></small></span></span>
     <span class="r"><img data-ri="gold"><span class="rv"><b id="rg">0</b><small id="rtg"></small></span></span>
-    <span class="r"><img data-ri="stone"><span class="rv"><b id="rs">0</b><small id="rts"></small></span></span>
+    <span class="r"><img data-ri="wealth"><span class="rv"><b id="rs">0</b><small id="rts"></small></span></span>
+    <span class="r rk"><img data-ri="know"><span class="rv"><b id="rk">0</b><small id="rtk"></small></span></span>
+    <span class="r ro" id="roil" style="display:none"><img data-ri="oil"><span class="rv"><b id="ro">0</b><small id="rto"></small></span></span>
     <span class="r rpop">👥<span class="rv"><b id="rp">0/0</b><small>população</small></span></span>
     <span id="won"></span><span id="civn" style="display:none"></span></div>
     <div class="tr"><span id="wx"></span><span id="era"><b id="eran">I</b><span id="age"></span></span>
@@ -375,6 +380,7 @@ button{font-family:inherit;color:inherit}
       <p><b>POPULAÇÃO (como no Rise)</b><br>Não precisa de casas: começa em 50. Cada Organização Militar (no Centro Urbano) dá +25, até 200. A Maravilha pronta dá mais 50: até 250.</p>
       <p><b>BIBLIOTECA (linhas de pesquisa)</b><br>🏛️ Cívica: +1 cidade no limite (começa com 3), fronteira maior e impostos em ouro de cada cidade. ⚖️ Comércio: coleta +5% por nível e caravanas melhores. 🔭 Ciência: pesquisas e eras 10% mais rápidas por nível.</p>
       <p><b>COMÉRCIO E RAROS</b><br>🐫 Caravana (Mercado): anda sozinha entre o Mercado e outra cidade e traz ouro a cada viagem; quanto mais longe, mais ouro. 🧺 Mercador: cuida de um recurso raro (💎🍇🧂🐎🌲🪨🧵🌿) dentro da sua fronteira: dá ouro e um bônus. Toque num raro para ver o que ele dá.</p>
+      <p><b>OS 6 RECURSOS (como no Rise)</b><br>🍖 Comida, 🪵 Madeira e ⛓ Metal: os aldeões coletam e levam ao depósito (as pedreiras viraram minério de metal). 🪙 Riqueza: caravanas, mercadores nos raros, impostos e Mercados. 📘 Conhecimento: Eruditos estudando na Universidade (até 7 por Universidade); paga as linhas da Biblioteca e as eras. 🛢 Petróleo: chega nas eras industriais.</p>
       <p><b>COLETA AUTOMÁTICA</b><br>🤖 Aldeão parado vai trabalhar sozinho no recurso que mais falta, seguindo o ⚖️ Plano de coleta (Equilibrado, Mais comida, Mais madeira, Mais ouro). Quem termina um Celeiro ou Depósito já começa a coletar ali perto. Barcos de pesca voltam a pescar. 🔁 Fila automática: o Centro Urbano treina aldeões sem parar. Tudo se liga e desliga no Centro Urbano; ✋ Parar segura o aldeão por 45 s.</p>
       <p><b>RUÍNAS E FORTE</b><br>🏺 Ruínas antigas: a primeira unidade que chegar ganha um prêmio. 🏰 Forte (Era do Bronze): amplia a fronteira, atira forte e treina o ⚔️ General (+15% de ataque e +1 de armadura para quem está perto; Marcha forçada) e a 🛒 Carroça de Suprimentos (sem atrito e cura perto dela).</p>
       <p><b>DICAS</b><br> O Mercado libera fazendas. Cuidado com leões e elefantes selvagens! O sacerdote converte inimigos e cura os seus.</p>
@@ -478,10 +484,11 @@ const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const idx=(x,y)=>y*MW+x;
 const inMap=(x,y)=>x>=0&&y>=0&&x<MW&&y<MH;
 const hyp=Math.hypot;
-const RES=['food','wood','gold','stone'];
-const RNM={food:'comida',wood:'madeira',gold:'ouro',stone:'pedra'};
+// os 6 recursos do Rise: comida, madeira, metal (chave interna 'gold'), riqueza, conhecimento e petróleo (eras industriais)
+const RES=['food','wood','gold','wealth','know','oil'];
+const RNM={food:'comida',wood:'madeira',gold:'metal',wealth:'riqueza',know:'conhecimento',oil:'petróleo',stone:'metal'};
 const AGES=['Era da Pedra','Era das Ferramentas','Era do Bronze','Era do Ferro'];
-const AGECOST=[null,{food:500},{food:800,gold:120},{food:1000,gold:700}];
+const AGECOST=[null,{food:500},{food:800,gold:120,know:60},{food:1000,gold:600,know:200}];
 const AGETIME=[0,50,70,90];
 // para avançar de era: ter 2 prédios diferentes desta lista (da era atual)
 const AGEREQ=[null,['celeiro','deposito','quartel','doca'],['mercado','arquearia','estabulo'],['templo','academia','oficina']];
@@ -504,7 +511,7 @@ const UT={
   elef:{n:'Elefante de Guerra',hp:300,atk:15,arm:0,rng:0,spd:.9,cd:2,los:5,cost:{food:170,gold:40},t:30,age:3,at:'estabulo',cls:'elef',splash:.7,spr:[74,72,37,64]},
   pedra:{n:'Lança-pedras',hp:75,atk:30,arm:0,rng:10,spd:.8,cd:5,los:10,cost:{wood:180,gold:80},t:30,age:2,at:'oficina',cls:'cerco',splash:1,bon:{bld:40},spr:[58,50,29,44]},
   bal:{n:'Balista',hp:60,atk:24,arm:0,rng:9,spd:.9,cd:3,los:10,cost:{wood:100,gold:80},t:28,age:3,at:'oficina',cls:'cerco',bon:{bld:16},spr:[58,46,29,40]},
-  sac:{n:'Sacerdote',hp:25,atk:0,arm:0,rng:6,spd:.8,cd:1,los:8,cost:{gold:125},t:30,age:2,at:'templo',cls:'sac',spr:[32,50,16,45]},
+  sac:{n:'Sacerdote',hp:25,atk:0,arm:0,rng:6,spd:.8,cd:1,los:8,cost:{wealth:100},t:30,age:2,at:'templo',cls:'sac',spr:[32,50,16,45]},
   pesc:{n:'Barco Pesqueiro',hp:45,atk:0,arm:0,rng:0,spd:1.6,cd:1,los:5,cost:{wood:50},t:16,age:0,at:'doca',cls:'navio',naval:1,carry:15,spr:[66,58,33,44]},
   trans:{n:'Barco de Transporte',hp:150,atk:0,arm:0,rng:0,spd:1.7,cd:1,los:5,cost:{wood:150},t:25,age:1,at:'doca',cls:'navio',naval:1,cap:5,spr:[78,66,39,50]},
   bguer:{n:'Barco de Guerra',hp:120,atk:5,arm:0,rng:6,spd:1.8,cd:1.8,los:7,cost:{wood:135},t:30,age:1,at:'doca',cls:'navio',naval:1,war:1,spr:[78,74,39,58]},
@@ -516,22 +523,22 @@ const UT={
 // ---------- PRÉDIOS ----------
 // sz tamanho em quadrados · t tempo de construção (1 aldeão) · h altura do desenho · pg página do menu (0 econ., 1 militar)
 const BT={
-  tc:{n:'Centro Urbano',sz:3,hp:600,cost:{food:300,wood:200,stone:100},t:60,age:1,drop:['food','wood','gold','stone'],train:['vill'],pop:5,los:7,pg:0,shoot:{atk:2,rng:6,cd:2},h:78},
+  tc:{n:'Centro Urbano',sz:3,hp:600,cost:{food:300,wood:200,gold:100},t:60,age:1,drop:['food','wood','gold','stone'],train:['vill'],pop:5,los:7,pg:0,shoot:{atk:2,rng:6,cd:2},h:78},
   casa:{n:'Casa',sz:2,hp:120,cost:{wood:30},t:15,age:0,pop:4,los:2,pg:0,h:46},
   celeiro:{n:'Celeiro',sz:2,hp:300,cost:{wood:120},t:30,age:0,drop:['food'],los:3,pg:0,res:['sentinela','muralhaF'],h:52},
   deposito:{n:'Depósito',sz:2,hp:300,cost:{wood:120},t:30,age:0,drop:['wood','gold','stone'],los:3,pg:0,res:['couro','ferraria','escudo','arcos','forja'],h:42},
   doca:{n:'Doca',sz:2,hp:350,cost:{wood:100},t:30,age:0,water:1,train:['pesc','trans','bguer','trir'],dropN:['food'],los:5,pg:0,res:['velas','casco'],h:52},
   mercado:{n:'Mercado',sz:3,hp:400,cost:{wood:150},t:40,age:1,req:'celeiro',los:3,pg:0,res:['enxada','serra','picareta','roda','arado','irrigacao'],h:50},
   fazenda:{n:'Fazenda',sz:3,hp:80,cost:{wood:75},t:15,age:1,req:'mercado',walk:1,los:1,pg:0,h:0},
-  maravilha:{n:'Maravilha',sz:4,hp:4000,cost:{wood:1000,gold:1000,stone:800},t:400,age:3,los:6,pg:0,h:140},
+  maravilha:{n:'Maravilha',sz:4,hp:4000,cost:{wood:1000,gold:800,wealth:600,know:300},t:400,age:3,los:6,pg:0,h:140},
   quartel:{n:'Quartel',sz:3,hp:450,cost:{wood:125},t:35,age:0,train:['guer','espa'],res:['machado','espadaL'],los:4,pg:1,h:56},
   arquearia:{n:'Arquearia',sz:3,hp:450,cost:{wood:150},t:35,age:1,req:'quartel',train:['arq','arqc','arqcav'],los:4,pg:1,h:52},
   estabulo:{n:'Estábulo',sz:3,hp:450,cost:{wood:150},t:35,age:1,req:'quartel',train:['bat','cav','carro','elef'],los:4,pg:1,h:50},
   academia:{n:'Academia',sz:3,hp:450,cost:{wood:200},t:45,age:2,req:'quartel',train:['hopl'],res:['falange'],los:4,pg:1,h:62},
   templo:{n:'Templo',sz:3,hp:450,cost:{wood:200},t:45,age:2,train:['sac'],res:['fe','medicina'],los:5,pg:1,h:86},
   oficina:{n:'Oficina de Cerco',sz:3,hp:450,cost:{wood:200},t:45,age:2,train:['pedra','bal'],los:4,pg:1,h:54},
-  torre:{n:'Torre',sz:1,hp:250,cost:{stone:150},t:40,age:1,los:7,pg:1,shoot:{atk:3,rng:6,cd:2},h:100},
-  muralha:{n:'Muralha',sz:1,hp:200,cost:{stone:5},t:6,age:1,los:1,pg:1,wall:1,h:34},
+  torre:{n:'Torre',sz:1,hp:250,cost:{wood:75,gold:75},t:40,age:1,los:7,pg:1,shoot:{atk:3,rng:6,cd:2},h:100},
+  muralha:{n:'Muralha',sz:1,hp:200,cost:{wood:5},t:6,age:1,los:1,pg:1,wall:1,h:34},
 };
 const ECO=['celeiro','deposito','doca','mercado','fazenda','tc','maravilha'];
 const MIL=['quartel','arquearia','estabulo','academia','templo','oficina','torre','muralha'];
@@ -542,7 +549,7 @@ function forCls(T,cl,fn){for(const k in T)if(cl.includes(T[k].cls))fn(T[k])}
 const TECH={
   enxada:{n:'Enxada',ic:'🌾',at:'mercado',age:1,cost:{food:100,wood:75},t:40,d:'Fazendas rendem +75 de comida',fx:(T,m)=>{m.farmFood+=75}},
   serra:{n:'Serra de Bronze',ic:'🪚',at:'mercado',age:1,cost:{food:120,wood:75},t:40,d:'Madeira 20% mais rápido',fx:(T,m)=>{m.gath.wood*=1.2}},
-  picareta:{n:'Picareta',ic:'⛏️',at:'mercado',age:1,cost:{food:100,wood:100},t:40,d:'Ouro e pedra 20% mais rápido',fx:(T,m)=>{m.gath.gold*=1.2;m.gath.stone*=1.2}},
+  picareta:{n:'Picareta',ic:'⛏️',at:'mercado',age:1,cost:{food:100,wood:100},t:40,d:'Metal 20% mais rápido',fx:(T,m)=>{m.gath.gold*=1.2}},
   roda:{n:'Roda',ic:'🛞',at:'mercado',age:2,cost:{food:175,wood:75},t:60,d:'Aldeões andam 30% mais rápido',fx:T=>{T.vill.spd*=1.3}},
   arado:{n:'Arado de Bronze',ic:'🐂',at:'mercado',age:2,req:'enxada',cost:{food:200,wood:100},t:50,d:'Fazendas +75 de comida e 10% mais rápidas',fx:(T,m)=>{m.farmFood+=75;m.gath.farm*=1.1}},
   irrigacao:{n:'Irrigação',ic:'💧',at:'mercado',age:3,req:'arado',cost:{food:300,wood:150},t:60,d:'Fazendas +100 de comida e 10% mais rápidas',fx:(T,m)=>{m.farmFood+=100;m.gath.farm*=1.1}},
@@ -551,10 +558,10 @@ const TECH={
   escudo:{n:'Escudo de Bronze',ic:'🛡️',at:'deposito',age:2,req:'couro',cost:{food:150,gold:75},t:50,d:'Infantaria e cavalaria +1 de armadura',fx:T=>forCls(T,['inf','cav','elef','arqcav'],t=>t.arm+=1)},
   arcos:{n:'Arcos Reforçados',ic:'🏹',at:'deposito',age:2,cost:{food:150,wood:100},t:50,d:'Arqueiros +1 de alcance e +1 de ataque',fx:T=>forCls(T,['arq','arqcav'],t=>{t.rng+=1;t.atk+=1})},
   forja:{n:'Forja de Ferro',ic:'⚒️',at:'deposito',age:3,req:'ferraria',cost:{food:250,gold:120},t:60,d:'Ataque corpo a corpo +3',fx:T=>forCls(T,MEL,t=>t.atk+=3)},
-  sentinela:{n:'Torre Sentinela',ic:'🗼',at:'celeiro',age:2,cost:{food:120,stone:80},t:45,d:'Torres: +2 de ataque, +1 de alcance, +50% de vida',fx:(T,m)=>{m.tower.atk+=2;m.tower.rng+=1;m.bldHp.torre=(m.bldHp.torre||1)*1.5}},
-  muralhaF:{n:'Muralha Forte',ic:'🧱',at:'celeiro',age:2,cost:{food:180,stone:100},t:50,d:'Muralhas com o dobro de vida',fx:(T,m)=>{m.bldHp.muralha=(m.bldHp.muralha||1)*2}},
-  fe:{n:'Fé',ic:'✨',at:'templo',age:2,cost:{gold:120},t:45,d:'Sacerdotes convertem 40% mais rápido',fx:(T,m)=>{m.conv*=1.4}},
-  medicina:{n:'Medicina',ic:'🌿',at:'templo',age:2,cost:{gold:150},t:45,d:'Sacerdotes curam 2x mais rápido',fx:(T,m)=>{m.heal*=2}},
+  sentinela:{n:'Torre Sentinela',ic:'🗼',at:'celeiro',age:2,cost:{food:120,gold:80},t:45,d:'Torres: +2 de ataque, +1 de alcance, +50% de vida',fx:(T,m)=>{m.tower.atk+=2;m.tower.rng+=1;m.bldHp.torre=(m.bldHp.torre||1)*1.5}},
+  muralhaF:{n:'Muralha Forte',ic:'🧱',at:'celeiro',age:2,cost:{food:180,wood:100},t:50,d:'Muralhas com o dobro de vida',fx:(T,m)=>{m.bldHp.muralha=(m.bldHp.muralha||1)*2}},
+  fe:{n:'Fé',ic:'✨',at:'templo',age:2,cost:{wealth:120},t:45,d:'Sacerdotes convertem 40% mais rápido',fx:(T,m)=>{m.conv*=1.4}},
+  medicina:{n:'Medicina',ic:'🌿',at:'templo',age:2,cost:{wealth:150},t:45,d:'Sacerdotes curam 2x mais rápido',fx:(T,m)=>{m.heal*=2}},
   velas:{n:'Velas Grandes',ic:'⛵',at:'doca',age:1,cost:{food:75,wood:100},t:40,d:'Barcos 20% mais rápidos',fx:T=>forCls(T,['navio'],t=>{t.spd*=1.2})},
   casco:{n:'Casco Reforçado',ic:'🛶',at:'doca',age:2,cost:{food:150,wood:150},t:50,d:'Barcos +30% de vida',fx:T=>forCls(T,['navio'],t=>{t.hp=Math.round(t.hp*1.3)})},
   machado:{n:'Machadeiro',ic:'🪓',at:'quartel',age:1,cost:{food:100},t:40,d:'Guerreiros viram Machadeiros: +2 de ataque e +10 de vida',fx:T=>{const t=T.guer;t.n='Machadeiro';t.atk+=2;t.hp+=10;t.axe=1}},
@@ -571,13 +578,13 @@ const STY={
   oriental:{nm:'Oriental',wall:'#93673f',wall2:'#704c2d',roof:'#3c4b45',rt:'pyr',stone:'#9a958a',wood:'#6a4426',acc:'#b8352a',sw:'#3c4b45'},
 };
 const CIVS=[
-  {id:'egipcios',n:'Egípcios',st:'egito',d:['Ouro 20% mais rápido','Sacerdotes com +2 de alcance'],fx:(T,m)=>{m.gath.gold*=1.2;T.sac.rng+=2}},
+  {id:'egipcios',n:'Egípcios',st:'egito',d:['Metal 20% mais rápido','Sacerdotes com +2 de alcance'],fx:(T,m)=>{m.gath.gold*=1.2;T.sac.rng+=2}},
   {id:'assirios',n:'Assírios',st:'egito',d:['Arqueiros atiram 30% mais rápido','Aldeões 10% mais rápidos'],fx:T=>{forCls(T,['arq','arqcav'],t=>{t.cd/=1.3});T.vill.spd*=1.1}},
   {id:'sumerios',n:'Sumérios',st:'egito',d:['Aldeões com +10 de vida','Fazendas rendem +100 de comida'],fx:(T,m)=>{T.vill.hp+=10;m.farmFood+=100}},
   {id:'gregos',n:'Gregos',st:'grego',d:['Infantaria 15% mais rápida','Barcos de guerra 20% mais rápidos'],fx:T=>{forCls(T,['inf'],t=>{t.spd*=1.15});T.bguer.spd*=1.2;T.trir.spd*=1.2}},
   {id:'fenicios',n:'Fenícios',st:'grego',d:['Madeira 15% mais rápido','Barcos custam 25% menos'],fx:(T,m)=>{m.gath.wood*=1.15;m.costMul.navio=.75}},
   {id:'minoicos',n:'Minoicos',st:'grego',d:['Pesca 30% mais rápida','Arqueiros com +1 de alcance'],fx:(T,m)=>{m.gath.fish*=1.3;m.gath.fishb*=1.3;forCls(T,['arq'],t=>{t.rng+=1})}},
-  {id:'babilonios',n:'Babilônios',st:'babilonia',d:['Pedra 30% mais rápido','Torres e muralhas +60% de vida'],fx:(T,m)=>{m.gath.stone*=1.3;m.bldHp.torre=1.6;m.bldHp.muralha=1.6}},
+  {id:'babilonios',n:'Babilônios',st:'babilonia',d:['Conhecimento 30% mais rápido','Torres e muralhas +60% de vida'],fx:(T,m)=>{m.gath.know*=1.3;m.bldHp.torre=1.6;m.bldHp.muralha=1.6}},
   {id:'persas',n:'Persas',st:'babilonia',d:['Caça 40% mais rápida','Cavalaria com +20% de vida'],fx:(T,m)=>{m.gath.hunt*=1.4;forCls(T,['cav','elef','arqcav'],t=>{t.hp=Math.round(t.hp*1.2)})}},
   {id:'hititas',n:'Hititas',st:'babilonia',d:['Armas de cerco com +50% de vida','Arqueiros com +1 de ataque'],fx:T=>{forCls(T,['cerco'],t=>{t.hp=Math.round(t.hp*1.5)});forCls(T,['arq','arqcav'],t=>{t.atk+=1})}},
   {id:'yamato',n:'Yamato',st:'oriental',d:['Cavalaria custa 25% menos','Barcos com +20% de vida'],fx:(T,m)=>{m.costMul.cav=.75;forCls(T,['navio'],t=>{t.hp=Math.round(t.hp*1.2)})}},
@@ -626,7 +633,7 @@ const isNav=u=>!!UT[u.type].naval;
 const passFor=u=>UT[u.type].naval?wpass:pass;
 function ST(u){return u.o<2&&STAT[u.o]?STAT[u.o][u.type]:UT[u.type]}
 function costOf(p,t){return STAT[p]?STAT[p][t].cost:UT[t].cost}
-function freshMods(){return{gath:{food:1,hunt:1,fish:1,fishb:1,farm:1,wood:1,gold:1,stone:1},farmFood:0,conv:1,heal:1,costMul:{},bldHp:{},tower:{atk:0,rng:0}}}
+function freshMods(){return{gath:{food:1,hunt:1,fish:1,fishb:1,farm:1,wood:1,gold:1,stone:1,know:1,wealth:1},farmFood:0,conv:1,heal:1,costMul:{},bldHp:{},tower:{atk:0,rng:0}}}
 // recalcula os números de um jogador (povo + tecnologias)
 function recompute(p){
   const P=G.P[p],T={};
@@ -652,7 +659,7 @@ function blob(cx,cy,r,fn){
   }
 }
 const SPIRAL=(()=>{const a=[];for(let y=-20;y<=20;y++)for(let x=-20;x<=20;x++)a.push([x,y,x*x+y*y]);a.sort((p,q)=>p[2]-q[2]);return a})();
-function mkPlayer(civ){return{civ,res:{food:200,wood:200,gold:100,stone:150},age:0,mil:0,cap:0,pop:0,techs:[],ai:null}}
+function mkPlayer(civ){return{civ,res:{food:200,wood:200,gold:100,wealth:50,know:0,oil:0},age:0,mil:0,cap:0,pop:0,techs:[],ai:null}}
 function newGame(o){
   const seed=(Math.random()*1e9)|0;RNG=mulberry32(seed);
   const aiCiv=CIVS[(RNG()*CIVS.length)|0].id;
@@ -685,7 +692,7 @@ function newGame(o){
     const a0=RNG()*Math.PI*2;
     let p=at(s,a0,6.5);cluster('berry',p[0],p[1],6);
     p=at(s,a0+1.9,9);cluster('gold',p[0],p[1],5);
-    p=at(s,a0+3.4,10);cluster('stone',p[0],p[1],4);
+    p=at(s,a0+3.4,10);cluster('stone',p[0],p[1],4);// vira minério de metal (o Rise não tem pedra)
     p=at(s,a0+4.8,9);blob(p[0],p[1],3,(x,y)=>{if(RNG()<.9)put('tree',x,y)});
     p=at(s,a0+2.7,14);blob(p[0],p[1],2.6,(x,y)=>{if(RNG()<.85)put('tree',x,y)});
     p=at(s,a0+.9,17);cluster('gold',p[0],p[1],4);
@@ -1376,11 +1383,11 @@ function updCities(dt){
 
 // ---------- prédios e unidades novas ----------
 BT.biblioteca={n:'Biblioteca',sz:3,hp:450,cost:{wood:125},t:40,age:0,los:3,pg:0,h:60};
-BT.forte={n:'Forte',sz:3,hp:1400,cost:{stone:250,wood:100},t:70,age:2,los:8,pg:1,shoot:{atk:4,rng:7,cd:1.6},train:['general','carroca'],h:72};
+BT.forte={n:'Forte',sz:3,hp:1400,cost:{wood:150,gold:200},t:70,age:2,los:8,pg:1,shoot:{atk:4,rng:7,cd:1.6},train:['general','carroca'],h:72};
 BT.mercado.train=['caravana','mercador'];
 UT.caravana={n:'Caravana',hp:70,atk:0,arm:1,rng:0,spd:1.35,cd:1,los:4,cost:{food:60,wood:40},t:20,age:1,at:'mercado',cls:'merc',civ:1,spr:[70,58,35,50]};
-UT.mercador={n:'Mercador',hp:30,atk:0,arm:0,rng:0,spd:1.3,cd:1,los:5,cost:{food:50,gold:20},t:16,age:1,at:'mercado',cls:'merc',civ:1,spr:[46,64,23,58]};
-UT.general={n:'General',hp:160,atk:9,arm:2,rng:0,spd:1.4,cd:1.4,los:7,cost:{food:120,gold:120},t:35,age:2,at:'forte',cls:'inf',gen:1,spr:[46,64,23,58]};
+UT.mercador={n:'Mercador',hp:30,atk:0,arm:0,rng:0,spd:1.3,cd:1,los:5,cost:{food:50,wealth:20},t:16,age:1,at:'mercado',cls:'merc',civ:1,spr:[46,64,23,58]};
+UT.general={n:'General',hp:160,atk:9,arm:2,rng:0,spd:1.4,cd:1.4,los:7,cost:{food:120,wealth:120},t:35,age:2,at:'forte',cls:'inf',gen:1,spr:[46,64,23,58]};
 UT.carroca={n:'Carroça de Suprimentos',hp:120,atk:0,arm:1,rng:0,spd:1.2,cd:1,los:5,cost:{food:70,wood:80},t:25,age:2,at:'forte',cls:'merc',civ:1,spr:[70,58,35,50]};
 ECO.splice(ECO.indexOf('mercado')+1,0,'biblioteca');
 MIL.splice(MIL.indexOf('torre'),0,'forte');
@@ -1388,11 +1395,11 @@ AGEREQ[1].push('biblioteca');
 
 // ---------- linhas de pesquisa da Biblioteca (como as do Rise) ----------
 const LINES={
-  cvc:{n:'Cívica',ic:'🏛️',d:'+1 cidade no limite · fronteira +1 · impostos: cada cidade rende ouro'},
+  cvc:{n:'Cívica',ic:'🏛️',d:'+1 cidade no limite · fronteira +1 · impostos: cada cidade rende riqueza'},
   com:{n:'Comércio',ic:'⚖️',d:'coleta de tudo +5% · caravanas e mercadores +20%'},
   sci:{n:'Ciência',ic:'🔭',d:'pesquisas, eras e Organização Militar 10% mais rápidas'}};
 const LN_N=4,LN_AGE=[0,1,2,3],LN_T=[30,40,50,60];
-const LN_COST=[{food:90,wood:60},{food:160,gold:80},{food:240,gold:160},{food:340,gold:260}];
+const LN_COST=[{food:90,wood:60},{food:120,know:60},{food:180,know:140},{food:240,know:240,wealth:120}];
 const lvl=(o,k)=>(G.P[o]&&G.P[o][k])||0;
 function cityMax(o){return CITY_MAX-1+lvl(o,'cvc')}   // começa com 3 e vai até 7
 function sciMul(o){return 1-.1*lvl(o,'sci')}
@@ -1413,15 +1420,15 @@ const RARE={
   uvas:{n:'Vinhedos',ic:'🍇',d:'Comida +8%'},
   sal:{n:'Sal',ic:'🧂',d:'Caça e pesca +15%'},
   cedro:{n:'Cedros',ic:'🌲',d:'Madeira +10%'},
-  gemas:{n:'Gemas',ic:'💎',d:'Ouro +10%'},
-  marmore:{n:'Mármore',ic:'🪨',d:'Pedra +12%'},
+  gemas:{n:'Gemas',ic:'💎',d:'Metal +10%'},
+  marmore:{n:'Mármore',ic:'🪨',d:'Mercados rendem +50% de riqueza'},
   seda:{n:'Seda',ic:'🧵',d:'Caravanas +25%'},
   ervas:{n:'Ervas',ic:'🌿',d:'Tropas se curam devagar dentro da sua fronteira'}};
 let RAREON=[{},{}];
 function rareGath(o,cat){const R=RAREON[o]||{};let m=1;
   if(R.uvas&&(cat==='food'||cat==='farm'||cat==='hunt'))m*=1.08;
   if(R.sal&&(cat==='hunt'||cat==='fish'||cat==='fishb'))m*=1.15;
-  if(R.cedro&&cat==='wood')m*=1.1;if(R.gemas&&cat==='gold')m*=1.1;if(R.marmore&&cat==='stone')m*=1.12;return m}
+  if(R.cedro&&cat==='wood')m*=1.1;if(R.gemas&&cat==='gold')m*=1.1;return m}
 function ronGath(o,cat){return o>1?1:(1+.05*lvl(o,'com'))*rareGath(o,cat)}
 function ronSpd(u){let m=1;if(u.haste>G.t)m*=1.4;if(u.o<2&&RAREON[u.o].cavalos){const c=UT[u.type].cls;if(c==='cav'||c==='arqcav')m*=1.1}return m}
 
@@ -1446,8 +1453,8 @@ newGame=function(o){newGame0(o);try{ronMap()}catch(e){G.rare=G.rare||[];G.ruins=
 function ruinLoot(r,u){r.done=1;r.by=u.o;const o=u.o,P=G.P[o],roll=RNG();let msg;
   if(roll<.2){P.res.food+=200;msg='+200 de comida'}
   else if(roll<.4){P.res.wood+=200;msg='+200 de madeira'}
-  else if(roll<.58){P.res.gold+=150;msg='+150 de ouro'}
-  else if(roll<.72){P.res.stone+=150;msg='+150 de pedra'}
+  else if(roll<.58){P.res.gold+=150;msg='+150 de metal'}
+  else if(roll<.72){P.res.wealth+=120;P.res.know+=40;msg='+120 de riqueza e +40 de conhecimento'}
   else if(roll<.86){if(o===0){for(let y=-14;y<=14;y++)for(let x=-14;x<=14;x++)if(x*x+y*y<=196&&inMap(r.x+x,r.y+y))G.exp[idx(r.x+x,r.y+y)]=1;mmDirty=true}msg='um mapa antigo: a região em volta foi revelada'}
   else{const v=spawnUnit('bat',o,(r.x+.5)*TS,(r.y+1.5)*TS);P.pop++;msg='um Batedor se juntou ao seu povo'}
   if(o===0){toast('🏺 Ruínas exploradas! Você ganhou '+msg);snd('done')}else if(vis[idx(r.x,r.y)])toast('🏺 O inimigo saqueou ruínas antigas');
@@ -1466,7 +1473,7 @@ function caravanThink(u,dt){
   if(u.st!=='trade'||!u.goal){u.st='trade';const c=ctr(tg);setGoal(u,{x:c.x,y:c.y+TS*1.6})}
   const c=ctr(tg);if(hyp(c.x-u.x,c.y-u.y)<tg.sz*TS*.75+TS*1.4||moveAlong(u,dt)){
     if(hyp(c.x-u.x,c.y-u.y)<tg.sz*TS*.75+TS*2.6){const a=ctr(E.get(u.tr.a)||tg),b=ctr(E.get(u.tr.b)||tg),dist=hyp(a.x-b.x,a.y-b.y)/TS;
-      const g=(2+dist*.55)*(1+.2*lvl(u.o,'com'))*(RAREON[u.o].seda?1.25:1);G.P[u.o].res.gold+=g;G.st.gath[u.o]+=g;if(u.o===0)incAdd('gold',g);
+      const g=(2+dist*.55)*(1+.2*lvl(u.o,'com'))*(RAREON[u.o].seda?1.25:1);G.P[u.o].res.wealth+=g;G.st.gath[u.o]+=g;if(u.o===0)incAdd('wealth',g);
       if(u.o===0&&vis[tileOf(u.x,u.y)]){G.fx.push({k:'coin',x:u.x,y:u.y,t:0,v:Math.round(g)});snd('coin',u)}}
     u.tr.leg^=1;u.goal=null;u.mv=false;u.st='trade'}
 }
@@ -1478,7 +1485,7 @@ function merchantThink(u,dt){
   r.w=u.id;const tx=(r.x+.5)*TS,ty=(r.y+1.4)*TS;
   if(hyp(tx-u.x,ty-u.y)>TS*1.2){if(u.st!=='rare'||!u.goal){u.st='rare';setGoal(u,{x:tx,y:ty})}if(moveAlong(u,dt)){u.goal=null;u.mv=false}return}
   u.st='rare';u.mv=false;u.work=true;u.an+=dt*4;faceTo(u,tx,ty-TS);
-  const g=.45*dt*(1+.2*lvl(u.o,'com'));G.P[u.o].res.gold+=g;G.st.gath[u.o]+=g;if(u.o===0)incAdd('gold',g)}
+  const g=.45*dt*(1+.2*lvl(u.o,'com'));G.P[u.o].res.wealth+=g;G.st.gath[u.o]+=g;if(u.o===0)incAdd('wealth',g)}
 const updUnit0=updUnit;
 updUnit=function(u,dt){
   const T=UT[u.type];
@@ -1491,8 +1498,8 @@ updUnit=function(u,dt){
 let ronAcc=0;
 function ronTick(dt){
   if(!G.rare){G.rare=[];G.ruins=[]}
-  // impostos: cada cidade rende ouro conforme a Cívica
-  for(let o=0;o<2;o++){const c=lvl(o,'cvc');if(!c)continue;const n=G.B.filter(b=>!b.dead&&b.o===o&&b.type==='tc'&&b.done>=1&&!b.down).length;const g=n*5*c*dt/60;G.P[o].res.gold+=g;if(o===0)incAdd('gold',g)}
+  // impostos: cada cidade rende riqueza conforme a Cívica
+  for(let o=0;o<2;o++){const c=lvl(o,'cvc');if(!c)continue;const n=G.B.filter(b=>!b.dead&&b.o===o&&b.type==='tc'&&b.done>=1&&!b.down).length;const g=n*5*c*dt/60;G.P[o].res.wealth+=g;if(o===0)incAdd('wealth',g)}
   ronAcc+=dt;if(ronAcc<.5)return;const st=ronAcc;ronAcc=0;
   // raros ativos
   RAREON=[{},{}];for(const r of G.rare){const w=r.w&&E.get(r.w);if(w&&!w.dead&&w.type==='mercador'&&w.st==='rare'&&!w.mv&&DOM[idx(r.x,r.y)]===w.o&&hyp((r.x+.5)*TS-w.x,(r.y+1.4)*TS-w.y)<TS*1.6)RAREON[w.o][r.kind]=1}
@@ -1514,7 +1521,7 @@ function ronAI(p,blds,has,any,build,htx,hty,toward,vills,army,res){
   const P=G.P[p],lib=blds.find(b=>b.type==='biblioteca'&&b.done>=1),mk=blds.find(b=>b.type==='mercado'&&b.done>=1),fo=blds.find(b=>b.type==='forte'&&b.done>=1);
   const mine=G.U.filter(u=>!u.dead&&u.o===p);const cnt=t=>mine.filter(u=>u.type===t).length+blds.reduce((s,b)=>s+b.q.filter(q=>q===t).length,0);
   if(vills.length>=9&&!any('biblioteca'))build('biblioteca',htx,hty,4,12);
-  if(P.age>=2&&vills.length>=18&&!any('forte')&&res.stone>=260)build('forte',toward.x,toward.y,6,14);
+  if(P.age>=2&&vills.length>=18&&!any('forte')&&afford(p,BT.forte.cost))build('forte',toward.x,toward.y,6,14);
   // linhas: Cívica quando a cidade bate no limite; senão Comércio e Ciência
   if(lib&&!lib.q.length&&vills.length>=12&&P.age>=1&&G.diff!=='facil'&&!(P.age<3&&blds.some(b=>b.q.includes('age')))){const cities=blds.filter(b=>b.type==='tc').length;
     const order=cities>=cityMax(p)-1?['cvc','com','sci']:['com','cvc','sci'];for(const k of order){if(lineCan(p,k))continue;const c=LN_COST[lvl(p,k)];const ag=P.age<3?AGECOST[P.age+1]:{food:0,gold:0};if(res.food<c.food+150+(ag.food||0)*.5||(c.gold&&res.gold<c.gold+(ag.gold||0)*.5))continue;pay(p,c);lib.q.push('ln:'+k);break}}
@@ -1529,6 +1536,57 @@ function ronAI(p,blds,has,any,build,htx,hty,toward,vills,army,res){
     for(const u of mine){if(u.type==='carroca'&&(u.st==='idle'||u.st==='move')&&hyp(u.x-c.x,u.y-c.y)>4*TS)orderMove(u,c.x,c.y);
       if(u.type==='general'){if(u.st==='idle'&&hyp(u.x-c.x,u.y-c.y)>4*TS)orderMove(u,c.x,c.y);if(army.some(a=>a.st==='attack'))forcedMarch(u)}}}
 }
+
+// =========================================================
+//   OS 6 RECURSOS DO RISE (na fusão: o aldeão continua levando comida, madeira e metal)
+//   · Metal: minas (o antigo ouro; as pedreiras viraram minério de metal)
+//   · Riqueza: caravanas, mercadores nos raros, impostos e Mercados
+//   · Conhecimento: Eruditos estudando na Universidade (até 7 por Universidade)
+//   · Petróleo: chega com as eras industriais (ainda escondido)
+// =========================================================
+BT.universidade={n:'Universidade',sz:3,hp:500,cost:{wood:140,food:60},t:45,age:1,req:'biblioteca',los:4,pg:0,train:['erudito'],h:66};
+UT.erudito={n:'Erudito',hp:20,atk:0,arm:0,rng:0,spd:1.05,cd:1,los:4,cost:{food:60,wood:25},t:18,age:1,at:'universidade',cls:'merc',civ:1,spr:[46,64,23,58]};
+ECO.splice(ECO.indexOf('biblioteca')+1,0,'universidade');
+const UNI_MAX=7,KNOW_RATE=.32,MARKET_WEALTH=4;   // conhecimento por erudito por segundo; riqueza por Mercado por minuto
+// ---------- mapa: pedra vira minério de metal ----------
+function stoneToMetal(){for(const r of G.R){if(r.sub==='stone'){r.sub='gold';r.rt='gold'}}}
+const newGame1=newGame;
+newGame=function(o){newGame1(o);stoneToMetal()};
+// jogos salvos antes da v20: pedra vira metal e entram os recursos novos
+const loadGame1=loadGame;
+loadGame=function(){const ok=loadGame1();if(!ok)return ok;
+  for(const P of G.P){const r=P.res;if(r.stone){r.gold=(r.gold||0)+r.stone;delete r.stone}for(const k of['wealth','know','oil'])if(r[k]==null)r[k]=k==='wealth'?50:0}
+  stoneToMetal();return ok};
+// ---------- Erudito: vai sozinho até uma Universidade com vaga e estuda ----------
+function uniFor(u){let b=u.uni&&E.get(u.uni);const okB=x=>x&&!x.dead&&x.o===u.o&&x.type==='universidade'&&x.done>=1;
+  if(okB(b))return b;let best=null,bd=1e9;
+  for(const x of G.B){if(!okB(x))continue;const n=G.U.filter(s=>!s.dead&&s.type==='erudito'&&s.uni===x.id&&s!==u).length;if(n>=UNI_MAX)continue;const c=ctr(x),d=hyp(c.x-u.x,c.y-u.y);if(d<bd){bd=d;best=x}}
+  u.uni=best?best.id:0;return best}
+function scholarThink(u,dt){
+  const b=uniFor(u);if(!b){if(u.st==='study')u.st='idle';return}
+  const n=G.U.filter(s=>!s.dead&&s.type==='erudito'&&s.uni===b.id&&s.id<u.id).length,a=n/UNI_MAX*Math.PI*2+.4,c=ctr(b);
+  const tx=c.x+Math.cos(a)*TS*2.1,ty=c.y+Math.sin(a)*TS*2.1;
+  if(hyp(tx-u.x,ty-u.y)>TS*.8){if(u.st!=='study'||!u.goal){u.st='study';setGoal(u,{x:tx,y:ty})}if(moveAlong(u,dt)){u.goal=null;u.mv=false}return}
+  u.st='study';u.mv=false;u.work=true;u.an+=dt*3;faceTo(u,c.x,c.y);
+  const k=KNOW_RATE*dt*(u.o<2?MODS[u.o].gath.know:1)*(1+.1*lvl(u.o,'sci'))*gmult(u.o);
+  G.P[u.o].res.know+=k;G.st.gath[u.o]+=k;if(u.o===0)incAdd('know',k)}
+const updUnit2=updUnit;
+updUnit=function(u,dt){if(u.type==='erudito'&&(u.st==='idle'||u.st==='study')){if(u.cd>0)u.cd-=dt;u.work=false;scholarThink(u,dt);return}updUnit2(u,dt)};
+// ---------- Mercados rendem riqueza ----------
+const ronTick2=ronTick;
+ronTick=function(dt){ronTick2(dt);
+  for(let o=0;o<2;o++){const n=G.B.filter(b=>!b.dead&&b.o===o&&b.type==='mercado'&&b.done>=1).length;if(!n)continue;
+    const g=n*MARKET_WEALTH*(RAREON[o]&&RAREON[o].marmore?1.5:1)*(1+.2*lvl(o,'com'))*dt/60;G.P[o].res.wealth+=g;if(o===0)incAdd('wealth',g)}};
+// ---------- IA: Universidade e eruditos ----------
+const ronAI1=ronAI;
+ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){
+  ronAI1(p,blds,has,any,build,htx,hty,toward,vills,army,res);
+  const P=G.P[p];if(P.age<1)return;
+  if(has('biblioteca')&&vills.length>=12&&!any('universidade'))build('universidade',htx,hty,4,12);
+  const u=blds.find(b=>b.type==='universidade'&&b.done>=1);if(!u)return;
+  const want={facil:3,normal:5,dificil:7}[G.diff]+(P.age>=2?2:0);
+  const n=G.U.filter(x=>!x.dead&&x.o===p&&x.type==='erudito').length+u.q.filter(q=>q==='erudito').length;
+  if(n<want&&u.q.length<2&&afford(p,costOf(p,'erudito'))&&P.pop+2<P.cap){pay(p,costOf(p,'erudito'));u.q.push('erudito')}};
 
 // =========================================================
 //   INTELIGÊNCIA DO INIMIGO
@@ -1595,10 +1653,10 @@ function aiTick(p){
   if(P.age>=1&&vills.length>=11&&!any('mercado'))build('mercado',htx,hty,4,12);
   if(P.age>=1&&vills.length>=12&&!any('arquearia'))build('arquearia',toward.x,toward.y,5,13);
   if(P.age>=1&&vills.length>=15&&!any('estabulo'))build('estabulo',htx,hty,5,14);
-  if(P.age>=2&&!any('templo')&&res.gold>=60)build('templo',htx,hty,5,14);
+  if(P.age>=2&&!any('templo')&&res.wealth>=60)build('templo',htx,hty,5,14);
   if(P.age>=2&&!any('academia'))build('academia',toward.x,toward.y,5,14);
   if(P.age>=2&&vills.length>=16&&!any('oficina'))build('oficina',htx,hty,5,15);
-  if(P.age>=1&&G.diff!=='facil'&&blds.filter(b=>b.type==='torre').length<(G.diff==='dificil'?3:1)&&res.stone>=170)build('torre',toward.x,toward.y,4,8);
+  if(P.age>=1&&G.diff!=='facil'&&blds.filter(b=>b.type==='torre').length<(G.diff==='dificil'?3:1)&&afford(p,BT.torre.cost))build('torre',toward.x,toward.y,4,8);
   ronAI(p,blds,has,any,build,htx,hty,toward,vills,army,res);
   // expansão: fundar cidades novas perto de minas e florestas (aumenta a fronteira)
   const cities=blds.filter(b=>b.type==='tc');
@@ -1613,7 +1671,7 @@ function aiTick(p){
         const sc=hyp(rx-htx,ry-hty)+(r.sub==='tree'?8:0);if(sc<bd){bd=sc;best=r}}
       if(best){const b=build('tc',best.tx,best.ty,2,6);if(b){for(let k=0;k<2;k++){const v=pick(ctr(b));if(v)orderBuild(v,b)}}else best.badCity=G.t}}}
   // sem lugar e sem cidade nova: uma torre na beira empurra a fronteira
-  if(crowded&&P.age>=1&&res.stone>=BT.torre.cost.stone&&blds.filter(b=>b.type==='torre').length<{facil:2,normal:4,dificil:6}[G.diff]&&!blds.some(b=>b.type==='torre'&&b.done<1)){
+  if(crowded&&P.age>=1&&afford(p,BT.torre.cost)&&blds.filter(b=>b.type==='torre').length<{facil:2,normal:4,dificil:6}[G.diff]&&!blds.some(b=>b.type==='torre'&&b.done<1)){
     const a0=RNG()*6.28;for(let k=0;k<8;k++){const a=a0+k*.785;if(build('torre',htx+Math.cos(a)*(INF_CAP-1),hty+Math.sin(a)*(INF_CAP-1),0,3))break}}
   // depósitos perto dos recursos
   for(const sub of['tree','gold','stone']){const r=findRes(sub,hb.x,hb.y,30,p);if(!r)continue;const d=findDrop(p,r.rt,(r.tx+.5)*TS,(r.ty+.5)*TS);
@@ -1838,6 +1896,12 @@ function paintBld(g,P,type,st,C,S){
       for(let x=20;x<=112;x+=10)cyl(g,P,x,110,3.4,15,44,st.sw);for(let y=20;y<=100;y+=10)cyl(g,P,110,y,3.4,15,44,st.sw);
       gable(g,P,14,14,116,116,59,28,R,true);band(g,P,14,14,116,116,59,m);flagP(g,P,116,64,59,m,24)}
     break}
+  case'universidade':{shadowB(g,P,4,4,92,92,70);ibox(g,P,4,4,92,92,0,6,ST);courses(g,P,4,4,92,92,0,6,3,.2);
+    ibox(g,P,10,30,86,70,6,28,W);faceL(g,P,30,46,70,6,22,dk);faceL(g,P,56,72,70,6,22,dk);band(g,P,10,30,86,70,28,m);
+    if(st.rt==='gable')gable(g,P,8,28,88,72,34,14,R,true);else if(st.rt==='pyr')pyr(g,P,8,28,88,72,34,18,R);else{ibox(g,P,8,28,88,72,34,4,R)}
+    ibox(g,P,34,8,62,32,6,52,W2);faceL(g,P,42,54,32,10,40,dk);band(g,P,34,8,62,32,50,m);ibox(g,P,32,6,64,34,58,4,ST);
+    pyr(g,P,38,12,58,30,62,16,'#3d6fc0');flagP(g,P,48,21,78,m,14);
+    for(const x of[16,26,66,76])cyl(g,P,x,72,2.6,6,26,st.sw);break}
   case'biblioteca':{shadowB(g,P,4,4,92,92,64);ibox(g,P,4,4,92,92,0,6,ST);courses(g,P,4,4,92,92,0,6,3,.2);
     ibox(g,P,16,14,80,70,6,34,W);faceL(g,P,40,56,70,6,24,dk);for(const x of[24,34,62,72])faceL(g,P,x,x+5,70,16,30,'#3a2a18');
     for(let x=12;x<=84;x+=12)cyl(g,P,x,80,3,6,34,st.sw);band(g,P,16,14,80,70,34,m);
@@ -1994,8 +2058,12 @@ function buildResIcons(){
   const mk=f=>{const[c,g]=mkC(20,20);f(g);return c.toDataURL()};
   RIMG.food=mk(g=>{ell(g,9,11,7,5.5,'#b0482a');ell(g,8,10,5,3.6,'#d8644a');ln(g,14,14,18,18,'#f0e6d0',2.4);circ(g,18.5,18.5,1.6,'#f0e6d0')});
   RIMG.wood=mk(g=>{ibx(g,3,6,14,9,'#8a5a2a');ibx(g,3,6,14,2,'#a8743a');ell(g,17,10.5,3,4.5,'#d8a868');ell(g,17,10.5,1.6,2.6,'#a8743a')});
-  RIMG.gold=mk(g=>{circ(g,10,10,8,'#a8801c');circ(g,10,10,6.5,'#f0c840');circ(g,8.5,8.5,2.2,'#fff1a0')});
-  RIMG.stone=mk(g=>{circ(g,7,12,6,'#77736c');circ(g,13,11,6.5,'#9a958d');circ(g,11,7,4,'#b8b3aa')});
+  // metal: lingotes; riqueza: moedas; conhecimento: livro; petróleo: gota
+  RIMG.gold=mk(g=>{const bar=(x,y,c1,c2)=>{g.fillStyle=c1;g.beginPath();g.moveTo(x,y);g.lineTo(x+9,y);g.lineTo(x+11,y+4);g.lineTo(x-2,y+4);g.closePath();g.fill();g.fillStyle=c2;g.fillRect(x+1,y,7,1.3)};bar(2,13,'#6f7c8c','#c8d4e2');bar(9,13,'#6f7c8c','#c8d4e2');bar(5.5,8.6,'#8a98aa','#e4ecf6')});
+  RIMG.wealth=mk(g=>{circ(g,8,12,6.5,'#a8801c');circ(g,8,12,5.2,'#f0c840');circ(g,13,9,6.5,'#a8801c');circ(g,13,9,5.2,'#f6d24a');circ(g,11.6,7.6,1.8,'#fff1a0')});
+  RIMG.know=mk(g=>{g.fillStyle='#1d4a8a';g.fillRect(3,4,14,13);g.fillStyle='#f2ead8';g.fillRect(4.5,5.5,5,10);g.fillRect(10.5,5.5,5,10);g.fillStyle='#8aa';for(let i=0;i<4;i++){g.fillRect(5.5,7+i*2,3,.8);g.fillRect(11.5,7+i*2,3,.8)}g.fillStyle='#e2bd62';g.fillRect(9.4,4,1.2,13)});
+  RIMG.oil=mk(g=>{g.fillStyle='#111';g.beginPath();g.moveTo(10,2);g.quadraticCurveTo(17,11,15,14);g.arc(10,13.5,5.2,0,Math.PI);g.quadraticCurveTo(3,11,10,2);g.fill();g.fillStyle='#6a6a7a';g.beginPath();g.ellipse(8,12,1.4,2.4,0,0,7);g.fill()});
+  RIMG.stone=RIMG.gold;
   document.querySelectorAll('[data-ri]').forEach(el=>el.src=RIMG[el.dataset.ri]);
 }
 const rimg=k=>'<img src="'+RIMG[k]+'">';
@@ -2977,7 +3045,7 @@ function btnHTML(c){
 }
 function updHUD(force){
   if(!G)return;const P=G.P[0];
-  $('rf').textContent=P.res.food|0;$('rw').textContent=P.res.wood|0;$('rg').textContent=P.res.gold|0;$('rs').textContent=P.res.stone|0;
+  $('rf').textContent=P.res.food|0;$('rw').textContent=P.res.wood|0;$('rg').textContent=P.res.gold|0;$('rs').textContent=P.res.wealth|0;$('rk').textContent=P.res.know|0;$('ro').textContent=P.res.oil|0;$('roil').style.display=P.age>=4||P.res.oil>0?'':'none';
   $('rp').textContent=P.pop+'/'+P.cap;$('rp').style.color=P.pop>=P.cap?'var(--bad)':'';
   const ab=G.B.find(b=>!b.dead&&b.o===0&&b.q[0]==='age');
   $('age').textContent=AGES[P.age]+(ab?' ⬆'+Math.floor(ab.qt/AGETIME[P.age+1]*100)+'%':'');
@@ -3003,11 +3071,11 @@ function infoHTML(s){
   if(s.length>1){const c={};for(const e of s){const k=e.k==='u'?'u'+e.type:'b'+e.type;c[k]=(c[k]||0)+1}
     return x+'<div class="bd"><div class="t">'+s.length+' selecionados</div><div class="grp">'+Object.entries(c).map(([k,v])=>'<span><img src="'+(THUMB[k]||'')+'"><b>'+v+'</b></span>').join('')+'</div></div>'}
   const e=s[0];
-  if(e.k==='r'){const nm={tree:'Árvore',berry:'Arbusto de frutas',gold:'Mina de ouro',stone:'Mina de pedra',fish:e.deep?'Cardume (só barcos)':'Peixes',carc:'Carne de caça'}[e.sub];
+  if(e.k==='r'){const nm={tree:'Árvore',berry:'Arbusto de frutas',gold:'Mina de metal',stone:'Minério de metal',fish:e.deep?'Cardume (só barcos)':'Peixes',carc:'Carne de caça'}[e.sub];
     return x+por(THUMB['r'+(e.sub==='fish'?'fish1':e.sub)]||THUMB.rtree)+'<div class="bd"><div class="t">'+nm+'</div><div class="st">'+rimg(e.rt)+' '+Math.ceil(e.amt)+' de '+RNM[e.rt]+'</div></div>'}
   if(e.k==='u'){const T=ST(e);const own=e.o===0?'':e.o===2?'':' <span style="color:#ff8a7a">(inimigo)</span>';
-    const stt={idle:'Parado',move:'Andando',gather:e.lsub==='farm'?'Cultivando':e.lsub==='tree'?'Cortando madeira':e.lsub==='gold'?'Minerando ouro':e.lsub==='stone'?'Quebrando pedra':e.lsub==='fish'?'Pescando':UT[e.lsub]||e.lsub==='carc'?'Caçando'+(e.hunting&&G.t-e.hunting<2?' com '+HUNTW[huntTier(e.o)].n:''):'Colhendo frutas',
-      return:'Levando recursos',build:'Construindo',attack:'Atacando',convert:'Convertendo',heal:'Curando',board:'Embarcando',unload:'Indo desembarcar',trade:'Levando mercadorias (rota de comércio)',rare:'Cuidando de um recurso raro'}[e.st]||'';
+    const stt={idle:'Parado',move:'Andando',gather:e.lsub==='farm'?'Cultivando':e.lsub==='tree'?'Cortando madeira':e.lsub==='gold'||e.lsub==='stone'?'Minerando metal':e.lsub==='fish'?'Pescando':UT[e.lsub]||e.lsub==='carc'?'Caçando'+(e.hunting&&G.t-e.hunting<2?' com '+HUNTW[huntTier(e.o)].n:''):'Colhendo frutas',
+      return:'Levando recursos',build:'Construindo',attack:'Atacando',convert:'Convertendo',heal:'Curando',board:'Embarcando',unload:'Indo desembarcar',study:'Estudando (gera conhecimento)',trade:'Levando mercadorias (rota de comércio)',rare:'Cuidando de um recurso raro'}[e.st]||'';
     let st='❤️'+Math.ceil(e.hp)+'/'+T.hp+(T.atk?' ⚔️'+T.atk:'')+(T.arm?' 🛡️'+T.arm:'')+(T.rng?' 🎯'+T.rng:'');
     if(e.type==='sac')st+=' ✨'+Math.floor(e.faith)+'%';
     if(e.cargo)st+=' · carga '+e.cargo.length+'/'+UT[e.type].cap;
@@ -3377,7 +3445,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 19';$('ver').textContent=VERSAO;
+const VERSAO='Versão 20';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -3531,7 +3599,7 @@ mm.addEventListener('pointerup',()=>{if($('pMap').classList.contains('big')&&inp
 UI.inc=[];
 function incAdd(k,a){UI.inc.push([G.t,k,a])}
 function incRates(){const t0=G.t-60;while(UI.inc.length&&UI.inc[0][0]<t0)UI.inc.shift();
-  const r={food:0,wood:0,gold:0,stone:0};for(const[,k,a]of UI.inc)r[k]+=a;const win=Math.max(30,Math.min(60,G.t));for(const k in r)r[k]=Math.round(r[k]*60/win);return r}
+  const r={food:0,wood:0,gold:0,stone:0,wealth:0,know:0,oil:0};for(const[,k,a]of UI.inc)r[k]=(r[k]||0)+a;const win=Math.max(30,Math.min(60,G.t));for(const k in r)r[k]=Math.round(r[k]*60/win);return r}
 
 // ---------- alertas ----------
 UI.alerts=[];
@@ -3555,6 +3623,7 @@ function objList(){
     const ab=G.B.find(b=>!b.dead&&b.o===0&&b.q[0]==='age');
     out.push({t:'Avance para a '+AGES[a+1]+(ab?' ('+Math.floor(ab.qt/AGETIME[a+1]*100)+'%)':''),ok:false,go:quickTC})}
   else{const w=G.B.find(b=>!b.dead&&b.o===0&&b.type==='maravilha');out.push({t:w?(w.done<1?'Termine a Maravilha ('+Math.floor(w.done*100)+'%)':'Proteja a Maravilha ('+fmtT(WONDER_T-G.won[0])+')'):'Construa uma Maravilha',ok:false,go:selVill})}
+  if(a>=1&&hasReq(0,'biblioteca')&&!hasReq(0,'universidade'))out.push({t:'Construa uma Universidade e treine Eruditos (conhecimento)',ok:false,go:selVill});
   if(a>=1&&!hasReq(0,'biblioteca'))out.push({t:'Construa uma Biblioteca (linhas Cívica, Comércio e Ciência)',ok:false,go:selVill});
   const ml=P.mil||0;if(ml<MIL_N&&P.age>=MILAGE[ml])out.push({t:'Organização Militar '+ROMAN[ml+1]+' (população +'+POP_STEP+')',ok:false,go:quickTC});
   const nc=G.B.filter(b=>!b.dead&&b.o===0&&b.type==='tc'&&b.done>=1).length;
@@ -3600,10 +3669,11 @@ getCmds=function(){const out=getCmds0();const us=selEnts().filter(e=>e.k==='u'&&
 // ---------- atualização dos painéis ----------
 function hudExtra(){
   if(!G)return;const P=G.P[0];
-  const r=incRates(),vc={food:0,wood:0,gold:0,stone:0};
+  const r=incRates(),vc={food:0,wood:0,gold:0,stone:0,know:0,wealth:0};
   for(const u of G.U){if(u.dead||u.o!==0)continue;if(u.type==='pesc'&&(u.st==='gather'||u.st==='return')){vc.food++;continue}
-    if(u.type!=='vill'||(u.st!=='gather'&&u.st!=='return'))continue;const s=u.lsub;vc[s==='tree'?'wood':s==='gold'?'gold':s==='stone'?'stone':'food']++}
-  for(const[k,id]of[['food','rtf'],['wood','rtw'],['gold','rtg'],['stone','rts']]){const t=(vc[k]?'👷'+vc[k]+' ':'')+(r[k]?'+'+r[k]+'/min':'');if($(id).textContent!==t)$(id).textContent=t}
+    if(u.type!=='vill'||(u.st!=='gather'&&u.st!=='return'))continue;const s=u.lsub;vc[s==='tree'?'wood':s==='gold'||s==='stone'?'gold':'food']++}
+  for(const u of G.U){if(u.dead||u.o!==0)continue;if(u.type==='erudito'&&u.st==='study'&&!u.mv)vc.know++;else if((u.type==='mercador'&&u.st==='rare')||u.type==='caravana')vc.wealth++}
+  for(const[k,id]of[['food','rtf'],['wood','rtw'],['gold','rtg'],['wealth','rts'],['know','rtk'],['oil','rto']]){const t=(vc[k]?(k==='know'?'🎓':k==='wealth'?'🐫':'👷')+vc[k]+' ':'')+(r[k]?'+'+r[k]+'/min':'');if($(id).textContent!==t)$(id).textContent=t}
   // objetivos
   OBJ=objList();const oh=OBJ.map((o,i)=>'<div class="ob'+(o.ok?' ok':'')+(o.go?' go':'')+'" data-oi="'+i+'"><i>'+(o.ok?'✔':'')+'</i><span>'+o.t+'</span></div>').join('');
   let relay=false;const ol=$('objl');if(oh!==ol._h){ol._h=oh;ol.innerHTML=oh;relay=true}
@@ -3694,12 +3764,12 @@ function techIcon(id){const key='t'+id;if(!ICO[key]){const T=TECH[id],[c,g]=icoC
   g.font='34px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';g.textAlign='center';g.textBaseline='middle';g.shadowColor='#000a';g.shadowBlur=4;g.fillText(T.ic,40,42);ICO[key]=c.toDataURL()}return ICO[key]}
 
 // ---------- textos da ficha ----------
-const ROLE={vill:'Coleta comida, madeira, ouro e pedra; constrói e conserta prédios.',inf:'Infantaria de corpo a corpo. Boa para defender e para derrubar prédios.',arq:'Ataca de longe. Fraco de perto: proteja com infantaria.',
+const ROLE={vill:'Coleta comida, madeira e metal; constrói e conserta prédios.',inf:'Infantaria de corpo a corpo. Boa para defender e para derrubar prédios.',arq:'Ataca de longe. Fraco de perto: proteja com infantaria.',
   cav:'Rápido e forte. Ótimo contra arqueiros e para invadir.',arqcav:'Arqueiro a cavalo: rápido e atira de longe.',elef:'Muito forte e resistente; o golpe acerta vários de uma vez.',
   cerco:'Derruba prédios e muralhas de longe. Lento e fraco de perto.',sac:'Cura os seus e converte inimigos para o seu lado.',
   pesc:'Barco que pesca no mar e leva o peixe para a Doca.',trans:'Carrega tropas pela água.',bguer:'Barco de guerra.',trir:'Barco de guerra forte (trirreme).'};
 const BDESC={tc:'Coração da cidade: treina aldeões, avança de era, aumenta a população e amplia a sua fronteira. Atira flechas.',casa:'Mais espaço para a população.',
-  celeiro:'Recebe comida. Pesquisas de torre e muralha.',deposito:'Recebe madeira, ouro e pedra. Pesquisas de armas e armaduras.',doca:'Barcos de pesca, transporte e guerra.',
+  celeiro:'Recebe comida. Pesquisas de torre e muralha.',deposito:'Recebe madeira e metal. Pesquisas de armas e armaduras.',doca:'Barcos de pesca, transporte e guerra.',
   mercado:'Pesquisas que melhoram a coleta. Libera a Fazenda.',fazenda:'Comida sem fim: um aldeão cultiva. Quando acaba, replanta.',maravilha:'Se ficar de pé por 5 minutos, você vence!',
   quartel:'Treina infantaria.',arquearia:'Treina arqueiros.',estabulo:'Treina cavalaria, carros e elefantes.',academia:'Treina hoplitas.',templo:'Treina sacerdotes; pesquisas de fé.',
   oficina:'Treina máquinas de cerco.',torre:'Atira flechas nos inimigos que chegam perto.',muralha:'Bloqueia a passagem do inimigo. Arraste do começo ao fim.'};
@@ -3783,8 +3853,8 @@ $('wx').onclick=()=>{if(G){snd('click');toast(seasonInfo())}};
 //   desenhos dos raros, ruínas, moedas, carroças e mercadores
 // =========================================================
 window.__RA.newGame=newGame;
-Object.assign(ROLE,{caravana:'Leva mercadorias entre o Mercado e outra cidade sozinha: cada viagem rende ouro. Quanto mais longe, mais ouro.',
-  mercador:'Trabalha um recurso raro dentro da sua fronteira: rende ouro e liga o bônus do recurso. Vai sozinho ao raro livre mais perto.',
+Object.assign(ROLE,{caravana:'Leva mercadorias entre o Mercado e outra cidade sozinha: cada viagem rende riqueza. Quanto mais longe, mais riqueza.',
+  mercador:'Trabalha um recurso raro dentro da sua fronteira: rende riqueza e liga o bônus do recurso. Vai sozinho ao raro livre mais perto.',
   general:'Comandante: tropas perto dele (5 quadrados) ganham +15% de ataque e +1 de armadura. Habilidade: Marcha forçada.',
   carroca:'Tropas perto dela não sofrem atrito em terra inimiga e se curam aos poucos.'});
 Object.assign(BDESC,{biblioteca:'Linhas de pesquisa do império: Cívica (mais cidades, fronteira e impostos), Comércio (coleta e caravanas) e Ciência (pesquisas mais rápidas).',
@@ -3804,7 +3874,7 @@ getCmds=function(){const out=getCmds2();const s=selEnts();const e=s[0];if(!e||e.
   return out.slice(0,12)};
 const cardInfo0=cardInfo;
 cardInfo=function(c){if(c.kind==='ln'){const k=c.key,v=lvl(0,k);
-    return{t:'Linha '+LINES[k].n+' '+ROMAN[v+1],sub:'Biblioteca · nível '+(v+1)+' de '+LN_N+' · '+AGES[LN_AGE[v]],txt:LINES[k].d+(k==='cvc'?'<br><b>Agora:</b> até '+cityMax(0)+' cidades · impostos '+5*v+' de ouro/min por cidade':k==='com'?'<br><b>Agora:</b> coleta +'+5*v+'% · caravanas +'+20*v+'%':'<br><b>Agora:</b> pesquisas '+10*v+'% mais rápidas'),time:Math.round(LN_T[v]*sciMul(0)),btn:'📜 Pesquisar'}}
+    return{t:'Linha '+LINES[k].n+' '+ROMAN[v+1],sub:'Biblioteca · nível '+(v+1)+' de '+LN_N+' · '+AGES[LN_AGE[v]],txt:LINES[k].d+(k==='cvc'?'<br><b>Agora:</b> até '+cityMax(0)+' cidades · impostos '+5*v+' de riqueza/min por cidade':k==='com'?'<br><b>Agora:</b> coleta +'+5*v+'% · caravanas +'+20*v+'%':'<br><b>Agora:</b> pesquisas '+10*v+'% mais rápidas'),time:Math.round(LN_T[v]*sciMul(0)),btn:'📜 Pesquisar'}}
   return cardInfo0(c)};
 // ---------- tocar num recurso raro ou numa ruína ----------
 function ronPick(sx,sy){let best=null,bd=26;
@@ -3848,7 +3918,7 @@ function drawRonUp(){if(!G.rare)return;const t=performance.now()/1000;
     else{col(-9,8,0);col(6,6,.1);ctx.fillStyle='#a89e88';ctx.fillRect(I-12,J-3,24,4)}
     ctx.globalAlpha=1}
   for(const f of G.fx){const I=f.x-f.y,J=(f.x+f.y)/2;
-    if(f.k==='coin'){ctx.globalAlpha=clamp(1.6-f.t,0,1);ctx.font='bold 11px Georgia,serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#2a1804';ctx.strokeText('+'+f.v+' ouro',I,J-40-f.t*16);ctx.fillStyle='#ffd84a';ctx.fillText('+'+f.v+' ouro',I,J-40-f.t*16)}
+    if(f.k==='coin'){ctx.globalAlpha=clamp(1.6-f.t,0,1);ctx.font='bold 11px Georgia,serif';ctx.textAlign='center';ctx.lineWidth=3;ctx.strokeStyle='#2a1804';ctx.strokeText('+'+f.v+' riqueza',I,J-40-f.t*16);ctx.fillStyle='#ffd84a';ctx.fillText('+'+f.v+' riqueza',I,J-40-f.t*16)}
     else if(f.k==='loot'){ctx.globalAlpha=clamp(1-f.t/1.6,0,1);ctx.strokeStyle='#ffe08a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(I,J-10,8+f.t*30,0,7);ctx.stroke()}}
   ctx.globalAlpha=1}
 const drawMM0=drawMM;
@@ -3895,7 +3965,7 @@ function orderLabel(us,t){const vill=us.some(u=>u.type==='vill');
   if(t.k==='u'&&t.o===0){if(t.type==='trans')return'⛵ Embarcar';if(us.every(u=>u.type==='sac'))return'✨ Curar';return'🚶 Mover'}
   if(t.o===1)return us.every(u=>u.type==='sac')?'✨ Converter':'⚔ Atacar';
   if(t.k==='u'&&t.o===2)return vill?'🏹 Caçar':'⚔ Atacar';
-  if(t.k==='r')return vill||us.some(u=>u.type==='pesc')?(t.sub==='tree'?'🪓 Cortar madeira':t.sub==='gold'?'⛏ Minerar ouro':t.sub==='stone'?'⛏ Quebrar pedra':t.sub==='fish'?'🎣 Pescar':t.sub==='carc'?'🍖 Recolher carne':'🧺 Colher frutas'):'🚶 Mover';
+  if(t.k==='r')return vill||us.some(u=>u.type==='pesc')?(t.sub==='tree'?'🪓 Cortar madeira':t.sub==='gold'||t.sub==='stone'?'⛏ Minerar metal':t.sub==='fish'?'🎣 Pescar':t.sub==='carc'?'🍖 Recolher carne':'🧺 Colher frutas'):'🚶 Mover';
   if(t.k==='b'&&t.o===0)return t.done<1?'🔨 Construir':t.type==='fazenda'?'🌾 Cultivar':t.hp<t.mhp?'🔧 Consertar':'📦 Levar recursos';
   return'🚶 Mover'}
 const smartOrder0=smartOrder;
@@ -3922,6 +3992,13 @@ const drawAtmos0=drawAtmos;
 drawAtmos=function(){drawAtmos0();try{drawPending()}catch(e){}};
 
 
+// ---------- Universidade e Erudito (textos e desenho) ----------
+Object.assign(ROLE,{erudito:'Estuda na Universidade e gera conhecimento (até 7 por Universidade). Vai sozinho para a Universidade com vaga.'});
+Object.assign(BDESC,{universidade:'Treina Eruditos. Cada erudito estudando aqui gera conhecimento, que paga as linhas da Biblioteca e as eras.',mercado:'Rende riqueza todo minuto. Pesquisas que melhoram a coleta. Treina Caravanas e Mercadores. Libera a Fazenda.'});
+const extraSheets1=extraSheets;
+extraSheets=function(o,C,skin){extraSheets1(o,C,skin);const H=[46,64,23,58];
+  mkSheet('erudito'+o,H[0],H[1],H[2],H[3],(g,ax,ay,fr,dir,meta)=>drawHuman(g,ax,ay,{hat:'hood',wpn:'staff',robe:'#2f5fb0'},C,skin,fr,dir===1,meta))};
+
 // =========================================================
 //   COLETA AUTOMÁTICA (como no Rise e nos Age mais novos)
 //   · aldeão parado vai trabalhar sozinho no recurso que mais falta (segue o Plano de coleta)
@@ -3936,9 +4013,10 @@ const PLANS={
   food:{n:'Mais comida',ic:'🍖',w:[{food:.75,wood:.25,gold:0,stone:0},{food:.62,wood:.26,gold:.1,stone:.02},{food:.55,wood:.25,gold:.16,stone:.04},{food:.5,wood:.24,gold:.2,stone:.06}]},
   wood:{n:'Mais madeira',ic:'🪵',w:[{food:.45,wood:.55,gold:0,stone:0},{food:.38,wood:.5,gold:.1,stone:.02},{food:.34,wood:.44,gold:.16,stone:.06},{food:.32,wood:.4,gold:.2,stone:.08}]},
   gold:{n:'Mais ouro',ic:'🪙',w:[{food:.55,wood:.35,gold:.1,stone:0},{food:.4,wood:.28,gold:.28,stone:.04},{food:.34,wood:.26,gold:.34,stone:.06},{food:.32,wood:.24,gold:.36,stone:.08}]}};
+for(const k in PLANS)for(const w of PLANS[k].w){w.gold+=w.stone;w.stone=0}PLANS.gold.n='Mais metal';PLANS.gold.ic='⛓';
 const PLAN_ORD=['eq','food','wood','gold'];
-const RCAT=s=>s==='tree'?'wood':s==='gold'||s==='stone'?s:'food';
-const RNAME={food:'🍖 comida',wood:'🪵 madeira',gold:'🪙 ouro',stone:'🪨 pedra'};
+const RCAT=s=>s==='tree'?'wood':s==='gold'||s==='stone'?'gold':'food';
+const RNAME={food:'🍖 comida',wood:'🪵 madeira',gold:'⛓ metal',stone:'⛓ metal'};
 function autoOn(){return OPT.autoV&&G&&!G.P[0].ai}
 // alvo de cada tipo perto de um ponto (sem lotar: no máximo 3 por arbusto/carcaça, 6 por árvore/mina)
 function autoTarget(cat,x,y,cnt){
