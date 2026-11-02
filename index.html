@@ -158,7 +158,7 @@ button{font-family:inherit;color:inherit}
 #pCmd #cmds{grid-template-columns:repeat(6,38px);grid-template-rows:repeat(2,38px);background:none;border:none;box-shadow:none;padding:0}
 #pCmd .cb{width:38px;height:38px}
 #pCmd.one #cmds{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:34px;grid-template-rows:34px;min-width:34px}
-#pAl.calm>.pc{display:none}#pCmd.empty>.pc{display:none}#pCmd.empty.tab>.ph{position:static;border-bottom:none;border-radius:6px}#pAl.calm>.ph{border-radius:6px;border-bottom:none;opacity:.85}
+#pAl.calm>.pc{display:none}#pCmd.empty>.pc{display:none}.pn.sq>.pc{display:none}.pn.sq>.ph{border-radius:6px;border-bottom:none}#pCmd.empty.tab>.ph{position:static;border-bottom:none;border-radius:6px}#pAl.calm>.ph{border-radius:6px;border-bottom:none;opacity:.85}
 #pSel #info .grp span{width:38px;height:38px}#pSel #info .grp img{width:36px;height:36px}
 #pCmd.one .cb{width:34px;height:34px;font-size:17px}
 #pCmd.one .cb img{width:30px;height:30px}
@@ -387,10 +387,11 @@ button{font-family:inherit;color:inherit}
       <p><b>RECURSOS</b><br>Comida: arbustos, caça (gazela, elefante), peixes e fazendas · Madeira: árvores · Ouro e Pedra: minas.<br>Aldeões levam tudo ao Centro Urbano, Celeiro (comida) ou Depósito. Barcos pesqueiros levam peixe para a Doca.</p>
       <p><b>ERAS</b><br>Pedra → Ferramentas → Bronze → Ferro. Para avançar, construa 2 prédios diferentes da era atual e pague no Centro Urbano.</p>
       <p><b>FRONTEIRAS E CIDADES</b><br>A linha azul marca o seu território. Casas, fazendas, mercado e prédios militares só dentro dela; depósito, celeiro, doca, torre e muralha também na terra neutra. Torres e cidades novas (Centro Urbano, a partir da era das Ferramentas) aumentam a fronteira. Centro Urbano não é destruído: com 0 de vida ele cai, e quem ficar perto com soldados, sem defensores, toma a cidade em 30 segundos. Tropas no território inimigo perdem vida aos poucos.</p>
-      <p><b>POPULAÇÃO (como no Rise)</b><br>Não precisa de casas: começa em 50. Cada Organização Militar (no Centro Urbano) dá +25, até 200. A Maravilha pronta dá mais 50: até 250.</p>
+      <p><b>POPULAÇÃO (como no Rise)</b><br>Não precisa de casas: começa em 50. Cada nível da linha Militar (na Biblioteca) dá +25, até 200. A Maravilha pronta dá mais 50: até 250.</p>
       <p><b>BIBLIOTECA (linhas de pesquisa)</b><br>🏛️ Cívica: +1 cidade no limite (começa com 3), fronteira maior e impostos em ouro de cada cidade. ⚖️ Comércio: coleta +5% por nível e caravanas melhores. 🔭 Ciência: pesquisas e eras 10% mais rápidas por nível.</p>
       <p><b>COMÉRCIO E RAROS</b><br>🐫 Caravana (Mercado): anda sozinha entre o Mercado e outra cidade e traz ouro a cada viagem; quanto mais longe, mais ouro. 🧺 Mercador: cuida de um recurso raro (💎🍇🧂🐎🌲🪨🧵🌿) dentro da sua fronteira: dá ouro e um bônus. Toque num raro para ver o que ele dá.</p>
       <p><b>OS 6 RECURSOS (como no Rise)</b><br>🍖 Comida, 🪵 Madeira e ⛓ Metal: os aldeões coletam e levam ao depósito (as pedreiras viraram minério de metal). 🪙 Riqueza: caravanas, mercadores nos raros, impostos e Mercados. 📘 Conhecimento: Eruditos estudando na Universidade (até 7 por Universidade); paga as linhas da Biblioteca e as eras. 🛢 Petróleo: chega nas eras industriais.</p>
+      <p><b>MERCADO E LIMITE DE COMÉRCIO</b><br>💱 No Mercado você compra e vende 100 de comida, madeira ou metal por riqueza. Quem compra muito faz o preço subir; quem vende faz cair; com o tempo volta ao normal. 📈 Cada recurso coletado rende no máximo um limite por minuto (começa em 300/min); o que passa se perde e aparece 🔒 na barra. A linha ⚖️ Comércio e as eras aumentam o limite.</p>
       <p><b>COLETA AUTOMÁTICA</b><br>🤖 Aldeão parado vai trabalhar sozinho no recurso que mais falta, seguindo o ⚖️ Plano de coleta (Equilibrado, Mais comida, Mais madeira, Mais ouro). Quem termina um Celeiro ou Depósito já começa a coletar ali perto. Barcos de pesca voltam a pescar. 🔁 Fila automática: o Centro Urbano treina aldeões sem parar. Tudo se liga e desliga no Centro Urbano; ✋ Parar segura o aldeão por 45 s.</p>
       <p><b>RUÍNAS E FORTE</b><br>🏺 Ruínas antigas: a primeira unidade que chegar ganha um prêmio. 🏰 Forte (Era do Bronze): amplia a fronteira, atira forte e treina o ⚔️ General (+15% de ataque e +1 de armadura para quem está perto; Marcha forçada) e a 🛒 Carroça de Suprimentos (sem atrito e cura perto dela).</p>
       <p><b>DICAS</b><br> O Mercado libera fazendas. Cuidado com leões e elefantes selvagens! O sacerdote converte inimigos e cura os seus.</p>
@@ -1071,7 +1072,7 @@ function doReturn(u,T,dt){
   let d=E.get(u.tg);
   if(!d||d.dead||d.done<1||u.fail>3){if(d&&u.fail>3){u.bad=d.id;u.badT=G.t}d=findDrop(u.o,u.ct,u.x,u.y,u.badT&&G.t-u.badT<60?u.bad:0,isNav(u));if(!d){u.st='idle';return}u.tg=d.id;u.fail=0;u.mv=false}
   if(!approach(u,d,dt,isNav(u)?30:24))return;
-  G.P[u.o].res[u.ct]+=u.carry;G.st.gath[u.o]+=u.carry;if(u.o===0)incAdd(u.ct,u.carry);u.carry=0;
+  {const a=capAdd(u.o,u.ct,u.carry);G.P[u.o].res[u.ct]+=a;G.st.gath[u.o]+=a;if(u.o===0)incAdd(u.ct,a)}u.carry=0;
   const r=E.get(u.lastRes);
   if(r&&!r.dead&&(r.k!=='b'||!farmTaken(r,u))&&!(r.k==='r'&&r.amt<=0)){orderGather(u,r)}
   else{let nr=findRes(u.lsub,u.x,u.y,u.lsub==='farm'?10:14,u.o);if(!nr&&u.lsub==='carc'&&u.hunt)nr=findRes(u.hunt,u.x,u.y,12,u.o);if(!(nr&&orderGather(u,nr)!==false))u.st='idle'}
@@ -1244,7 +1245,7 @@ function updBld(b,dt){
     if(b.o===0)snd('unit');
     if(b.rally){const rt=b.rally.id&&E.get(b.rally.id);if(rt&&canGather(u,rt))orderGather(u,rt);else if(passFor(u)[tileOf(b.rally.x,b.rally.y)])orderMove(u,b.rally.x,b.rally.y)}}
   else{const k=b.q.findIndex(x=>x==='mil'||x==='age'||x.startsWith('t:')||x.startsWith('ln:'));if(k>0){b.q.unshift(b.q.splice(k,1)[0]);b.qt=0;b.wait=false;return} // pesquisa na fila passa na frente quando a população está cheia
-    if(!b.wait&&b.o===0)toast((P.mil||0)<MIL_N?'👥 População no limite! Pesquise Organização Militar no Centro Urbano.':'👥 População no máximo.');b.wait=true}
+    if(!b.wait&&b.o===0)toast((P.mil||0)<MIL_N?'👥 População no limite! Pesquise a linha Militar na Biblioteca.':'👥 População no máximo.');b.wait=true}
 }
 function itemTime(b,it){if(it==='age')return AGETIME[G.P[b.o].age+1];if(it==='mil')return MILTIME[G.P[b.o].mil||0];if(it.startsWith('t:'))return TECH[it.slice(2)].t;return ST({o:b.o,type:it}).t}
 function itemCost(p,it){if(it==='age')return AGECOST[G.P[p].age+1];if(it==='mil')return MILCOST[G.P[p].mil||0];if(it.startsWith('t:'))return TECH[it.slice(2)].cost;return costOf(p,it)}
@@ -1381,7 +1382,7 @@ function updCities(dt){
       if(!att){t.hp=Math.min(t.mhp,t.hp+t.mhp*.01*dt);if(t.hp>=t.mhp*.25){t.down=0;t.cp=0;if(t.o===0)toast('🏛 Seu Centro Urbano voltou a funcionar.')}}}}
   // atrito: quem fica no território inimigo vai perdendo vida aos poucos (nunca morre disso)
   for(const u of G.U){if(u.dead||u.inT||u.o>1||isNav(u))continue;const d=DOM[tileOf(u.x,u.y)];
-    if(d>=0&&d!==u.o&&!(u.sup>G.t)){u.att=(u.att||0)+dt;if(u.att>ATTR_DELAY){const mh=ST(u).hp,fl=mh*ATTR_FLOOR;if(u.hp>fl)u.hp=Math.max(fl,u.hp-mh*ATTR_RATE*dt)}}
+    if(d>=0&&d!==u.o&&!(u.sup>G.t)){u.att=(u.att||0)+dt;if(u.att>ATTR_DELAY){const mh=ST(u).hp,fl=mh*ATTR_FLOOR;if(u.hp>fl)u.hp=Math.max(fl,u.hp-mh*ATTR_RATE*dt*Math.max(.25,1-.12*((G.P[u.o]&&G.P[u.o].mil)||0)))}}
     else if(u.att)u.att=0}
 }
 
@@ -1646,7 +1647,7 @@ function aiTick(p){
   const queued=blds.reduce((s,b)=>s+b.q.filter(q=>q!=='age'&&!q.startsWith('t:')).length,0);
   // casas
   // população (como no Rise): Organização Militar no Centro Urbano quando chega perto do limite
-  {const ml=P.mil||0;if(tc&&ml<MIL_N&&P.age>=MILAGE[ml]&&P.pop+queued+6>=P.cap&&!blds.some(b=>b.q.includes('mil'))&&afford(p,MILCOST[ml])){pay(p,MILCOST[ml]);tc.q.push('mil')}}
+  {const ml=P.mil||0,lb=blds.find(b=>b.type==='biblioteca'&&b.done>=1);if(lb&&lb.q.length<2&&ml<MIL_N&&P.age>=MILAGE[ml]&&P.pop+queued+6>=P.cap&&!blds.some(b=>b.q.includes('mil'))&&afford(p,MILCOST[ml])){pay(p,MILCOST[ml]);lb.q.push('mil')}}
   // aldeões
   const nextAge=P.age<3?AGECOST[P.age+1]:null;
   const ageGoal=P.age<3&&vills.length>=D.ageV[P.age];
@@ -3043,7 +3044,7 @@ function getCmds(){
         act:n=>{for(let i=0;i<(n||1);i++){const w=canTrain(b,t);if(w){if(i===0)toast(w);break}pay(0,costOf(0,t));b.q.push(t)}}})}
       if(b.type==='tc'&&G.P[0].age<3){const a=G.P[0].age+1,c=AGECOST[a];const busy=G.B.some(x=>!x.dead&&x.o===0&&x.q.includes('age'));const rq=ageReqMsg(0);
         out.push({ic:'⬆️',nm:'Avançar: '+AGES[a],cost:c,dis:busy?'Já está avançando':rq?rq:!afford(0,c)?'Faltam recursos: '+costTxt(c):null,cnt:b.q.includes('age')?1:0,act:()=>{pay(0,c);b.q.push('age')}})}
-      if(b.type==='tc'&&(G.P[0].mil||0)<MIL_N){const P=G.P[0],ml=P.mil||0,c=MILCOST[ml],ra=MILAGE[ml],busy=G.B.some(x=>!x.dead&&x.o===0&&x.q.includes('mil'));
+      if(b.type==='biblioteca'&&(G.P[0].mil||0)<MIL_N){const P=G.P[0],ml=P.mil||0,c=MILCOST[ml],ra=MILAGE[ml],busy=G.B.some(x=>!x.dead&&x.o===0&&x.q.includes('mil'));
         out.push({ic:'🎖️',nm:'Organização Militar '+ROMAN[ml+1],d:'População máxima +'+POP_STEP+' (agora '+P.cap+')',cost:c,dis:busy?'Já está pesquisando':P.age<ra?'Requer '+AGES[ra]:!afford(0,c)?'Faltam recursos: '+costTxt(c):null,lock:P.age<ra,cnt:b.q.includes('mil')?1:0,act:()=>{pay(0,c);b.q.push('mil')}})}
       for(const id of BT[b.type].res||[]){if(G.P[0].techs.includes(id))continue;const T=TECH[id];const r=canResearch(b,id);
         out.push({tech:T.ic,nm:T.n,d:T.d,cost:T.cost,dis:r,lock:G.P[0].age<T.age,cnt:b.q.includes('t:'+id)?1:0,act:()=>{pay(0,T.cost);b.q.push('t:'+id)}})}
@@ -3459,7 +3460,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 21';$('ver').textContent=VERSAO;
+const VERSAO='Versão 22';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -3548,7 +3549,8 @@ function hudObstacles(skip){const L=[];for(const k of PNL){if(k===skip||!HS.p[k]
 function fitTopStack(){const s=hudScale();
   for(const [k,list] of[['obj','objl'],['al','all']]){const el=$(PEL[k]);if(!HS.p[k].v||HS.p[k].m||!el.offsetParent)continue;const r=el.getBoundingClientRect();
     let lim=innerHeight-4;for(const o of hudObstacles(k)){if(o.k==='obj'||o.k==='al'||o.k.startsWith('#'))continue;if(o.r>r.left&&o.l<r.right&&o.t>r.top)lim=Math.min(lim,o.t-6)}
-    if(r.bottom>lim){const pc=$(list),pr=pc.getBoundingClientRect();pc.style.maxHeight=Math.max(34,(lim-pr.top)/s)+'px'}}}
+    el.classList.remove('sq');const r2=el.getBoundingClientRect();
+    if(r2.bottom>lim){const pc=$(list),pr=pc.getBoundingClientRect(),room=(lim-pr.top)/s;if(room<34)el.classList.add('sq');else pc.style.maxHeight=room+'px'}}}
 function noOverlapXY(el,x,y){const w=el.offsetWidth,h=el.offsetHeight,obs=hudObstacles(null),hit=(X,Y)=>obs.some(o=>X<o.r&&X+w>o.l&&Y<o.b&&Y+h>o.t);
   if(!hit(x,y))return[x,y];
   // tenta: subir, ir para o meio da tela, canto de cima à direita
@@ -3639,7 +3641,7 @@ function objList(){
   else{const w=G.B.find(b=>!b.dead&&b.o===0&&b.type==='maravilha');out.push({t:w?(w.done<1?'Termine a Maravilha ('+Math.floor(w.done*100)+'%)':'Proteja a Maravilha ('+fmtT(WONDER_T-G.won[0])+')'):'Construa uma Maravilha',ok:false,go:selVill})}
   if(a>=1&&hasReq(0,'biblioteca')&&!hasReq(0,'universidade'))out.push({t:'Construa uma Universidade e treine Eruditos (conhecimento)',ok:false,go:selVill});
   if(a>=1&&!hasReq(0,'biblioteca'))out.push({t:'Construa uma Biblioteca (linhas Cívica, Comércio e Ciência)',ok:false,go:selVill});
-  const ml=P.mil||0;if(ml<MIL_N&&P.age>=MILAGE[ml])out.push({t:'Organização Militar '+ROMAN[ml+1]+' (população +'+POP_STEP+')',ok:false,go:quickTC});
+  const ml=P.mil||0;if(ml<MIL_N&&P.age>=MILAGE[ml])out.push({t:'Linha Militar '+ROMAN[ml+1]+' na Biblioteca (população +'+POP_STEP+')',ok:false,go:()=>{const b=G.B.find(x=>!x.dead&&x.o===0&&x.type==='biblioteca'&&x.done>=1);if(!b){selVill();toast('Construa uma Biblioteca primeiro');return}SEL=[b.id];const c=ctr(b);centerOn(c.x,c.y);updHUD(true)}});
   const nc=G.B.filter(b=>!b.dead&&b.o===0&&b.type==='tc'&&b.done>=1).length;
   if(a>=1&&nc<2)out.push({t:'Funde uma 2ª cidade (Centro Urbano)',ok:false,go:selVill});
   if(a>=2)out.push({t:'Domine 65% da terra (agora '+Math.round(domShare(0)*100)+'%)',ok:domShare(0)>=.65,go:null});
@@ -3798,7 +3800,7 @@ function cardInfo(c){
   if(c.kind==='t'){const T=TECH[c.key];return{t:T.n,sub:'Pesquisa · '+AGES[T.age]+(T.req?' · precisa de '+TECH[T.req].n:''),txt:T.d,time:T.t,btn:'📜 Pesquisar'}}
   if(c.kind==='age'){const a=P.age+1,nu=Object.keys(UT).filter(t=>UT[t].age===a&&UT[t].cls!=='animal').map(t=>STAT[0][t].n),nb=Object.keys(BT).filter(t=>BT[t].age===a).map(t=>BT[t].n);
     return{t:'Avançar para a '+AGES[a]+' ('+ROMAN[a+1]+')',sub:'Você está na '+AGES[P.age]+' ('+ROMAN[P.age+1]+')',txt:'Precisa de 2 destes prédios: '+AGEREQ[a].map(t=>(hasReq(0,t)?'✅':'⬜')+' '+BT[t].n).join(' · ')+(nb.length?'<br><b>Libera prédios:</b> '+nb.join(', '):'')+(nu.length?'<br><b>Libera tropas:</b> '+nu.join(', '):''),time:AGETIME[a],btn:'🎺 Avançar de era'}}
-  if(c.kind==='mil'){const ml=P.mil||0;return{t:'Organização Militar '+ROMAN[ml+1],sub:'Pesquisa no Centro Urbano · nível '+(ml+1)+' de '+MIL_N,txt:'Aumenta a população máxima em +'+POP_STEP+' (agora '+P.cap+', máximo '+POP_MIL+' sem Maravilha).',time:MILTIME[ml],btn:'🎖️ Pesquisar'}}
+  if(c.kind==='mil'){const ml=P.mil||0;return{t:'Organização Militar '+ROMAN[ml+1],sub:'Linha Militar da Biblioteca · nível '+(ml+1)+' de '+MIL_N,txt:'Diminui o atrito das tropas em terra inimiga (−12% por nível). Aumenta a população máxima em +'+POP_STEP+' (agora '+P.cap+', máximo '+POP_MIL+' sem Maravilha).',time:MILTIME[ml],btn:'🎖️ Pesquisar'}}
   return{t:c.nm,sub:'',txt:c.d||'',btn:'✔ Fazer'}
 }
 // ---------- liga ícones e tipo de cada comando ----------
@@ -4179,6 +4181,70 @@ $('bstart').onclick=()=>{OPT.civ=SETUP.civ;OPT.map=SETUP.map;OPT.diff=SETUP.diff
   loading(()=>{newGame(SETUP);startGame();const c=G.cfg,S=SEASONS[c.est];
     toast(S.ic+' '+S.n+' · '+{aman:'🌅 amanhecer',dia:'☀️ dia',tarde:'🌇 entardecer',noite:'🌙 noite'}[c.hora]+(c.clima!=='clear'?' · '+{rain:'🌧 chuva',storm:'⛈ tempestade',snow:'🌨 neve'}[c.clima]:'')+'<br>Dica: selecione os aldeões e mande coletar!')})};
 // o ícone do tempo no topo: estação + hora + clima (fixos)
+
+// =========================================================
+//   MERCADO DE TROCA E LIMITE DE COMÉRCIO (como no Rise)
+//   · no Mercado: comprar e vender comida, madeira e metal por riqueza; o preço sobe quando compram
+//     e desce quando vendem, e volta devagar ao normal (conhecimento não se negocia)
+//   · limite de comércio: cada recurso coletado por aldeões/barcos rende no máximo X por minuto;
+//     o que passa do limite se perde. A linha Comércio e as eras aumentam o limite.
+// =========================================================
+const TRADE_K=['food','wood','gold'],TRADE_N=100,TRADE_IC={food:'🍖',wood:'🪵',gold:'⛓'};
+const CAP_BASE=300,CAP_AGE=60,CAP_COM=120;
+function capOf(o,k){return Math.round((CAP_BASE+CAP_AGE*G.P[o].age+CAP_COM*lvl(o,'com'))*(o===1?Math.max(1,DIFF[G.diff].gm):1))}
+function capInit(){if(!G.cap)G.cap=[{},{}];if(!G.capHit)G.capHit=[{},{}];if(!G.mkt)G.mkt=[{food:1,wood:1,gold:1},{food:1,wood:1,gold:1}]}
+// quanto deste depósito entra (o resto passa do limite)
+function capAdd(o,k,a){if(o>1||!TRADE_K.includes(k))return a;capInit();const C=G.cap[o];if(C[k]==null)C[k]=capOf(o,k)/3;
+  const ok=Math.min(a,C[k]);C[k]-=ok;if(ok<a-.01){G.capHit[o][k]=G.t;if(o===0&&G.t-(UI.capT&&UI.capT[k]||-99)>90){UI.capT=UI.capT||{};UI.capT[k]=G.t;
+      toast('📈 Limite de comércio de '+RNM[k]+': '+capOf(0,k)+'/min. Pesquise ⚖️ Comércio na Biblioteca ou mande aldeões para outro recurso.')}}
+  return ok}
+// o limite se recarrega a cada segundo; os preços voltam aos poucos para 1
+const ronTick3=ronTick;
+ronTick=function(dt){ronTick3(dt);capInit();
+  for(let o=0;o<2;o++){for(const k of TRADE_K){const m=capOf(o,k);G.cap[o][k]=Math.min(m/3,(G.cap[o][k]??m/3)+m/60*dt);const p=G.mkt[o][k];G.mkt[o][k]=p+(1-p)*Math.min(1,dt*.004)}}};
+// ---------- comprar e vender ----------
+const buyPrice=(o,k)=>Math.round(TRADE_N*G.mkt[o][k]);
+const sellPrice=(o,k)=>Math.round(TRADE_N*G.mkt[o][k]*.75);
+function trade(o,k,buy){capInit();const P=G.P[o],p=G.mkt[o];
+  if(buy){const c=buyPrice(o,k);if(P.res.wealth<c)return false;P.res.wealth-=c;P.res[k]+=TRADE_N;p[k]=Math.min(4,p[k]*1.07)}
+  else{if(P.res[k]<TRADE_N)return false;P.res[k]-=TRADE_N;const g=sellPrice(o,k);P.res.wealth+=g;p[k]=Math.max(.25,p[k]*.94)}
+  return true}
+function tradeIcon(k,buy){const key='tr_'+k+(buy?1:0);if(!ICO[key]){const[c,g]=icoC();medal(g,buy?'#5ac07a':'#e0a040',buy?'#0e3a1e':'#5a3a08');
+    g.font='30px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(TRADE_IC[k],38,40);badge(g,buy?'+':'−',buy?'#2e8a2a':'#b03020');ICO[key]=c.toDataURL()}return ICO[key]}
+function mktIcon(){const key='mkt';if(!ICO[key]){const[c,g]=icoC();medal(g,'#e0b040','#5a3a08');g.font='32px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText('💱',40,41);ICO[key]=c.toDataURL()}return ICO[key]}
+UI.mktPage=0;
+const getCmds4=getCmds;
+getCmds=function(){const s=selEnts(),e=s[0];
+  if(e&&e.o===0&&e.k==='b'&&e.type==='mercado'&&e.done>=1&&UI.mktPage){capInit();const out=[];
+    for(const k of TRADE_K){const bp=buyPrice(0,k),sp=sellPrice(0,k);
+      out.push({img:tradeIcon(k,1),trade:1,cnt:bp,nm:'Comprar '+TRADE_N+' de '+RNM[k]+' por '+bp+' de riqueza',dis:G.P[0].res.wealth<bp?'Faltam '+(bp-(G.P[0].res.wealth|0))+' de riqueza':null,
+        act:()=>{if(trade(0,k,1)){snd('coin');toast('🛒 +'+TRADE_N+' '+RNM[k]+' (−'+bp+' riqueza) · próximo: '+buyPrice(0,k))}}});
+      out.push({img:tradeIcon(k,0),trade:1,cnt:sp,nm:'Vender '+TRADE_N+' de '+RNM[k]+' por '+sp+' de riqueza',dis:G.P[0].res[k]<TRADE_N?'Precisa de '+TRADE_N+' de '+RNM[k]:null,
+        act:()=>{if(trade(0,k,0)){snd('coin');toast('💰 −'+TRADE_N+' '+RNM[k]+' (+'+sp+' riqueza) · próximo: '+sellPrice(0,k))}}})}
+    out.push({ic:'↩️',trade:1,nm:'Voltar',act:()=>{UI.mktPage=0;UI.sig=''}});
+    return out}
+  const out=getCmds4();
+  if(e&&e.o===0&&e.k==='b'&&e.type==='mercado'&&e.done>=1)out.splice(Math.min(out.length,11),0,{img:mktIcon(),trade:1,nm:'Comprar e vender',act:()=>{UI.mktPage=1;UI.sig=''}});
+  return out.slice(0,12)};
+// botões de troca agem com um toque só (sem ficha)
+const cmdTap1=cmdTap;
+cmdTap=function(i){const c=getCmds()[i];if(c&&c.trade){runCmd(c);updHUD(true);return}cmdTap1(i)};
+// trocar de seleção volta à página normal do Mercado
+const updHUD3=updHUD;
+updHUD=function(f){if(G&&UI.mktPage){const e=selEnts()[0];if(!e||e.type!=='mercado'){UI.mktPage=0;UI.sig=''}}updHUD3(f);
+  if(G&&UI.mktPage){const t=$('cmdt');if(t)t.textContent='💱 Mercado · preços: '+TRADE_K.map(k=>TRADE_IC[k]+' '+buyPrice(0,k)+'/'+sellPrice(0,k)).join(' ')}};
+// ---------- painel: mostra quando um recurso bateu no limite ----------
+const hudExtra1=hudExtra;
+hudExtra=function(){hudExtra1();if(!G||!G.capHit)return;
+  for(const[k,id]of[['food','rtf'],['wood','rtw'],['gold','rtg']]){const el=$(id);if(!el)continue;const hit=G.t-(G.capHit[0][k]||-99)<4;
+    if(hit&&!el.textContent.includes('🔒'))el.textContent+=' 🔒';el.style.color=hit?'#ffb070':''}};
+// ---------- ficha da linha Comércio mostra o limite ----------
+LINES.com.d='coleta +5% · caravanas e mercadores +20% · limite de comércio +'+CAP_COM+'/min por recurso';
+// ---------- IA: vende o que sobra e compra o que falta ----------
+const ronAI2=ronAI;
+ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){ronAI2(p,blds,has,any,build,htx,hty,toward,vills,army,res);
+  if(!blds.some(b=>b.type==='mercado'&&b.done>=1))return;capInit();
+  for(const k of TRADE_K){if(res[k]>1400&&G.mkt[p][k]>.6)trade(p,k,0);else if(res[k]<60&&res.wealth>buyPrice(p,k)+250)trade(p,k,1)}};
 </script>
 </body>
 </html>
