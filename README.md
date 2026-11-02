@@ -18,6 +18,7 @@ Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*),
 - Economia igual ao Rise: sem carregar, recursos infinitos com limite de trabalhadores, Acampamento de lenhadores, 5 fazendas por cidade, Celeiro/Serraria/Fundição/Refinaria
 - **Fronteiras:** cada cidade tem o seu território. Casas, fazendas e quartéis só dentro dele; torres e cidades novas aumentam a fronteira
 - **Várias cidades:** até 4 Centros Urbanos. Centro Urbano derrubado não some: quem cercar com soldados toma a cidade inteira
+- **Exército do Rise:** espião (quartel; perto de uma base inimiga mostra o que ela tem), 🔁 patrulha (vai e volta entre dois pontos até você dar outra ordem) e tropas que ficam +6% mais fortes a cada era
 - **Atrito:** tropas paradas no território inimigo perdem vida aos poucos
 - **População como no Rise:** sem casas; começa em 50 e cada Organização Militar (no Centro Urbano) dá +25, até 200; com a Maravilha de pé, até 250
 - Comida de arbustos, caça (gazelas, elefantes selvagens, leões), peixes e fazendas
@@ -33,5 +34,5 @@ Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*),
 
 ## Arquivos
 - `index.html` — o jogo inteiro (desenhos, regras, inteligência do inimigo, sons e música)
-- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `imperio-v33` → `imperio-v34`)
+- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `imperio-v34` → `imperio-v35`)
 - `manifest.json` e ícones — instalação como app
