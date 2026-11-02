@@ -353,7 +353,7 @@ button{font-family:inherit;color:inherit}
 
 <div id="menu" class="screen art on">
   <div class="mpanel">
-    <div class="mlogo"><h1 class="ttl">IMPÉRIO</h1><p class="sub">Do barro ao bronze, do bronze à glória.</p></div>
+    <div class="mlogo"><h1 class="ttl">IMPÉRIO</h1><p class="sub">Da Antiguidade à Era da Informação.</p></div>
     <nav class="mlist">
       <button class="mb mi" id="bcont" style="display:none"><b>▶</b><span>Continuar a jornada<small>Volte para a partida salva</small></span></button>
       <button class="mb mi" id="bnew"><b>⚔</b><span>Nova partida<small>Escolha o povo, o mapa e o inimigo</small></span></button>
@@ -683,7 +683,7 @@ function newGame(o){
   const seed=(Math.random()*1e9)|0;RNG=mulberry32(seed);
   if(o.map==='rand'||!MAPS[o.map])o=Object.assign({},o,{map:MAP_ORD[(Math.random()*MAP_ORD.length)|0]});
   setMapSize((MAPSZ[o.size]||MAPSZ.med).s);const MP=mapSpec(o.map),S=MW/72,A=S*S;
-  const aiCiv=CIVS[(RNG()*CIVS.length)|0].id;
+  const aiR=CIVS[(RNG()*CIVS.length)|0].id,aiCiv=o.ai&&o.ai!=='rand'&&CIVS.some(c=>c.id===o.ai)?o.ai:aiR;
   G={v:2,seed,diff:o.diff,map:o.map,t:0,nid:1,U:[],B:[],R:[],pj:[],fx:[],carc:{},terr:new Array(N).fill(0),exp:new Array(N).fill(0),
      P:[mkPlayer(o.civ),mkPlayer(aiCiv)],st:{kill:[0,0],lost:[0,0],gath:[0,0],city:[0,0]},won:[0,0],tw:[0,0],over:false,mw:MW,size:o.size||'med',dryB:MP.dry||0};
   E=new Map();occ.fill(0);STAT=[null,null];
@@ -1728,11 +1728,11 @@ function aiTick(p){
   // população (como no Rise): Organização Militar no Centro Urbano quando chega perto do limite
   {const ml=P.mil||0,lb=blds.find(b=>b.type==='biblioteca'&&b.done>=1);if(lb&&lb.q.length<2&&ml<MIL_N&&P.age>=MILAGE[ml]&&P.pop+queued+14>=P.cap&&!blds.some(b=>b.q.includes('mil'))&&afford(p,MILCOST[ml])){pay(p,MILCOST[ml]);lb.q.push('mil')}}
   // aldeões
-  const nextAge=P.age<MAXAGE?AGECOST[P.age+1]:null;
-  const ageGoal=P.age<MAXAGE&&vills.length>=D.ageV[P.age];
+  const nextAge=P.age<ENDAGE()?AGECOST[P.age+1]:null;
+  const ageGoal=P.age<ENDAGE()&&vills.length>=D.ageV[P.age];
   if(tc&&tc.q.length<2&&!tc.q.includes('age')&&vills.length+tc.q.length<(P.age===0?Math.min(D.vt,22):D.vt)&&afford(p,costOf(p,'vill'))&&!(ageGoal&&res.food>=nextAge.food*.6&&res.food<nextAge.food+50&&vills.length>8)){pay(p,costOf(p,'vill'));tc.q.push('vill')}
   // requisitos de era: 2 prédios diferentes da era atual
-  if(P.age<MAXAGE){const need=AGEREQ[P.age+1];const got=need.filter(t=>has(t)).length;
+  if(P.age<ENDAGE()){const need=AGEREQ[P.age+1];const got=need.filter(t=>has(t)).length;
     if(got<2&&vills.length>=6){for(const t of need){if(any(t))continue;if(t==='doca')continue;
       const near=t==='celeiro'?(findRes('berry',hb.x,hb.y,14,p)||{tx:htx,ty:hty}):t==='deposito'?(findRes('tree',hb.x,hb.y,20,p)||{tx:htx,ty:hty}):{tx:htx+(G.starts[0][0]-htx)*.1,ty:hty+(G.starts[0][1]-hty)*.1};
       if(build(t,near.tx,near.ty,t==='celeiro'||t==='deposito'?1:4,t==='celeiro'||t==='deposito'?6:12))break;break}}
@@ -3166,7 +3166,7 @@ function getCmds(){
     if(b.done>=1){
       for(const t of BT[b.type].train||[]){const r=canTrain(b,t);const T=STAT[0][t];out.push({img:THUMB['u'+(t==='guer'&&T.axe?'guerA':t)],nm:T.n,cost:costOf(0,t),dis:r,lock:G.P[0].age<UT[t].age,cnt:b.q.filter(q=>q===t).length,
         act:n=>{for(let i=0;i<(n||1);i++){const w=canTrain(b,t);if(w){if(i===0)toast(w);break}pay(0,costOf(0,t));b.q.push(t)}}})}
-      if(b.type==='biblioteca'&&G.P[0].age<MAXAGE){const a=G.P[0].age+1,c=AGECOST[a];const busy=G.B.some(x=>!x.dead&&x.o===0&&x.q.includes('age'));const rq=ageReqMsg(0);
+      if(b.type==='biblioteca'&&G.P[0].age<ENDAGE()){const a=G.P[0].age+1,c=AGECOST[a];const busy=G.B.some(x=>!x.dead&&x.o===0&&x.q.includes('age'));const rq=ageReqMsg(0);
         out.push({ic:'⬆️',nm:'Avançar: '+AGES[a],cost:c,dis:busy?'Já está avançando':rq?rq:!afford(0,c)?'Faltam recursos: '+costTxt(c):null,cnt:b.q.includes('age')?1:0,act:()=>{pay(0,c);b.q.push('age')}})}
       if(b.type==='biblioteca'&&(G.P[0].mil||0)<MIL_N){const P=G.P[0],ml=P.mil||0,c=MILCOST[ml],ra=MILAGE[ml],busy=G.B.some(x=>!x.dead&&x.o===0&&x.q.includes('mil'));
         out.push({ic:'🎖️',nm:'Organização Militar '+ROMAN[ml+1],d:'População máxima +'+POP_STEP+' (agora '+P.cap+')',cost:c,dis:busy?'Já está pesquisando':P.age<ra?'Requer '+AGES[ra]:!afford(0,c)?'Faltam recursos: '+costTxt(c):null,lock:P.age<ra,cnt:b.q.includes('mil')?1:0,act:()=>{pay(0,c);b.q.push('mil')}})}
@@ -3584,7 +3584,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 30';$('ver').textContent=VERSAO;
+const VERSAO='Versão 31';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -3758,7 +3758,7 @@ function objList(){
   const P=G.P[0],a=P.age,out=[];
   const nv=G.U.filter(u=>!u.dead&&u.o===0&&u.type==='vill').length,vt=[16,24,32,40][a]||40;
   out.push({t:'Tenha '+vt+' aldeões ('+Math.min(nv,vt)+'/'+vt+')',ok:nv>=vt,go:quickTC});
-  if(a<MAXAGE){const need=AGEREQ[a+1],got=need.filter(t=>hasReq(0,t)),miss=need.filter(t=>!hasReq(0,t));
+  if(a<ENDAGE()){const need=AGEREQ[a+1],got=need.filter(t=>hasReq(0,t)),miss=need.filter(t=>!hasReq(0,t));
     out.push({t:got.length>=2?'Biblioteca pronta para pesquisar a era':'Construa uma Biblioteca (lá se avança de era)',ok:got.length>=2,go:selVill});
     const ab=G.B.find(b=>!b.dead&&b.o===0&&b.q[0]==='age');
     out.push({t:'Avance para a '+AGES[a+1]+' na Biblioteca'+(ab?' ('+Math.floor(ab.qt/AGETIME[a+1]*100)+'%)':''),ok:false,go:quickLib})}
@@ -4789,6 +4789,72 @@ window.__RA.newGame=newGame;
 // atalho: seleciona a Biblioteca (onde se avança de era)
 function quickLib(){const t=G.B.filter(b=>!b.dead&&b.o===0&&b.type==='biblioteca'&&b.done>=1);if(!t.length){toast('📚 Construa uma Biblioteca: é nela que se avança de era');return}
   const b=t[UI.idleIdx++%t.length];SEL=[b.id];const c=ctr(b);centerOn(c.x,c.y);UI.sig='';updHUD(true)}
+
+// =========================================================
+//   MENU E BATALHA RÁPIDA (organização como no Rise of Nations, visual próprio)
+//   Menu: Batalha Rápida · Conquistar o Mundo (em breve) · Multijogador · Aprender a jogar · Opções
+//   Batalha Rápida: jogadores à esquerda, regras à direita (com Era inicial e Era final)
+// =========================================================
+function ENDAGE(){return G&&G.cfg&&G.cfg.endAge!=null?G.cfg.endAge:MAXAGE}
+// ---------- menu principal ----------
+{const bn=$('bnew');bn.innerHTML='<b>⚔</b><span>Batalha Rápida<small>Você contra o computador: escolha os povos, o mapa e as regras</small></span>';
+  const cw=document.createElement('button');cw.className='mb mi lock';cw.id='bcw';cw.innerHTML='<b>🌍</b><span>Conquistar o Mundo <em class="tag">EM BREVE</em><small>Campanha no mapa do mundo, território por território</small></span>';
+  cw.onclick=()=>{toast('🌍 Conquistar o Mundo chega numa atualização futura');snd('click')};bn.after(cw);
+  const h=$('bhelp');h.innerHTML='<b>📜</b><span>Aprender a jogar<small>Regras, toque e controle Xbox</small></span>';
+  // opções reunidas num botão (música e atualizar continuam lá dentro)
+  const op=document.createElement('button');op.className='mb mi';op.id='bopts';op.innerHTML='<b>⚙️</b><span>Opções<small>Música e atualização do jogo</small></span>';
+  const mus=$('bmus'),upd=$('bupd');mus.style.display='none';upd.style.display='none';let open=false;
+  op.onclick=()=>{open=!open;mus.style.display=upd.style.display=open?'':'none';snd('click')};h.after(op);op.after(mus);mus.after(upd)}
+// ---------- Batalha Rápida ----------
+SDEF.fim='7';if(SETUP.fim==null)SETUP.fim='7';if(SETUP.ai==null)SETUP.ai='rand';
+const ERAS_OPT=AGES.map((n,i)=>[String(i),ROMAN[i+1]+' · '+n.replace(/^Era (da |do |)/,'')]);
+{const css=document.createElement('style');css.textContent=`
+#setup .tabs{display:none}
+#qb{display:grid;grid-template-columns:1fr 1.15fr;gap:8px;flex:1;min-height:0;overflow:auto;touch-action:pan-y}
+#qb .qh{font:700 12px Georgia,serif;letter-spacing:2px;color:#f0c860;border-bottom:1px solid rgba(232,196,106,.5);padding:2px 2px 3px;margin-bottom:3px}
+#qb .qp{display:flex;align-items:center;gap:6px;padding:4px 5px;margin-bottom:4px;border-radius:7px;background:rgba(20,12,4,.55);border:1px solid rgba(232,196,106,.35)}
+#qb .qp i{width:9px;align-self:stretch;border-radius:3px;flex:none}
+#qb .qp .qn{flex:1;min-width:0;font-size:12.5px;line-height:1.1}#qb .qp .qn small{display:block;font-size:9.5px;opacity:.75;font-style:italic}
+#qb .qp.off{opacity:.42}
+#qb .qr{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:3px 2px;border-bottom:1px dashed rgba(232,196,106,.22)}
+#qb .qr span{font-size:12px;opacity:.9}
+#qb .qv{min-width:0;height:auto;min-height:28px;padding:2px 9px;font-size:12px;border-radius:6px;white-space:nowrap;max-width:62%;overflow:hidden;text-overflow:ellipsis}
+#setup .qback{height:auto;min-height:28px;padding:2px 10px;font-size:12px;margin-bottom:4px;align-self:flex-start}`;document.head.appendChild(css)}
+{const spl=document.querySelector('#setup .spl');const tc=document.createElement('div');tc.className='tabc';tc.dataset.tc='qb';tc.innerHTML='<div id="qb"></div>';
+  spl.querySelector('.tabs').after(tc);document.querySelector('#setup .shh b').textContent='⚔ Batalha Rápida';document.querySelector('#setup .shh small').textContent='Jogadores à esquerda, regras à direita · toque para mudar · tudo fica salvo';
+  // nas sub-telas (povo, mapa, partida, ambiente) um botão volta para a Batalha Rápida
+  for(const t of['povo','mapa','partida','amb']){const c=spl.querySelector('[data-tc="'+t+'"]');const b=document.createElement('button');b.className='mb qback';b.textContent='↩ Batalha Rápida';b.onclick=()=>{setTab('qb');snd('click')};c.prepend(b)}}
+const cyc=(k,vals)=>{const i=vals.indexOf(String(SETUP[k]));SETUP[k]=vals[(i+1)%vals.length];
+  if(k==='era'&&+SETUP.fim<+SETUP.era)SETUP.fim=SETUP.era;if(k==='fim'&&+SETUP.fim<+SETUP.era)SETUP.era=SETUP.fim;updSetup();snd('click')};
+function qbRender(){const q=$('qb');if(!q)return;const civN=id=>id==='rand'?'🎲 Aleatório':(CIVS.find(c=>c.id===id)||{n:id}).n;
+  const P=(col,nm,sub,btns,off)=>'<div class="qp'+(off?' off':'')+'"><i style="background:'+col+'"></i><div class="qn">'+nm+'<small>'+sub+'</small></div>'+btns+'</div>';
+  const sz=Object.keys(MAPSZ),ops=k=>(SOPT.partida.find(g=>g.k===k)||{v:[]}).v.map(v=>v[0]);
+  const R=(lab,k,val,act)=>'<div class="qr"><span>'+lab+'</span><button class="mb qv" data-q="'+act+'" data-k="'+k+'">'+val+'</button></div>';
+  let h='<div><div class="qh">JOGADORES</div>'+P('#3a6fd8','Você','Time 1','<button class="mb qv" data-q="tab" data-k="povo">'+civN(SETUP.civ)+'</button>')+
+    P('#d23a2a','Computador','Time 2 · '+optLbl('diff',SETUP.diff),'<button class="mb qv" data-q="ai">'+civN(SETUP.ai)+'</button><button class="mb qv" data-q="cyc" data-k="diff">'+optLbl('diff',SETUP.diff).replace(/^\S+ /,'')+'</button>');
+  for(const[c,n]of[['#3aa04a',3],['#d8c03a',4],['#8a4ad0',5],['#3ab8c8',6],['#e07a2a',7],['#9a9a9a',8]])h+=P(c,'Vaga '+n,'Fechada · até 8 jogadores na versão completa','',1);
+  h+='</div><div><div class="qh">REGRAS DA PARTIDA</div>'+
+    R('🗺 Mapa','mapa',optLbl('map',SETUP.map),'tab')+R('📐 Tamanho','size',optLbl('size',SETUP.size),'cyc')+R('💰 Recursos','res',optLbl('res',SETUP.res),'cyc')+
+    R('📜 Era inicial','era',(ERAS_OPT.find(e=>e[0]===String(SETUP.era))||ERAS_OPT[0])[1],'cyc')+R('🏁 Era final','fim',(ERAS_OPT.find(e=>e[0]===String(SETUP.fim))||ERAS_OPT[7])[1],'cyc')+
+    R('🏆 Vitória','vic',optLbl('vic',SETUP.vic),'cyc')+R('⏩ Velocidade','vel',optLbl('vel',SETUP.vel),'cyc')+R('🌤 Ambiente','amb',optLbl('est',String(SETUP.est))+' · '+optLbl('hora',SETUP.hora).replace(/^\S+ /,''),'tab')+'</div>';
+  q.innerHTML=h;
+  q.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const a=b.dataset.q,k=b.dataset.k;
+    if(a==='tab'){setTab(k);snd('click');return}
+    if(a==='ai'){const ids=['rand',...CIVS.map(c=>c.id)];SETUP.ai=ids[(ids.indexOf(SETUP.ai)+1)%ids.length];updSetup();snd('click');return}
+    if(k==='size')return cyc('size',sz);if(k==='era')return cyc('era',['0','1','2','3']);if(k==='fim')return cyc('fim',ERAS_OPT.map(e=>e[0]));
+    return cyc(k,ops(k))})}
+const updSetup9=updSetup;
+updSetup=function(){updSetup9();qbRender();const on=document.querySelector('#setup [data-tc="qb"]');$('sumr').style.display=on&&on.classList.contains('on')?'none':''};
+const setTab9=setTab;
+setTab=function(t){setTab9(t);const on=t==='qb';$('sumr').style.display=on?'none':'';if(on)qbRender()};
+const buildSetup9=buildSetup;
+buildSetup=function(){buildSetup9();setTab('qb')};
+// a partida nova leva a Era final e o povo do computador
+const newGame9=newGame;
+newGame=function(o){newGame9(o);if(!G.cfg)G.cfg={};const f=o&&o.fim!=null?+o.fim:MAXAGE;G.cfg.endAge=clamp(Math.max(f,G.cfg.era|0),0,MAXAGE)};
+window.__RA.newGame=newGame;
+const ageReqMsg9=ageReqMsg;
+ageReqMsg=function(p){if(G.P[p].age>=ENDAGE())return'Era final desta partida: '+AGES[ENDAGE()];return ageReqMsg9(p)};
 </script>
 </body>
 </html>
