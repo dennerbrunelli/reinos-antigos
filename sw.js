@@ -1,7 +1,7 @@
 // Guarda o jogo no celular para funcionar sem internet.
 // Ao atualizar o jogo, troque o número da versão abaixo (v1 -> v2 ...).
-const CACHE = 'imperio-v4';
-const FILES = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
+const CACHE = 'imperio-v5';
+const FILES = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './assets/abertura.jpg'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)));
   self.skipWaiting();

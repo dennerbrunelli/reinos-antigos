@@ -1,6 +1,6 @@
 # ⚔️ Império
 
-Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*), com visão em diagonal e clima de jogo clássico dos anos 90. Funciona **sem internet** depois de aberto uma vez. Todos os desenhos, sons e a música são gerados pelo próprio código.
+Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*), com visão em diagonal e clima de jogo clássico dos anos 90. Funciona **sem internet** depois de aberto uma vez. É a fusão de dois clássicos: a economia e o clima do Age of Empires com as fronteiras e cidades do Rise of Nations. A pintura da abertura foi feita com o GPT; os outros desenhos, os sons e a música são gerados pelo próprio código.
 
 **Jogar:** https://dennerbrunelli.github.io/reinos-antigos/
 
@@ -13,11 +13,14 @@ Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*),
 ## O jogo
 - 12 povos com 4 estilos de arquitetura (egípcia, grega, babilônica e oriental), cada um com vantagens próprias
 - 4 eras: Pedra, Ferramentas, Bronze e Ferro (para avançar, construa 2 prédios da era atual)
+- **Fronteiras:** cada cidade tem o seu território. Casas, fazendas e quartéis só dentro dele; torres e cidades novas aumentam a fronteira
+- **Várias cidades:** até 4 Centros Urbanos. Centro Urbano derrubado não some: quem cercar com soldados toma a cidade inteira
+- **Atrito:** tropas paradas no território inimigo perdem vida aos poucos
 - Comida de arbustos, caça (gazelas, elefantes selvagens, leões), peixes e fazendas
 - Doca, barco pesqueiro, barco de transporte, barco de guerra e trirreme
 - Templo e sacerdote (converte inimigos e cura), 20 tecnologias, muralhas e torres
 - Mapas: Mar Interior e Continente · inimigo com 3 dificuldades
-- Vitória destruindo o inimigo ou mantendo a Maravilha de pé por 5 minutos
+- Vitória por conquista, pela Maravilha (5 minutos de pé) ou por território (65% da terra por 3 minutos)
 - Salva sozinho: dá para sair e continuar depois
 
 ## Controles
@@ -26,5 +29,5 @@ Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*),
 
 ## Arquivos
 - `index.html` — o jogo inteiro (desenhos, regras, inteligência do inimigo, sons e música)
-- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `imperio-v4` → `imperio-v5`)
+- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `imperio-v5` → `imperio-v6`)
 - `manifest.json` e ícones — instalação como app
