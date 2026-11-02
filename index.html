@@ -151,6 +151,7 @@ button{font-family:inherit;color:inherit}
 #objl .ob.go{cursor:pointer}
 #all .al{display:flex;align-items:center;gap:6px;font-size:11.5px;line-height:1.2;padding:4px 4px 4px 6px;margin:2px 0;border-radius:4px;background:linear-gradient(90deg,#7a1a10,#3a0c06);border:1px solid #d8584a;color:#ffe9dc}
 #all .al span{flex:1}
+#objl,#all{overflow-y:auto;touch-action:pan-y}
 #all .al b{font-size:16px;color:#ffd0a0}
 #all .calm{font-size:11px;opacity:.7;font-style:italic;padding:1px 3px}
 #pSel #info{width:100%;height:74px}
@@ -174,11 +175,6 @@ button{font-family:inherit;color:inherit}
 #info .grp span{cursor:pointer}
 #info .grp span u{position:absolute;left:1px;right:1px;bottom:1px;height:3px;background:#3a0b07;text-decoration:none}
 #info .grp span u em{display:block;height:100%;background:#4ad04a}
-#uiset{background:rgba(10,7,3,.86);gap:6px}
-#uiset .mb{min-width:150px;height:auto;min-height:36px;padding:4px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15}
-#uiset .mb small{font-size:10px;font-weight:400;font-style:italic;opacity:.85}
-#uiset #uipn .mb{min-width:112px}
-#uiset .uitip{font-size:11.5px;max-width:640px;opacity:.9}
 /* ===== cores vivas (v11): azul real + ouro, recursos coloridos ===== */
 #top{background:linear-gradient(#2d5ab0,#173a7c 55%,#0e2452);border-bottom:2px solid #f2c75a;box-shadow:0 2px 10px #000b,inset 0 1px 0 #8fb6ff66,inset 0 -1px 0 #ffe3905a}
 #top .r{border:1px solid #ffffff38;box-shadow:inset 0 1px 0 #ffffff26,0 1px 2px #0008}
@@ -255,6 +251,46 @@ button{font-family:inherit;color:inherit}
 #card .mb.go{min-width:0;flex:1;height:34px;font-size:14px;background:linear-gradient(#5aa83a,#2e6a1c);border-color:#bff0a0 #1e4a12 #1e4a12 #bff0a0}
 #card .mb.go#cdo5{flex:none;width:52px}
 #card .mb.go.off{filter:grayscale(1) brightness(.75)}
+
+/* ===== telas novas (v16): Interface e Nova partida ===== */
+.sheet,.setp{background:linear-gradient(rgba(14,30,66,.94),rgba(6,14,34,.96));border:1.5px solid #f0c55a;border-radius:14px;box-shadow:0 10px 30px #000c,inset 0 1px 0 #9cc0ff33;color:#eef3ff;text-align:left}
+.sheet{width:min(860px,96vw);max-height:96vh;overflow:auto;padding:8px 12px 10px;display:flex;flex-direction:column;gap:5px;touch-action:pan-y}
+.shh{display:flex;align-items:center;gap:8px;border-bottom:1px solid #f0c55a55;padding-bottom:4px}
+.shh>div{flex:1}.shh b{font-size:19px;color:#ffe08a;letter-spacing:.5px;display:block;line-height:1.1}.shh small{font-size:11px;opacity:.8;font-style:italic}
+.screen .mb.shx{min-width:0;width:34px;height:30px;padding:0;font-size:15px}
+.sht{font-size:10.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#9cc0ff;margin-top:2px}
+.screen .mb{background:linear-gradient(#24477f,#132a55);border:1px solid #6f95d8;border-radius:9px;box-shadow:0 2px 6px #0008,inset 0 1px 0 #ffffff22;color:#f2f6ff;text-shadow:0 1px 1px #000}
+.screen .mb.on{background:linear-gradient(#f3cf6a,#c18f2e);border-color:#fff0b0;color:#231503;text-shadow:none}
+.screen .mb.f{outline:3px solid #fff1b8;outline-offset:1px}
+.screen .mb.go{background:linear-gradient(#5cc04a,#2c7a1e);border-color:#c8ffb0;color:#fff;font-size:17px}
+.pres{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.screen .mb.pre{min-width:0;height:auto;padding:5px 6px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+.mb.pre b{font-size:13.5px}.mb.pre small{font-size:9.5px;font-weight:400;font-style:italic;opacity:.85;line-height:1.15}
+.pv{position:relative;display:block;width:100%;max-width:120px;height:44px;border-radius:5px;background:linear-gradient(#5e8a3c,#3d6a28);border:1px solid #0006;overflow:hidden}
+.pv u{position:absolute;background:#0e1d3ae0;border:1px solid #f0c55a;border-radius:2px}
+.mb.pre.on .pv u{border-color:#5a3a08}
+.shc{display:grid;grid-template-columns:1.35fr 1fr;gap:10px}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.screen .mb.chip{min-width:0;height:34px;padding:0 6px;display:flex;align-items:center;gap:5px;font-size:12.5px;text-align:left}
+.mb.chip span{flex:1;line-height:1.05}.mb.chip small{display:block;font-size:9px;font-weight:400;opacity:.8}
+.mb.chip em{flex:none;width:28px;height:16px;border-radius:8px;background:#0a1530;border:1px solid #6f95d8;position:relative}
+.mb.chip em::after{content:'';position:absolute;top:1px;left:1px;width:12px;height:12px;border-radius:50%;background:#8aa0c8;transition:left .15s}
+.mb.chip.on em{background:#2c7a1e;border-color:#c8ffb0}.mb.chip.on em::after{left:13px;background:#fff}
+.seg{display:flex;gap:5px}.screen .seg .mb{flex:1;min-width:0;height:auto;min-height:32px;padding:3px 6px;font-size:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.seg .mb small{font-size:9px;font-weight:400;font-style:italic;opacity:.85}
+.tip{font-size:10.5px;opacity:.75;margin-top:6px;line-height:1.3}
+.shf{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}.screen .shf .mb{min-width:150px;height:36px}
+.setp{width:min(900px,97vw);height:min(396px,96vh);display:grid;grid-template-columns:1.12fr 1fr;gap:12px;padding:9px 12px}
+.spl,.spr{display:flex;flex-direction:column;gap:5px;min-height:0}
+#uiset{background:rgba(4,8,20,.72)}
+#setup #civg{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:1fr;gap:6px;width:auto;flex:1;overflow:auto;align-content:stretch;touch-action:pan-y}
+#setup #civg .mb{height:auto;min-height:38px;padding:3px 6px;justify-content:flex-start;gap:7px;font-size:13.5px;text-align:left;display:flex;align-items:center}
+#setup #civg .mb i{width:8px;height:28px;border-radius:3px;flex:none;border:1px solid #0008}
+#setup #civg .mb span{line-height:1.05}#setup #civg .mb small{display:block;font-size:9.5px;font-weight:400;opacity:.8;font-style:italic}
+#setup #civd{width:auto;min-height:0;flex:1;max-height:190px;background:linear-gradient(#f5e8c4,#dcc596);color:#2a1a08;border:1.5px solid #c9952e;border-radius:10px;padding:6px 9px;display:flex;gap:9px;align-items:center;font-size:12px;box-shadow:inset 0 0 0 1px #fff6}
+#civd .cvimg{width:96px;height:84px;flex:none;object-fit:contain;filter:drop-shadow(0 3px 3px #0006)}
+#civd .cvn{font-size:19px;font-weight:700;color:#5a2e04;line-height:1}#civd .cvs{display:inline-block;margin:3px 0 4px;font-size:10.5px;background:#3d6fc0;color:#fff;border-radius:8px;padding:1px 8px}
+#civd ul{margin:0;padding-left:15px;line-height:1.3}#civd li{font-size:12px}
 </style>
 </head>
 <body>
@@ -307,23 +343,19 @@ button{font-family:inherit;color:inherit}
 </div>
 
 <div id="setup" class="screen art">
-  <h2>Escolha o seu povo</h2>
-  <div id="civg"></div>
-  <div id="civd"></div>
-  <div class="lbl2">Mapa</div>
-  <div class="row" id="mapg">
-    <button class="mb" data-map="mar">🌊 Mar Interior</button>
-    <button class="mb" data-map="terra">🌳 Continente</button>
-  </div>
-  <div class="lbl2">Dificuldade do inimigo</div>
-  <div class="row" id="difg">
-    <button class="mb" data-diff="facil">Fácil</button>
-    <button class="mb" data-diff="normal">Normal</button>
-    <button class="mb" data-diff="dificil">Difícil</button>
-  </div>
-  <div class="row" style="margin-top:4px">
-    <button class="mb" id="bback" data-back="1">↩ Voltar</button>
-    <button class="mb" id="bstart">⚔ Começar</button>
+  <div class="setp">
+    <div class="spl">
+      <div class="shh"><div><b>⚔ Nova partida</b><small>1 · Escolha o seu povo</small></div></div>
+      <div id="civg"></div>
+    </div>
+    <div class="spr">
+      <div id="civd"></div>
+      <div class="sht">2 · Mapa</div>
+      <div class="seg" id="mapg"><button class="mb" data-map="mar">🌊 Mar Interior<small>barcos, pesca e praias</small></button><button class="mb" data-map="terra">🌳 Continente<small>só terra, rotas longas</small></button></div>
+      <div class="sht">3 · Inimigo</div>
+      <div class="seg" id="difg"><button class="mb" data-diff="facil">🙂 Fácil</button><button class="mb" data-diff="normal">😐 Normal</button><button class="mb" data-diff="dificil">😠 Difícil</button></div>
+      <div class="shf"><button class="mb" id="bback" data-back="1">↩ Voltar</button><button class="mb go" id="bstart">⚔ Começar</button></div>
+    </div>
   </div>
 </div>
 
@@ -368,15 +400,22 @@ button{font-family:inherit;color:inherit}
 </div>
 
 <div id="uiset" class="screen">
-  <h2>🧩 Interface</h2>
-  <div class="lbl2">Modo pronto (toque para usar)</div>
-  <div class="row"><button class="mb" data-pre="modern">📱 Moderno<small>limpo · padrão</small></button><button class="mb" data-pre="classic">🏛 Clássico<small>tudo à mostra</small></button><button class="mb" data-pre="equil">⚖️ Equilibrado<small>padrão · painéis soltos</small></button><button class="mb" data-pre="battle">⚔️ Campo de Batalha<small>só o essencial</small></button></div>
-  <div class="lbl2">Painéis (toque para mostrar ou esconder)</div>
-  <div class="row" id="uipn"></div>
-  <div class="lbl2">Tamanho dos painéis</div>
-  <div class="row"><button class="mb" data-sz="0.85">Pequeno</button><button class="mb" data-sz="1">Médio</button><button class="mb" data-sz="1.15">Grande</button></div>
-  <p class="uitip">✋ Arraste qualquer painel pela barrinha do título para mudar de lugar · — encolhe · ✕ esconde · tudo fica salvo</p>
-  <div class="row"><button class="mb" id="uirst">↺ Restaurar interface padrão</button><button class="mb" id="uiok" data-back="1">▶ Voltar ao jogo</button></div>
+  <div class="sheet">
+    <div class="shh"><div><b>🧩 Interface</b><small>Como os painéis aparecem durante a partida · tudo fica salvo</small></div><button class="mb shx" id="uiok" data-back="1">✕</button></div>
+    <div class="sht">Modo</div>
+    <div class="pres">
+      <button class="mb pre" data-pre="modern"><i class="pv"></i><b>📱 Moderno</b><small>Limpo, como os RTS atuais · padrão</small></button>
+      <button class="mb pre" data-pre="classic"><i class="pv"></i><b>🏛 Clássico</b><small>Tudo à mostra numa barra embaixo</small></button>
+      <button class="mb pre" data-pre="equil"><i class="pv"></i><b>⚖️ Equilibrado</b><small>Painéis soltos que você arrasta</small></button>
+      <button class="mb pre" data-pre="battle"><i class="pv"></i><b>⚔️ Batalha</b><small>Só comandos: mapa livre para lutar</small></button>
+    </div>
+    <div class="shc">
+      <div><div class="sht">Painéis</div><div id="uipn" class="chips"></div></div>
+      <div class="shs"><div class="sht">Tamanho</div><div class="seg"><button class="mb" data-sz="0.85">Pequeno</button><button class="mb" data-sz="1">Médio</button><button class="mb" data-sz="1.15">Grande</button></div>
+        <div class="tip">✋ Arraste um painel pela barrinha do título para mudar de lugar · — encolhe · ✕ esconde</div></div>
+    </div>
+    <div class="shf"><button class="mb" id="uirst">↺ Restaurar padrão</button><button class="mb go" id="uiok2">▶ Voltar ao jogo</button></div>
+  </div>
 </div>
 <div id="pause" class="screen">
   <h2>⏸ Pausa</h2>
@@ -3199,16 +3238,23 @@ function startGame(){
 let SETUP={civ:OPT.civ||'gregos',map:OPT.map||'mar',diff:OPT.diff||'normal'};
 function buildSetup(){
   const g=$('civg');g.innerHTML='';
-  for(const c of CIVS){const b=document.createElement('button');b.className='mb';b.dataset.civ=c.id;b.innerHTML='<i style="background:'+STY[c.st].sw+'"></i>'+c.n;b.onclick=()=>{SETUP.civ=c.id;updSetup();snd('click')};g.appendChild(b)}
+  for(const c of CIVS){const b=document.createElement('button');b.className='mb';b.dataset.civ=c.id;b.innerHTML='<i style="background:'+STY[c.st].sw+'"></i><span>'+c.n+'<small>arquitetura '+STY[c.st].nm.toLowerCase()+'</small></span>';b.onclick=()=>{SETUP.civ=c.id;updSetup();snd('click')};g.appendChild(b)}
   document.querySelectorAll('[data-map]').forEach(b=>b.onclick=()=>{SETUP.map=b.dataset.map;updSetup();snd('click')});
   document.querySelectorAll('[data-diff]').forEach(b=>b.onclick=()=>{SETUP.diff=b.dataset.diff;updSetup();snd('click')});
-  updSetup();
+  updSetup();ARTP.then(updSetup);
 }
+// desenho da arquitetura do povo (Centro Urbano da arte do GPT; se o estilo ainda não tem arte, um emblema)
+const CIVART={};
+function civArt(st){if(CIVART[st]!==undefined)return CIVART[st];const B=GPTART.b[st],m=B&&B.tc,img=m&&GA['b_'+st+'_'+m.at+'_0'];
+  if(!img){const em={babilonia:'🏺',oriental:'🏯',egito:'𓂀',grego:'🏛️'}[st]||'🏛️';const c=document.createElement('canvas');c.width=c.height=160;const g=c.getContext('2d');
+    g.fillStyle=STY[st].sw;g.beginPath();g.arc(80,80,70,0,7);g.fill();g.lineWidth=6;g.strokeStyle='#c9952e';g.stroke();g.font='84px "Noto Color Emoji","Apple Color Emoji",serif';g.textAlign='center';g.textBaseline='middle';g.fillText(em,80,86);return CIVART[st]=c.toDataURL()}
+  return CIVART[st]=gaCut(img,m.r).toDataURL()}
 function updSetup(){
   document.querySelectorAll('[data-civ]').forEach(b=>b.classList.toggle('on',b.dataset.civ===SETUP.civ));
   document.querySelectorAll('[data-map]').forEach(b=>b.classList.toggle('on',b.dataset.map===SETUP.map));
   document.querySelectorAll('[data-diff]').forEach(b=>b.classList.toggle('on',b.dataset.diff===SETUP.diff));
-  const c=CIVS.find(x=>x.id===SETUP.civ);$('civd').innerHTML='<b>'+c.n+'</b> — arquitetura '+STY[c.st].nm+' · '+c.d.map(x=>'✦ '+x).join(' · ');
+  const c=CIVS.find(x=>x.id===SETUP.civ);
+  $('civd').innerHTML='<img class="cvimg" src="'+civArt(c.st)+'"><div><div class="cvn">'+c.n+'</div><span class="cvs">arquitetura '+STY[c.st].nm.toLowerCase()+'</span><ul>'+c.d.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>';
 }
 $('bnew').onclick=()=>{musicStart();snd('click');buildSetup();show('setup')};
 $('bback').onclick=()=>show('menu');
@@ -3318,7 +3364,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 15';$('ver').textContent=VERSAO;
+const VERSAO='Versão 16';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -3359,7 +3405,8 @@ function defPos(k){
     if(k==='al'){const o=$('pObj');const below=HS.p.obj.v&&!HS.p.obj.pos&&o.offsetParent;return{ax:'l',ay:'t',dx:6,dy:below?o.getBoundingClientRect().bottom+6:TOPH+10}}
     if(k==='map')return{ax:'l',ay:'b',dx:4,dy:4};
     if(k==='cmd')return{ax:'r',ay:'b',dx:4,dy:4};
-    return{ax:'c',ay:'b',dx:0,dy:4}}
+    {const m=$('pMap'),c=$('pCmd'),L=HS.p.map.v&&m.offsetParent&&!m.classList.contains('big')?m.getBoundingClientRect().right+6:4,R=HS.p.cmd.v&&c.offsetParent?c.getBoundingClientRect().left-6:innerWidth-4,w=$('pSel').offsetWidth*s;
+     return{ax:'l',ay:'b',dx:Math.max(L,L+(R-L-w)/2),dy:4}}}
   if(k==='obj')return{ax:'l',ay:'t',dx:52,dy:TOPH+6};
   if(k==='al'){const o=$('pObj');const below=HS.p.obj.v&&!HS.p.obj.pos&&o.offsetParent;return{ax:'l',ay:'t',dx:52,dy:below?o.getBoundingClientRect().bottom+6:TOPH+6}}
   if(k==='map')return{ax:'r',ay:'b',dx:4,dy:4};
@@ -3386,7 +3433,8 @@ function layoutHUD(){
   // seleção: ocupa o espaço que sobra até os comandos (no Clássico enche tudo)
   const si=$('info');si.style.width='';
   if(HS.p.sel.v&&!HS.p.sel.pos){const c=$('pCmd'),cw=HS.p.cmd.v?c.offsetWidth*s:0,mw=HS.p.map.v?$('pMap').offsetWidth*s:0;
-    const free=(innerWidth-(HS.pre==='battle'?0:cw+mw)-24)/s;si.style.width=Math.round(clamp(P.big?free:Math.min(free,P.clean?360:300),170,560))+'px'}
+    const free=(innerWidth-(HS.pre==='battle'?0:cw+mw)-30)/s-16;si.style.width=Math.round(clamp(P.big?free:Math.min(free,P.clean?360:300),170,560))+'px'}
+  $('objl').style.maxHeight=$('all').style.maxHeight='';
   for(const k of['obj','al','map','cmd','sel']){const el=$(PEL[k]);if(!HS.p[k].v)continue;placeEl(el,HS.p[k].pos||defPos(k))}
   // altura livre embaixo: o centro da câmera fica no meio da parte que sobra do mapa
   let low=0;for(const k of['sel','cmd','map']){const el=$(PEL[k]);if(!HS.p[k].v||HS.p[k].m||el.classList.contains('big'))continue;const r=el.getBoundingClientRect();if(r.top>innerHeight*.45)low=Math.max(low,innerHeight-r.top+(el.classList.contains('tab')?22*s:0))}
@@ -3395,6 +3443,22 @@ function layoutHUD(){
   $('placebar').style.bottom=(PANH+12)+'px';
   // botões rápidos: no Moderno ficam numa fileira em cima do minimapa
   const q=$('quick');if(P.clean&&HS.p.map.v){const r=$('pMap').getBoundingClientRect();q.style.left=Math.max(4,r.left)+'px';q.style.top=Math.max(TOPH+40,r.top-48)+'px'}else{q.style.left='';q.style.top=''}
+  // objetivos e alertas não podem descer por cima dos painéis de baixo: a lista ganha rolagem
+  fitTopStack();
+}
+function hudObstacles(skip){const L=[];for(const k of PNL){if(k===skip||!HS.p[k].v)continue;const el=$(PEL[k]);if(!el.offsetParent||getComputedStyle(el).display==='none')continue;const r=el.getBoundingClientRect();const ph=el.classList.contains('tab')&&!el.classList.contains('min')?el.querySelector('.ph').getBoundingClientRect():null;L.push({k,l:r.left,r:r.right,t:Math.min(r.top,ph?ph.top:r.top),b:r.bottom})}
+  const q=$('quick');if(q.offsetParent){const r=q.getBoundingClientRect();L.push({k:'quick',l:r.left,r:r.right,t:r.top,b:r.bottom})}
+  {const t=$('toast');if(skip===null&&t.style.display==='block'){const r=t.getBoundingClientRect();L.push({k:'#toast',l:r.left,r:r.right,t:r.top,b:r.bottom})}}
+  for(const s of['#top .tl','#top .tr']){const e=document.querySelector(s);if(e){const r=e.getBoundingClientRect();if(r.width)L.push({k:s,l:r.left,r:r.right,t:r.top,b:r.bottom})}}return L}
+function fitTopStack(){const s=hudScale();
+  for(const [k,list] of[['obj','objl'],['al','all']]){const el=$(PEL[k]);if(!HS.p[k].v||HS.p[k].m||!el.offsetParent)continue;const r=el.getBoundingClientRect();
+    let lim=innerHeight-4;for(const o of hudObstacles(k)){if(o.k==='obj'||o.k==='al'||o.k.startsWith('#'))continue;if(o.r>r.left&&o.l<r.right&&o.t>r.top)lim=Math.min(lim,o.t-6)}
+    if(r.bottom>lim){const pc=$(list),pr=pc.getBoundingClientRect();pc.style.maxHeight=Math.max(34,(lim-pr.top)/s)+'px'}}}
+function noOverlapXY(el,x,y){const w=el.offsetWidth,h=el.offsetHeight,obs=hudObstacles(null),hit=(X,Y)=>obs.some(o=>X<o.r&&X+w>o.l&&Y<o.b&&Y+h>o.t);
+  if(!hit(x,y))return[x,y];
+  // tenta: subir, ir para o meio da tela, canto de cima à direita
+  for(const [X,Y] of[[x,Math.min(y,Math.min(...obs.filter(o=>o.r>x&&o.l<x+w&&o.t>innerHeight/2).map(o=>o.t),innerHeight)-h-6)],[(innerWidth-w)/2,(innerHeight-h)/2],[innerWidth-w-6,TOPH+44],[(innerWidth-w)/2,TOPH+44]]){const XX=clamp(X,4,innerWidth-w-4),YY=clamp(Y,TOPH+4,innerHeight-h-4);if(!hit(XX,YY))return[XX,YY]}
+  return[clamp((innerWidth-w)/2,4,innerWidth-w-4),clamp((innerHeight-h)/2,TOPH+4,innerHeight-h-4)]
 }
 addEventListener('resize',()=>setTimeout(layoutHUD,60));
 
@@ -3426,14 +3490,21 @@ function uiSetClose(){paused=false;show(null);setTimeout(layoutHUD,30)}
 function uiSetUpd(){
   document.querySelectorAll('#uiset [data-pre]').forEach(b=>b.classList.toggle('on',b.dataset.pre===HS.pre));
   document.querySelectorAll('#uiset [data-sz]').forEach(b=>b.classList.toggle('on',+b.dataset.sz===HS.size));
+  // miniatura de cada modo: onde ficam os painéis na tela
+  const PV={modern:[[1,3,48,13],[66,3,33,13],[1,21,22,11],[1,70,24,28],[33,76,34,22],[71,70,28,28]],
+    classic:[[0,0,100,12],[1,15,26,22],[0,68,100,32]],
+    equil:[[0,0,100,12],[8,16,26,26],[1,70,34,28],[40,70,28,28],[71,66,28,32]],
+    battle:[[0,0,100,12],[1,15,20,9],[30,78,40,20],[80,86,19,12]]};
+  document.querySelectorAll('#uiset [data-pre]').forEach(b=>{const pv=b.querySelector('.pv');if(pv&&!pv.childElementCount)pv.innerHTML=PV[b.dataset.pre].map(r=>'<u style="left:'+r[0]+'%;top:'+r[1]+'%;width:'+r[2]+'%;height:'+r[3]+'%"></u>').join('')});
   const box=$('uipn');box.innerHTML='';
-  for(const k of PNL){const b=document.createElement('button');b.className='mb'+(HS.p[k].v?' on':'');b.innerHTML=(HS.p[k].v?'✅ ':'⬜ ')+PNAME[k]+'<small>'+(!HS.p[k].v?'escondido':HS.p[k].m?'encolhido':'à mostra')+'</small>';
+  for(const k of PNL){const b=document.createElement('button');b.className='mb chip'+(HS.p[k].v?' on':'');const nm=PNAME[k],sp=nm.indexOf(' ');
+    b.innerHTML='<span>'+nm.slice(0,sp)+' '+nm.slice(sp+1)+'<small>'+(!HS.p[k].v?'escondido':HS.p[k].m?'encolhido':'à mostra')+'</small></span><em></em>';
     b.onclick=()=>{snd('click');HS.p[k].v=HS.p[k].v?0:1;if(HS.p[k].v)HS.p[k].m=0;hudSave();uiSetUpd()};box.appendChild(b)}
 }
 document.querySelectorAll('#uiset [data-pre]').forEach(b=>b.onclick=()=>{snd('click');const sz=HS.size;HS=hudDefault(b.dataset.pre);HS.size=sz;hudSave();uiSetUpd()});
 document.querySelectorAll('#uiset [data-sz]').forEach(b=>b.onclick=()=>{snd('click');HS.size=+b.dataset.sz;hudSave();uiSetUpd()});
 $('uirst').onclick=()=>{snd('click');HS=hudDefault('equil');hudSave();uiSetUpd();toast('↺ Interface padrão restaurada')};
-$('uiok').onclick=uiSetClose;
+$('uiok').onclick=uiSetClose;$('uiok2').onclick=uiSetClose;
 $('bui').onclick=()=>{snd('click');uiSetOpen()};
 
 // ---------- minimapa: zoom e tela cheia ----------
@@ -3670,7 +3741,7 @@ function cardDraw(){const c=cardCmd();if(!c){cardClose();return}const f=cardInfo
   // em cima do painel de comandos
   const r=$('pCmd').getBoundingClientRect(),w=el.offsetWidth,hh=el.offsetHeight;
   let x=clamp(r.left+r.width/2-w/2,4,innerWidth-w-4),y=r.top-hh-(($('pCmd').classList.contains('tab')&&!$('pCmd').classList.contains('min'))?28:6);
-  if(y<TOPH+4)y=TOPH+4;el.style.left=x+'px';el.style.top=y+'px'}
+  if(y<TOPH+4)y=TOPH+4;[x,y]=noOverlapXY(el,x,y);el.style.left=x+'px';el.style.top=y+'px'}
 function cardDo(n){const c=cardCmd();if(!c){cardClose();return}
   if(c.dis){toast(c.dis);snd('click');return}
   runCmd(c,n);
