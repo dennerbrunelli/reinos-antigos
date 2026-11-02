@@ -13,6 +13,7 @@ Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*),
 ## O jogo
 - 12 povos com 4 estilos de arquitetura (egípcia, grega, babilônica e oriental), cada um com vantagens próprias
 - 7 eras: Pedra, Ferramentas, Bronze, Ferro, Pólvora, Industrial e Inteligência Artificial (petróleo, Fábrica, Silo com Bomba nuclear, Pulso EMP e o Relógio do Armagedom)
+- Formações (Livre, Linha, Caixa, Espaçada, Flanco; o grupo anda no passo do mais lento) e posturas (Agressiva, Defensiva, Firme, Sem ataque)
 - **Fronteiras:** cada cidade tem o seu território. Casas, fazendas e quartéis só dentro dele; torres e cidades novas aumentam a fronteira
 - **Várias cidades:** até 4 Centros Urbanos. Centro Urbano derrubado não some: quem cercar com soldados toma a cidade inteira
 - **Atrito:** tropas paradas no território inimigo perdem vida aos poucos
@@ -30,5 +31,5 @@ Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*),
 
 ## Arquivos
 - `index.html` — o jogo inteiro (desenhos, regras, inteligência do inimigo, sons e música)
-- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `imperio-v25` → `imperio-v26`)
+- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `imperio-v26` → `imperio-v27`)
 - `manifest.json` e ícones — instalação como app
