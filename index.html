@@ -291,6 +291,11 @@ button{font-family:inherit;color:inherit}
 #civd .cvimg{width:96px;height:84px;flex:none;object-fit:contain;filter:drop-shadow(0 3px 3px #0006)}
 #civd .cvn{font-size:19px;font-weight:700;color:#5a2e04;line-height:1}#civd .cvs{display:inline-block;margin:3px 0 4px;font-size:10.5px;background:#3d6fc0;color:#fff;border-radius:8px;padding:1px 8px}
 #civd ul{margin:0;padding-left:15px;line-height:1.3}#civd li{font-size:12px}
+#pause{background:rgba(4,8,20,.78)}
+.sheet.pz{width:min(620px,94vw);gap:6px}
+.screen .sheet.pz .mb.go{width:100%;height:40px;min-width:0}
+.pzg{display:grid;grid-template-columns:1fr 1fr;gap:6px}.pzg:last-child{grid-template-columns:1fr 1fr 1fr}
+.screen .pzg .mb{min-width:0;width:100%;height:auto;min-height:36px;padding:4px 8px;font-size:14px}
 </style>
 </head>
 <body>
@@ -418,14 +423,19 @@ button{font-family:inherit;color:inherit}
   </div>
 </div>
 <div id="pause" class="screen">
-  <h2>⏸ Pausa</h2>
-  <button class="mb" id="bres" data-back="1">▶ Continuar</button>
-  <button class="mb" id="bspd">⏩ Velocidade: 1x</button>
-  <button class="mb" id="bqual">🖼 Gráfico: Bonito</button>
-  <button class="mb" id="bfps">🔋 Economia: Desligada</button>
-  <div class="row"><button class="mb" id="bsnd">🔊 Sons</button><button class="mb" id="bmus2">🎵 Música</button></div>
-  <button class="mb" id="bhelp2">📜 Como jogar</button>
-  <div class="row"><button class="mb" id="bquit">💾 Salvar e ir ao menu</button><button class="mb" id="bexit2">🚪 Sair do jogo</button></div>
+  <div class="sheet pz">
+    <div class="shh"><div><b>⏸ Pausa</b><small>O jogo está parado · as opções ficam salvas</small></div></div>
+    <button class="mb go" id="bres" data-back="1">▶ Continuar</button>
+    <div class="pzg">
+      <button class="mb" id="bspd">⏩ Velocidade: 1x</button>
+      <button class="mb" id="bqual">🖼 Gráfico: Bonito</button>
+      <button class="mb" id="bfps">🔋 Economia: Desligada</button>
+      <button class="mb" id="bord">👆 Ordens: 2 toques (seguro)</button>
+      <button class="mb" id="bsnd">🔊 Sons</button>
+      <button class="mb" id="bmus2">🎵 Música</button>
+    </div>
+    <div class="pzg"><button class="mb" id="bhelp2">📜 Como jogar</button><button class="mb" id="bquit">💾 Salvar e ir ao menu</button><button class="mb" id="bexit2">🚪 Sair do jogo</button></div>
+  </div>
 </div>
 
 <div id="quitc" class="screen art">
@@ -3084,6 +3094,7 @@ function selectSameType(sx,sy){
 function boxSelect(b,add){
   const x0=Math.min(b.x0,b.x1),x1=Math.max(b.x0,b.x1),y0=Math.min(b.y0,b.y1),y1=Math.max(b.y0,b.y1);
   const ids=G.U.filter(u=>{if(u.dead||u.inT||u.o!==0)return false;const p=w2s(u.x,u.y);return p.x>=x0-6&&p.x<=x1+6&&p.y>=y0-6&&p.y<=y1+24}).map(u=>u.id);
+  if(!ids.length&&!add)return;   // caixa vazia: mantém o que já estava selecionado
   SEL=add?[...new Set([...SEL,...ids])]:ids;if(ids.length)snd('sel');updHUD();
 }
 function quickIdle(){const vs=G.U.filter(u=>!u.dead&&!u.inT&&u.o===0&&u.type==='vill'&&u.st==='idle');if(!vs.length){toast('Nenhum aldeão parado');return}const u=vs[UI.idleIdx++%vs.length];SEL=[u.id];centerOn(u.x,u.y);updHUD()}
@@ -3105,7 +3116,7 @@ cv.addEventListener('pointerdown',e=>{
   try{cv.setPointerCapture(e.pointerId)}catch(_){}
   ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY,lx:e.clientX,ly:e.clientY});
   if(ptrs.size===1){tm='pend';ts0={x:e.clientX,y:e.clientY};clearTimeout(lpT);
-    lpT=setTimeout(()=>{if(tm==='pend'&&!placing){tm='box';selBox={x0:ts0.x,y0:ts0.y,x1:ts0.x,y1:ts0.y};try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}}},380)}
+    lpT=setTimeout(()=>{if(tm==='pend'&&!placing&&ptrs.size===1&&(()=>{const p=[...ptrs.values()][0];return hyp(p.x-ts0.x,p.y-ts0.y)<6})()){tm='box';selBox={x0:ts0.x,y0:ts0.y,x1:ts0.x,y1:ts0.y};try{navigator.vibrate&&navigator.vibrate(15)}catch(_){}}},600)}
   else if(ptrs.size===2){tm='pinch';clearTimeout(lpT);selBox=null;const[a,b]=[...ptrs.values()];const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;pin={d:hyp(a.x-b.x,a.y-b.y)||1,z:Z,w:scrToW(mx,my)}}
 });
 cv.addEventListener('pointermove',e=>{
@@ -3270,6 +3281,7 @@ $('bres').onclick=()=>{paused=false;show(null)};
 $('bspd').onclick=()=>{OPT.spd=OPT.spd===1?1.5:OPT.spd===1.5?2:1;saveOpt();updOptBtns()};
 $('bqual').onclick=()=>{OPT.qual=OPT.qual?0:1;saveOpt();resize();updOptBtns()};
 $('bfps').onclick=()=>{OPT.eco=OPT.eco?0:1;saveOpt();updOptBtns()};
+$('bord').onclick=()=>{OPT.tap2=OPT.tap2===0?1:0;saveOpt();updOptBtns();snd('click')};
 $('bsnd').onclick=()=>{OPT.snd=OPT.snd?0:1;saveOpt();updOptBtns();snd('click')};
 const togMus=()=>{OPT.mus=OPT.mus?0:1;saveOpt();if(OPT.mus)musicStart();else musicStop();updOptBtns()};
 $('bmus').onclick=togMus;$('bmus2').onclick=togMus;
@@ -3290,7 +3302,7 @@ function quitGame(){
 }
 $('bbyeback').onclick=()=>{$('bcont').style.display=hasSave()?'flex':'none';try{if(AC&&OPT.mus)AC.resume()}catch(e){}if(OPT.mus)musicStart();show('menu')};
 function updOptBtns(){$('bspd').textContent='⏩ Velocidade: '+OPT.spd+'x';$('bqual').textContent='🖼 Gráfico: '+(OPT.qual?'Bonito':'Leve');$('bfps').textContent='🔋 Economia de bateria: '+(OPT.eco?'Ligada':'Desligada');
-  $('bsnd').textContent=OPT.snd?'🔊 Sons':'🔇 Sons';$('bmus2').textContent=OPT.mus?'🎵 Música':'🔇 Música';$('bmust').textContent='Música: '+(OPT.mus?'Ligada':'Desligada')}
+  $('bord').textContent=OPT.tap2===0?'👆 Ordens: 1 toque (rápido)':'👆 Ordens: 2 toques (seguro)';$('bsnd').textContent=OPT.snd?'🔊 Sons':'🔇 Sons';$('bmus2').textContent=OPT.mus?'🎵 Música':'🔇 Música';$('bmust').textContent='Música: '+(OPT.mus?'Ligada':'Desligada')}
 updOptBtns();
 function endGame(win,msg){
   G.over=true;running=false;try{localStorage.removeItem(SAVEK)}catch(e){}
@@ -3364,7 +3376,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 17';$('ver').textContent=VERSAO;
+const VERSAO='Versão 18';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -3871,6 +3883,42 @@ function extraSheets(o,C,skin){
   mkSheet('general'+o,H[0],H[1],H[2],H[3],(g,ax,ay,fr,dir,meta)=>drawHuman(g,ax,ay,{hat:'crest',wpn:'sword',shield:'round',armor:'#e2bd62',greaves:1},C,skin,fr,dir===1,meta));
   for(const k of['caravana','carroca']){const sp=UT[k].spr;mkSheet(k+o,sp[0],sp[1],sp[2],sp[3],(g,ax,ay,fr)=>wagon(g,ax,ay,C,fr,k))}
 }
+
+// =========================================================
+//   ORDENS SEGURAS NO TOQUE: o 1º toque marca o alvo e mostra o que vai acontecer;
+//   o 2º toque no mesmo lugar (ou toque duplo rápido) confirma. Selecionar unidade sua continua com 1 toque.
+// =========================================================
+let TAPCTX=false;
+function orderLabel(us,t){const vill=us.some(u=>u.type==='vill');
+  if(!t)return'🚶 Mover';
+  if(t.k==='u'&&t.o===0){if(t.type==='trans')return'⛵ Embarcar';if(us.every(u=>u.type==='sac'))return'✨ Curar';return'🚶 Mover'}
+  if(t.o===1)return us.every(u=>u.type==='sac')?'✨ Converter':'⚔ Atacar';
+  if(t.k==='u'&&t.o===2)return vill?'🏹 Caçar':'⚔ Atacar';
+  if(t.k==='r')return vill||us.some(u=>u.type==='pesc')?(t.sub==='tree'?'🪓 Cortar madeira':t.sub==='gold'?'⛏ Minerar ouro':t.sub==='stone'?'⛏ Quebrar pedra':t.sub==='fish'?'🎣 Pescar':t.sub==='carc'?'🍖 Recolher carne':'🧺 Colher frutas'):'🚶 Mover';
+  if(t.k==='b'&&t.o===0)return t.done<1?'🔨 Construir':t.type==='fazenda'?'🌾 Cultivar':t.hp<t.mhp?'🔧 Consertar':'📦 Levar recursos';
+  return'🚶 Mover'}
+const smartOrder0=smartOrder;
+smartOrder=function(us,tgt,x,y,o){
+  if(TAPCTX&&OPT.tap2!==0&&us.length&&us[0].o===0){
+    const key=tgt?'e'+tgt.id:'p',P=UI.pend,now=performance.now(),sel=SEL.join(',');
+    const same=P&&now-P.wall<3500&&P.sel===sel&&P.key===key&&(tgt||hyp(P.x-x,P.y-y)<TS*1.7);
+    if(!same){UI.pend={key,x:tgt?ctr(tgt).x:x,y:tgt?ctr(tgt).y:y,wall:now,sel,lbl:orderLabel(us,tgt)};
+      if(!OPT.tapTip){OPT.tapTip=1;saveOpt();toast('👆 Toque de novo no mesmo lugar para confirmar a ordem (ou toque duas vezes rápido). Dá para mudar na Pausa.')}
+      return'pend'}
+    UI.pend=null}
+  return smartOrder0(us,tgt,x,y,o)};
+const clickAt2=clickAt;
+clickAt=function(sx,sy,add){TAPCTX=inputMode==='touch';try{return clickAt2(sx,sy,add)}finally{TAPCTX=false}};
+// desenho do alvo marcado (por cima de tudo, até das árvores e da noite): anel pulsando e a etiqueta "toque de novo"
+function drawPending(){const P=UI.pend;if(!P)return;const age=performance.now()-P.wall;if(age>3500||P.sel!==SEL.join(',')){UI.pend=null;return}
+  const p=w2s(P.x,P.y),ph=(age/600)%1,a=clamp(1-(age-2800)/700,0,1),g=ctx;g.save();g.globalAlpha=a;
+  g.strokeStyle='#ffe08a';g.lineWidth=2.4;g.beginPath();g.ellipse(p.x,p.y,(14+ph*10)*Z,(7+ph*5)*Z,0,0,7);g.stroke();g.lineWidth=1.5;g.beginPath();g.ellipse(p.x,p.y,10*Z,5*Z,0,0,7);g.stroke();
+  const t='👆 Toque de novo: '+P.lbl;g.font='bold 13px Georgia,serif';const w=g.measureText(t).width+16,h=22,x=clamp(p.x-w/2,4,VW-w-4),y=clamp(p.y-24*Z-h-8,TOPH+6,VH-h-4);
+  g.fillStyle='rgba(6,14,34,.92)';g.strokeStyle='#f0c55a';g.lineWidth=1.2;g.beginPath();if(g.roundRect)g.roundRect(x,y,w,h,7);else g.rect(x,y,w,h);g.fill();g.stroke();
+  g.fillStyle='#fff6d8';g.textAlign='left';g.textBaseline='middle';g.fillText(t,x+8,y+h/2+1);g.restore()}
+const drawAtmos0=drawAtmos;
+drawAtmos=function(){drawAtmos0();try{drawPending()}catch(e){}};
+
 </script>
 </body>
 </html>
