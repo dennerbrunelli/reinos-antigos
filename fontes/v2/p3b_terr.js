@@ -76,10 +76,15 @@ function cityDown(t){
 }
 function captureCity(t,no){
   const old=t.o,wasCap=G.P[old].capId===t.id,c=ctr(t),R=infR(t)*TS;
+  // no Rise, quem estava guarnecido (eruditos, soldados) sai quando a cidade é
+  // conquistada — a cidade nem sempre é destruída, só muda de dono — então ejeta
+  // antes de virar a posse, e as unidades continuam do dono antigo (garEject não mexe em u.o)
+  if(t.cargo&&t.cargo.length)garEject(t);
   t.o=no;t.down=0;t.cp=0;t.imm=G.t+CAPT_IMM;t.q=[];t.qt=0;t.wait=false;t.rally=null;
   // a cidade vem junto: prédios do antigo dono dentro do raio dela mudam de lado
   for(const b of G.B){if(b.dead||b.o!==old||b===t||b.type==='tc'||b.type==='maravilha')continue;const bc=ctr(b);if(hyp(bc.x-c.x,bc.y-c.y)>R)continue;
     for(const u of G.U)if(!u.dead&&u.o===old&&(u.tg===b.id||u.lastRes===b.id)){releaseFarm(u);u.st='idle';u.tg=0;u.lastRes=0;u.path=null}
+    if(b.cargo&&b.cargo.length)garEject(b);
     b.o=no;b.q=[];b.qt=0;b.wait=false;b.rally=null;if(b.wk)b.wk=0}
   for(const b of G.B)if(!b.dead&&b.o===no){const nh=bldMaxHp(b);if(nh!==b.mhp){b.hp=Math.min(nh,Math.round(b.hp*nh/b.mhp));b.mhp=nh}}
   t.hp=Math.round(t.mhp*.3);

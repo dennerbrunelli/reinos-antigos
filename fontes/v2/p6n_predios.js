@@ -65,10 +65,12 @@ if(BDESC.torre)BDESC.torre+=' Soldados guarnecidos dão mais flechas (+1 a cada 
 if(BDESC.forte)BDESC.forte+=' Soldados guarnecidos dão mais flechas (+1 a cada 2).';
 
 // ---------- guarnição ----------
-const GAR_CAP={tc:12,forte:10,torre:6,quartel:8,maravilha:8,universidade:UNI_MAX,casa:4,celeiro:4,deposito:4,serraria:4,fundicao:4,refinaria:4};
-const GAR_NO=['muralha','fazenda','silo','doca','mina','pesca'];
-function garCap(b){if(!b||b.dead||b.done<1||b.o>1||GAR_NO.includes(b.type))return 0;
-  return GAR_CAP[b.type]!=null?GAR_CAP[b.type]:(BT[b.type].sz>=3?6:4)}
+// no Rise of Nations e no Age, só um grupo pequeno de prédios guarnece tropas
+// (Centro Urbano, Forte, Torre). A Universidade é uma exceção nossa, de propósito,
+// para os eruditos (pedido explícito do Denner) — não existe no Rise original.
+const GAR_CAP={tc:12,forte:10,torre:8,universidade:UNI_MAX};
+function garCap(b){if(!b||b.dead||b.done<1||b.o>1)return 0;
+  return GAR_CAP[b.type]||0}
 function garFull(b){return (b.cargo||[]).length>=garCap(b)}
 function garOK(b,u){if(!b||!u||u.dead||u.k!=='u'||u.o!==b.o||isNav(u)||u.type==='pesc'||u.type==='trans'||garCap(b)<=0)return false;
   if(b.type==='universidade')return u.type==='erudito';
@@ -90,6 +92,16 @@ function garThink(u,dt){const b=E.get(u.tg);
 const updUnitN=updUnit;
 updUnit=function(u,dt){if(u.inT){if(u.st!=='gar')u.st='idle';if(u.st==='gar')garThink(u,dt);return}
   if(u.st==='gar'){garThink(u,dt);return}return updUnitN(u,dt)};
+// no Rise, o Erudito nasce já dentro da Universidade (não anda até lá sozinho).
+// Só sai se a Universidade for destruída (garEject, já existente) ou a cidade for tomada.
+const updBldGar=updBld;
+updBld=function(b,dt){
+  if(b.type!=='universidade'||b.q[0]!=='erudito')return updBldGar(b,dt);
+  const n0=G.U.length;updBldGar(b,dt);
+  if(G.U.length>n0){const nu=G.U[G.U.length-1];
+    if(nu.type==='erudito'&&nu.o===b.o&&!nu.dead&&!nu.inT&&garCap(b)>0&&!garFull(b)){
+      nu.inT=b.id;(b.cargo||(b.cargo=[])).push(nu.id);nu.st='idle';nu.mv=false;nu.path=null}}
+};
 // sai todo mundo do prédio (vivo, do lado de fora)
 function garEject(b){if(!b.cargo||!b.cargo.length)return 0;
   const c=ctr(b),bx=Math.floor(c.x/TS),by=Math.floor(c.y/TS);let n=0;const ids=b.cargo.slice();b.cargo=[];
