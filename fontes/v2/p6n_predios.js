@@ -127,6 +127,22 @@ getCmds=function(){const out=getCmdsN();const s=selEnts();const e=s[0];
     out.splice(0,0,{ic:'📤',nm:'Desguarnecer ('+e.cargo.length+')',act:()=>{const n=garEject(e);toast(n?'📤 '+n+' saíram de '+BT[e.type].n:'Ninguém dentro')}});
     if(out.length>12)out.length=12}
   return out};
+// comando "Alarme" (igual ao Rise): só com aldeões selecionados, manda todos
+// correrem a guarnecer no Centro Urbano, Forte ou Torre mais perto — defesa num toque só
+function cmdAlarm(vs){
+  let cx=0,cy=0;for(const u of vs){cx+=u.x;cy+=u.y}cx/=vs.length;cy/=vs.length;
+  let best=null,bd=Infinity;
+  for(const b of G.B){if(b.dead||b.o!==0||b.done<1||(b.type!=='tc'&&b.type!=='forte'&&b.type!=='torre'))continue;
+    const c=ctr(b),d=hyp(c.x-cx,c.y-cy);if(d<bd){bd=d;best=b}}
+  if(!best){toast('🚨 Nenhum Centro Urbano, Forte ou Torre disponível');return}
+  garrisonOrder(vs,best)}
+const getCmdsAlarm=getCmds;
+getCmds=function(){const out=getCmdsAlarm();const s=selEnts();
+  const vs=s.filter(u=>u.k==='u'&&u.o===0&&u.type==='vill'&&!u.dead);
+  if(vs.length&&vs.length===s.length){
+    out.push({ic:'🚨',nm:'Alarme: guarnecer no mais perto',act:()=>cmdAlarm(vs)});
+    if(out.length>12)out.length=12}
+  return out};
 // a cada tick: eruditos dentro da Universidade estudam; a lista de quem está dentro se limpa sozinha
 const ronTickN=ronTick;
 ronTick=function(dt){ronTickN(dt);
