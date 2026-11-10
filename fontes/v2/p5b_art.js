@@ -304,6 +304,8 @@ function drawVillTool(t,S,fr,dir,u){const M=GPTART.u.vill.tool&&GPTART.u.vill.to
     if(fr===5){for(const[a,b,c]of[[0,0,'#c0283a'],[1.6,.8,'#8a1830'],[.4,1.7,'#d8364a']]){ctx.fillStyle=c;ctx.beginPath();ctx.arc(px+a-1,py+b-1,1.25,0,7);ctx.fill()}}
     const ph=(performance.now()/900+u.id*.37)%1;if(ph<.6){ctx.globalAlpha=1-ph/.6;ctx.fillStyle='#4e8a2e';ctx.beginPath();ctx.ellipse(px+4+ph*5,py+2+ph*14,1.6,.8,ph*4,0,7);ctx.fill();ctx.globalAlpha=1}}}
 function toolFor(u){if(u.st==='build')return'hammer';if(u.st!=='gather')return null;const s=u.lsub;return s==='tree'?'axe':s==='gold'||s==='stone'?'pick':s==='farm'?'hoe':UT[s]?'spear':null}
+let USHADOW=null;
+function mkUShadow(){const c=document.createElement('canvas');c.width=64;c.height=32;const g=c.getContext('2d');g.scale(1,.5);const gr=g.createRadialGradient(32,32,2,32,32,32);gr.addColorStop(0,'rgba(10,8,2,.95)');gr.addColorStop(.55,'rgba(10,8,2,.55)');gr.addColorStop(1,'rgba(10,8,2,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);return c}
 function drawUnit(u,selSet){
   const T=ST(u);let key=(u.type==='guer'&&T.axe?'guerA':u.type)+u.o,S=SHEET[key];if(!S)return;
   // aldeão andando: folha nova de 8 quadros em ciclo (pernas cruzando)
@@ -329,6 +331,8 @@ function drawUnit(u,selSet){
       const A=VT.t==='faca'&&hT>=0?null:SHEET['vw_'+VT.t+u.o];
       if(A){S=A;VT.art=1;if(VT.t==='colher')fr=5+((u.an/2|0)%3)}
       else if(!VT.v){VT=null}else{const S2=SHEET[VT.v+u.o];if(S2)S=S2;else VT=null;if(VT&&VT.t==='colher')fr=5+((u.an/2.4|0)%2);if(VT&&VT.t==='faca'&&hT<0)fr=5}}}
+  // sombra macia no chão (o sol vem de cima à esquerda): prende o boneco ao terreno
+  if(!isNav(u)){const sw=Math.max(9,S.w*.34),sh=sw*.42;ctx.globalAlpha=.42;ctx.drawImage(USHADOW||(USHADOW=mkUShadow()),I-sw*.78,J-sh*.62,sw*2,sh*2);ctx.globalAlpha=1}
   ctx.save();ctx.translate(I,J-bob);if(u.face<0)ctx.scale(-1,1);
   if(fx){ctx.translate(fx.dx,fx.dy);if(fx.s!==1)ctx.scale(fx.s,fx.s)}
   ctx.drawImage(S.c,fr*S.w*SS,dir*S.h*SS,S.w*SS,S.h*SS,-S.ax,-S.ay,S.w,S.h);
@@ -389,6 +393,8 @@ function buildTerrain(){
         const dirt=clamp((nm-.62)*5,0,1)*clamp(dr*1.6-.3,0,1),D=TX.terra;tr=tr*(1-dirt)+D[q]*dirt;tg=tg*(1-dirt)+D[q+1]*dirt;tb=tb*(1-dirt)+D[q+2]*dirt;
         if(f>0){tr=tr*(1-f*.42)+42*f*.42;tg=tg*(1-f*.3)+64*f*.3;tb=tb*(1-f*.4)+24*f*.4}}
       r=tr*TM+r*(1-TM);gg=tg*TM+gg*(1-TM);b=tb*TM+b*(1-TM)}
+    // grama menos "verde de brinquedo": puxa um pouco para o oliva e varia em manchas largas
+    if(w>=1){const lum=r*.3+gg*.59+b*.11,pv=.9+nm*.18;r=(r*.8+lum*.2+6)*pv;gg=(gg*.8+lum*.2)*pv*.97;b=(b*.8+lum*.2-4)*pv}
     const k=(py*W+px)*4,ss=w<-.05?1:s;d[k]=r*ss;d[k+1]=gg*ss;d[k+2]=b*ss;d[k+3]=255}}
   g.putImageData(img,0,0);
   const R=mulberry32(G.seed+5);
@@ -397,6 +403,15 @@ function buildTerrain(){
     if(kk<.75){const c=R()<.5?'rgba(40,80,20,.55)':'rgba(150,180,80,.5)';g.strokeStyle=c;g.lineWidth=.8;g.beginPath();g.moveTo(x,y);g.lineTo(x-1+R()*2,y-2.5-R()*2.5);g.moveTo(x+1.2,y);g.lineTo(x+1.2+R()*1.6,y-2-R()*2);g.stroke()}
     else if(kk<.86){g.fillStyle='rgba(110,100,85,.55)';g.beginPath();g.ellipse(x,y,1.4,1,0,0,7);g.fill()}
     else if(kk<.92){g.fillStyle=['#f2e27a','#f2f2e8','#e6a0c8','#d8604a'][R()*4|0];g.beginPath();g.arc(x,y,1.1,0,7);g.fill()}}
+  // moitas de capim maiores, espalhadas em grupos (as lâminas apontam para "cima da tela", que no mapa é a diagonal)
+  {const R2=mulberry32(G.seed+11),nT=Math.round(N*.55);
+    for(let i=0;i<nT;i++){let x=R2()*W,y=R2()*W;const gx=x/PX/5,gy=y/PX/5;if(vnoise(gx+3,gy+7)<.52)continue;// só em manchas
+      const tx=x/PX|0,ty=y/PX|0;if(!inMap(tx,ty))continue;const ti=idx(tx,ty);if(G.terr[ti]||WDIST[ti]<=2)continue;
+      const dryv=dry[ti],nb=5+(R2()*4|0),L=(PX/24)*(7+R2()*6);
+      g.fillStyle='rgba(20,30,8,.28)';g.beginPath();g.ellipse(x+1,y+1,L*.45,L*.28,.78,0,7);g.fill();
+      for(let j=0;j<nb;j++){const a=-2.356+(R2()-.5)*1.5,l=L*(.55+R2()*.6),ex=x+Math.cos(a)*l,ey=y+Math.sin(a)*l,bx=x+(R2()-.5)*L*.35,by=y+(R2()-.5)*L*.2;
+        const dark=dryv>.6?'#6b6a2c':'#34531c',lite=dryv>.6?'#b9b060':'#86a548';const gr=g.createLinearGradient(bx,by,ex,ey);gr.addColorStop(0,dark);gr.addColorStop(1,lite);
+        g.strokeStyle=gr;g.lineWidth=PX/24*1.5;g.lineCap='round';g.beginPath();g.moveTo(bx,by);g.quadraticCurveTo((bx+ex)/2+(R2()-.5)*2,(by+ey)/2,ex,ey);g.stroke()}}}
   SHORE=[];for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){if(!G.terr[idx(x,y)])continue;for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1]]){if(inMap(x+a,y+b)&&!G.terr[idx(x+a,y+b)]){SHORE.push([(x+.5+a*.42)*TS,(y+.5+b*.42)*TS,a,b,hash2(x,y)])}}}
   stumps=null;stumpG=terrC.getContext('2d');
 }
