@@ -57,6 +57,20 @@ function gaTeam(img,o,key){const ck=key+'|'+o;if(GA_TEAM[ck])return GA_TEAM[ck];
     let R=0,G2=0,B=0;if(hp<1){R=C;G2=X}else if(hp<2){R=X;G2=C}else if(hp<3){G2=C;B=X}else if(hp<4){G2=X;B=C}else if(hp<5){R=X;B=C}else{R=C;B=X}
     D[i]=(R+m)*255;D[i+1]=(G2+m)*255;D[i+2]=(B+m)*255}
   g.putImageData(I,0,0);return GA_TEAM[ck]=c}
+// ---------- povos sem arte pintada própria (Europa, Oriente, Babilônia) ----------
+// Em vez dos prédios cinzentos desenhados por código, usam a arte pintada mais próxima com o telhado
+// repintado (ardósia na Europa, verde-jade no Oriente). É provisório até cada estilo ganhar arte própria.
+const GA_STFB={europa:'grego',oriental:'grego',babilonia:'egito'};
+const GA_ROOF={europa:[212,.2,.68],oriental:[158,.6,.7]};// matiz, fator de saturação, fator de brilho
+function gaStyle(img,st0,key){const P=GA_ROOF[st0];if(!P)return img;const ck='st|'+st0+'|'+key;if(GA_TEAM[ck])return GA_TEAM[ck];
+  const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const g=c.getContext('2d',{willReadFrequently:true});g.drawImage(img,0,0);
+  const I=g.getImageData(0,0,c.width,c.height),D=I.data,th=P[0];
+  for(let i=0;i<D.length;i+=4){if(D[i+3]<8)continue;const r=D[i]/255,gg=D[i+1]/255,b=D[i+2]/255;if(r<=gg||gg<b)continue;// só tons de telha (vermelho > verde > azul)
+    const d=r-b;if(d<.2)continue;const l=(r+b)/2,s=d/(1-Math.abs(2*l-1));if(s<.42)continue;const h=(gg-b)/d*60;if(h<7||h>30)continue;
+    const s2=Math.min(1,s*P[1]),l2=l*P[2],C=(1-Math.abs(2*l2-1))*s2,hp=th/60,X=C*(1-Math.abs(hp%2-1)),m=l2-C/2;
+    let R=0,G2=0,B=0;if(hp<1){R=C;G2=X}else if(hp<2){R=X;G2=C}else if(hp<3){G2=C;B=X}else if(hp<4){G2=X;B=C}else if(hp<5){R=X;B=C}else{R=C;B=X}
+    D[i]=(R+m)*255;D[i+1]=(G2+m)*255;D[i+2]=(B+m)*255}
+  g.putImageData(I,0,0);return GA_TEAM[ck]=c}
 function applyGPTArt(){
   // unidades: folha 8 (ou 9 com o caído) colunas x 2 linhas, igual às do código
   for(const k in GPTART.u){const m=GPTART.u[k];
@@ -69,8 +83,9 @@ function applyGPTArt(){
     const im0=GA['u_'+k+'_'+(m.team?0:2)];if(im0&&!WALK[k]&&!m.walk8&&!m.wf)try{gaWalk(k,m,im0)}catch(e){WALK[k]={hum:0,seq:[1,2,3,4],fx:[],cyc:40}}}
   // prédios gregos (azul para o jogador, vermelho para o inimigo)
   const B=GPTART.b.grego;
-  for(let o=0;o<NP;o++){const st=civOf(o).st,BS=GPTART.b[st];if(!BS)continue;
-    for(const t in BS){if(GA_NOWALL[t]||!BT[t])continue;const m=BS[t],i0=GA['b_'+st+'_'+m.at+'_0'],img=GA['b_'+st+'_'+m.at+'_'+o]||(o>1&&i0?gaTeam(i0,o,'b_'+st+'_'+m.at):null);if(!img)continue;
+  for(let o=0;o<NP;o++){const st0=civOf(o).st,st=GPTART.b[st0]?st0:GA_STFB[st0],BS=GPTART.b[st];if(!BS)continue;
+    for(const t in BS){if(GA_NOWALL[t]||!BT[t])continue;const m=BS[t],i0=GA['b_'+st+'_'+m.at+'_0'];let img=GA['b_'+st+'_'+m.at+'_'+o]||(o>1&&i0?gaTeam(i0,o,'b_'+st+'_'+m.at):null);if(!img)continue;
+      if(st!==st0)img=gaStyle(img,st0,'b_'+st+'_'+m.at+'_'+o);
       const c=gaCut(img,m.r);SPR['b'+t+o]={c,dk:o===0?c:darkCopy(c),W:m.W,H:m.H,top:m.top,bt:m.bt,gpt:1}}}
   // prédios iguais para todos os povos (Biblioteca, Forte)
   const BC=GPTART.b.comum;if(BC)for(let o=0;o<NP;o++)for(const t in BC){if(!BT[t]||(SPR['b'+t+o]&&SPR['b'+t+o].gpt))continue;const m=BC[t],i0=GA['b_comum_'+m.at+'_0'],img=GA['b_comum_'+m.at+'_'+o]||(o>1&&i0?gaTeam(i0,o,'b_comum_'+m.at):null);if(!img)continue;const c=gaCut(img,m.r);SPR['b'+t+o]={c,dk:o===0?c:darkCopy(c),W:m.W,H:m.H,top:m.top,bt:m.bt,gpt:1}}
