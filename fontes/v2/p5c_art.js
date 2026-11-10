@@ -83,10 +83,11 @@ function applyGPTArt(){
     const im0=GA['u_'+k+'_'+(m.team?0:2)];if(im0&&!WALK[k]&&!m.walk8&&!m.wf)try{gaWalk(k,m,im0)}catch(e){WALK[k]={hum:0,seq:[1,2,3,4],fx:[],cyc:40}}}
   // prédios gregos (azul para o jogador, vermelho para o inimigo)
   const B=GPTART.b.grego;
-  for(let o=0;o<NP;o++){const st0=civOf(o).st,st=GPTART.b[st0]?st0:GA_STFB[st0],BS=GPTART.b[st];if(!BS)continue;
+  // primeiro a arte emprestada (com o telhado repintado), depois a arte própria do estilo por cima, prédio a prédio
+  for(let o=0;o<NP;o++){const st0=civOf(o).st;for(const st of[GA_STFB[st0],st0]){const BS=st&&GPTART.b[st];if(!BS)continue;
     for(const t in BS){if(GA_NOWALL[t]||!BT[t])continue;const m=BS[t],i0=GA['b_'+st+'_'+m.at+'_0'];let img=GA['b_'+st+'_'+m.at+'_'+o]||(o>1&&i0?gaTeam(i0,o,'b_'+st+'_'+m.at):null);if(!img)continue;
       if(st!==st0)img=gaStyle(img,st0,'b_'+st+'_'+m.at+'_'+o);
-      const c=gaCut(img,m.r);SPR['b'+t+o]={c,dk:o===0?c:darkCopy(c),W:m.W,H:m.H,top:m.top,bt:m.bt,gpt:1}}}
+      const c=gaCut(img,m.r);SPR['b'+t+o]={c,dk:o===0?c:darkCopy(c),W:m.W,H:m.H,top:m.top,bt:m.bt,gpt:1}}}}
   // prédios iguais para todos os povos (Biblioteca, Forte)
   const BC=GPTART.b.comum;if(BC)for(let o=0;o<NP;o++)for(const t in BC){if(!BT[t]||(SPR['b'+t+o]&&SPR['b'+t+o].gpt))continue;const m=BC[t],i0=GA['b_comum_'+m.at+'_0'],img=GA['b_comum_'+m.at+'_'+o]||(o>1&&i0?gaTeam(i0,o,'b_comum_'+m.at):null);if(!img)continue;const c=gaCut(img,m.r);SPR['b'+t+o]={c,dk:o===0?c:darkCopy(c),W:m.W,H:m.H,top:m.top,bt:m.bt,gpt:1}}
   // recursos raros e ruínas (versão azul e vermelha)
