@@ -7,8 +7,8 @@
 function ENDAGE(){return G&&G.cfg&&G.cfg.endAge!=null?G.cfg.endAge:MAXAGE}
 // ---------- menu principal ----------
 {const bn=$('bnew');bn.innerHTML='<b>⚔</b><span>Batalha Rápida<small>Você contra o computador: escolha os povos, o mapa e as regras</small></span>';
-  const cw=document.createElement('button');cw.className='mb mi lock';cw.id='bcw';cw.innerHTML='<b>🌍</b><span>Conquistar o Mundo <em class="tag">EM BREVE</em><small>Campanha no mapa do mundo, território por território</small></span>';
-  cw.onclick=()=>{toast('🌍 Conquistar o Mundo chega numa atualização futura');snd('click')};bn.after(cw);
+  const cw=document.createElement('button');cw.className='mb mi';cw.id='bcw';cw.innerHTML='<b>🌍</b><span>Conquistar o Mundo<small>Campanha no mapa do mundo, território por território</small></span>';
+  cw.onclick=()=>{snd('click');cwOpen()};bn.after(cw);
   const h=$('bhelp');h.innerHTML='<b>📜</b><span>Aprender a jogar<small>Regras, toque e controle Xbox</small></span>';
   // opções reunidas num botão (música e atualizar continuam lá dentro)
   const op=document.createElement('button');op.className='mb mi';op.id='bopts';op.innerHTML='<b>⚙️</b><span>Opções<small>Música e atualização do jogo</small></span>';
