@@ -194,8 +194,9 @@ function updHUD(force){
   const ab=G.B.find(b=>!b.dead&&b.o===0&&b.q[0]==='age');
   $('age').textContent=AGES[P.age]+(ab?' ⬆'+Math.floor(ab.qt/AGETIME[P.age+1]*100)+'%':'');
   const m=G.t/60|0,sx=G.t%60|0;$('clock').textContent=m+':'+(sx<10?'0':'')+sx;
-  const ww=[0,1].map(o=>G.B.find(b=>!b.dead&&b.o===o&&b.type==='maravilha'&&b.done>=1));
-  const tw=G.tw||[0,0];$('won').textContent=ww[0]?'🏛 '+fmtT(WONDER_T-G.won[0]):ww[1]?'⚠️🏛 '+fmtT(WONDER_T-G.won[1]):tw[0]?'🗺 '+fmtT(TERR_T-tw[0]):tw[1]?'⚠️🗺 '+fmtT(TERR_T-tw[1]):'';
+  // relógio de vitória: o do seu time primeiro; senão, o do inimigo que está mais perto de vencer
+  {let mw=0,mt=0,fw=0,ft=0;const tw=G.tw||[];for(let o=0;o<NP;o++){const w=G.won[o]||0,t=tw[o]||0;if(ally(o,0)){mw=Math.max(mw,w);mt=Math.max(mt,t)}else{fw=Math.max(fw,w);ft=Math.max(ft,t)}}
+    $('won').textContent=mw?'🏛 '+fmtT(WONDER_T-mw):fw?'⚠️🏛 '+fmtT(WONDER_T-fw):mt?'🗺 '+fmtT(TERR_T-mt):ft?'⚠️🗺 '+fmtT(TERR_T-ft):''}
   const idle=G.U.filter(u=>!u.dead&&!u.inT&&u.o===0&&u.type==='vill'&&u.st==='idle').length;$('nidle').textContent=idle||'';$('qidle').classList.toggle('off',!idle);
   SEL=SEL.filter(id=>{const e=E.get(id);return e&&!e.dead&&!e.inT});
   const s=selEnts(),info=$('info');
@@ -523,7 +524,8 @@ updOptBtns();
 function endGame(win,msg){
   G.over=true;running=false;try{localStorage.removeItem(SAVEK)}catch(e){}
   $('hud').style.display='none';$('endt').textContent=win?'VITÓRIA':'DERROTA';snd(win?'win':'lose');
-  $('ends').innerHTML='<b>'+msg+'</b><br><br>Povo: '+civOf(0).n+' · Inimigo: '+civOf(1).n+' · '+DIFF[G.diff].n+'<br>Tempo: '+fmtT(G.t)+' · Era alcançada: '+AGES[G.P[0].age]+'<br>Inimigos derrotados: '+G.st.kill[0]+' · Perdas: '+G.st.lost[0]+' · Recursos coletados: '+(G.st.gath[0]|0)+
+  $('ends').innerHTML='<b>'+msg+'</b><br><br>Povo: '+civOf(0).n+(NP===2?' · Inimigo: '+civOf(1).n:' · '+NP+' nações')+' · '+DIFF[G.diff].n+'<br>Tempo: '+fmtT(G.t)+' · Era alcançada: '+AGES[G.P[0].age]+'<br>Inimigos derrotados: '+G.st.kill[0]+' · Perdas: '+G.st.lost[0]+' · Recursos coletados: '+(G.st.gath[0]|0)+
+    (NP>2?'<table style="margin:8px auto 0;border-collapse:collapse;font-size:12px"><tr><th></th><th style="text-align:left;padding:1px 6px">Nação</th><th style="padding:1px 6px">Abates</th><th style="padding:1px 6px">Perdas</th><th style="padding:1px 6px">Recursos</th></tr>'+G.P.map((P,p)=>'<tr><td><span style="display:inline-block;width:10px;height:10px;border:1px solid #000;background:'+COL[p].m+'"></span></td><td style="text-align:left;padding:1px 6px">'+civOf(p).n+(p===0?' (você)':ally(p,0)?' 🤝':'')+'</td><td>'+G.st.kill[p]+'</td><td>'+G.st.lost[p]+'</td><td>'+(G.st.gath[p]|0)+'</td></tr>').join('')+'</table>':'')+
     '<br><br><i>'+(win?'Seu nome será lembrado pelas próximas gerações.':'Até os grandes impérios começaram com uma derrota. Tente outra vez!')+'</i>';
   show('end');
 }
@@ -594,7 +596,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 48';$('ver').textContent=VERSAO;
+const VERSAO='Versão 49';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';

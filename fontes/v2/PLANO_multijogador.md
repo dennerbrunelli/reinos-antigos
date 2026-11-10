@@ -158,7 +158,10 @@ Só faz sentido depois do motor aceitar N jogadores. Vai precisar de:
    aliança ou declarar guerra. A IA recusa se você a atacou nos últimos 90 s, se você traiu
    a aliança nos últimos 5 min, ou se não sobraria nenhum inimigo. Quem se alia entra no seu
    time (rompe com os seus inimigos). Teste: `dip48.js`.
-   Ainda não tem: IA propondo aliança por conta própria, tributo, e construir em terra aliada.
+   **Versão 49** completou: tributo (🎁 150 de metal — ajuda aliado, acalma inimigo), IA
+   propondo aliança (quando um terceiro reino mais forte ameaça os dois; oferta vale 60 s no
+   painel), construir torre/muralha/depósito/celeiro/doca em terra aliada, placar de fim de
+   jogo com todas as nações e relógio de vitória do inimigo mais perigoso. Teste: `dip49.js`.
 
 Cada etapa sobe pro GitHub sozinha, testada, sem deixar o jogo quebrado no meio do
 caminho — do jeito que venho fazendo com guarnecimento, Alarme, Espião e som.

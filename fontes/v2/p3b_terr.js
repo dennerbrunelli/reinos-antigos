@@ -49,8 +49,9 @@ const domShare=o=>LANDN?DOMCNT[o]/LANDN:0;
 function domWhy(type,tx,ty,o){
   if(o>=NP||!G)return'';const sz=BT[type].sz,need=!NEUTRAL_OK[type];
   for(let y=ty;y<ty+sz;y++)for(let x=tx;x<tx+sz;x++){const d=DOM[y*MW+x];
-    if(d>=0&&d<NP&&d!==o)return'⛔ Não dá para construir no território inimigo';
-    if(need&&d!==o)return'🚩 Só dentro da sua fronteira (a linha '+(o===0?'azul':'vermelha')+')'}
+    if(d>=0&&d<NP&&!ally(d,o))return'⛔ Não dá para construir no território inimigo';
+    if(type==='tc'&&d>=0&&d<NP&&d!==o)return'🤝 Não dá para fundar cidade dentro da terra de um aliado';
+    if(need&&d!==o)return d>=0&&d<NP?'🤝 Em terra aliada só dá para erguer torre, muralha, depósito, celeiro e doca':'🚩 Só dentro da sua fronteira (a linha '+(o===0?'azul':'da cor do seu reino')+')'}
   if(type==='tc'){const cx=tx+sz/2,cy=ty+sz/2;let n=0;
     for(const b of G.B){if(b.dead||b.type!=='tc')continue;const d=hyp(b.tx+b.sz/2-cx,b.ty+b.sz/2-cy);
       if(b.o===o){n++;if(d<CITY_MIN_OWN)return'🏘 Cidade nova: pelo menos '+CITY_MIN_OWN+' quadrados longe das suas cidades'}
