@@ -140,9 +140,16 @@ Só faz sentido depois do motor aceitar N jogadores. Vai precisar de:
 4. ✅ **FEITO junto com a Etapa 2** — IA rodando pra todos os `NP-1` oponentes (sem
    diplomacia ainda — todos contra todos, cada aldeão e soldado de cada IA se defende e
    persegue qualquer outro jogador real, não só o jogador 0).
-5. Tela de configurar partida: escolher quantos oponentes (até o máximo de nações
-   disponível pelo tamanho do mapa) e o povo de cada um. **Esta é a próxima etapa.**
-6. Diplomacia (aliar/guerra), IA respeitando alianças, vitória em time.
+5. ✅ **FEITO (Versão 47)** — Tela de configurar partida: nova opção "Oponentes" (1 a 7) na
+   aba Partida. Ao clicar Iniciar, `SETUP.np = oponentes+1` é passado pro `newGame()`; se o
+   tamanho do mapa escolhido não aguenta tantos (ex.: Pequeno só recomenda 2 jogadores), o
+   jogo avisa na tela ("⚠️ Este tamanho de mapa aguenta bem até N oponente(s)") e o próprio
+   motor já limita sozinho (testado: Pequeno + pedir 7 oponentes = parte com 2 mesmo assim,
+   sem travar). Os povos dos oponentes extras são sorteados entre os 15 disponíveis (as 12
+   nações originais + Alemães, e as outras que o módulo de nações acrescenta).
+   **Com isso o jogo já é jogável de ponta a ponta com até 8 jogadores reais** — falta só a
+   diplomacia (Etapa 6) pra virar aliados em vez de todos-contra-todos.
+6. Diplomacia (aliar/guerra), IA respeitando alianças, vitória em time. **Próxima etapa.**
 
 Cada etapa sobe pro GitHub sozinha, testada, sem deixar o jogo quebrado no meio do
 caminho — do jeito que venho fazendo com guarnecimento, Alarme, Espião e som.
