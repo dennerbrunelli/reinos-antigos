@@ -101,12 +101,12 @@ function updCities(dt){
   for(const t of G.B){if(t.dead||t.type!=='tc'||t.done<1)continue;
     if(!t.down){if(t.hp>0)continue;cityDown(t)}
     const c=ctr(t),R=(CAPT_R+t.sz/2)*TS;let att=0,ao=-1,def=0;
-    for(const u of G.U){if(u.dead||u.inT||u.o>=NP||!canCapture(u))continue;if(hyp(u.x-c.x,u.y-c.y)>R)continue;if(u.o===t.o)def++;else{att++;ao=u.o}}
+    for(const u of G.U){if(u.dead||u.inT||u.o>=NP||!canCapture(u))continue;if(hyp(u.x-c.x,u.y-c.y)>R)continue;if(ally(u.o,t.o))def++;else{att++;ao=u.o}}
     if(att&&!def&&!(t.imm>G.t)){t.cp=(t.cp||0)+dt;t.cpo=ao;if(t.cp>=CAPT_T)captureCity(t,ao)}
     else{t.cp=Math.max(0,(t.cp||0)-dt*.5);
       if(!att){t.hp=Math.min(t.mhp,t.hp+t.mhp*.01*dt);if(t.hp>=t.mhp*.25){t.down=0;t.cp=0;if(t.o===0)toast('🏛 Seu Centro Urbano voltou a funcionar.')}}}}
   // atrito: quem fica no território inimigo vai perdendo vida aos poucos (nunca morre disso)
   for(const u of G.U){if(u.dead||u.inT||u.o>=NP||isNav(u))continue;const d=DOM[tileOf(u.x,u.y)];
-    if(d>=0&&d!==u.o&&!(u.sup>G.t)){u.att=(u.att||0)+dt;if(u.att>ATTR_DELAY){const mh=ST(u).hp,fl=mh*ATTR_FLOOR;if(u.hp>fl)u.hp=Math.max(fl,u.hp-mh*ATTR_RATE*dt*Math.max(.25,1-.12*((G.P[u.o]&&G.P[u.o].mil)||0)))}}
+    if(d>=0&&!ally(d,u.o)&&!(u.sup>G.t)){u.att=(u.att||0)+dt;if(u.att>ATTR_DELAY){const mh=ST(u).hp,fl=mh*ATTR_FLOOR;if(u.hp>fl)u.hp=Math.max(fl,u.hp-mh*ATTR_RATE*dt*Math.max(.25,1-.12*((G.P[u.o]&&G.P[u.o].mil)||0)))}}
     else if(u.att)u.att=0}
 }

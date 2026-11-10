@@ -17,8 +17,8 @@ function findResLimited(sub,hb,maxD,tgc,lim){
 }
 function nearestFoe(p,from,naval){
   let best=null,bd=1e9;
-  for(const u of G.U){if(u.dead||u.inT||u.o===p||u.o===GAIA)continue;if(naval&&!isNav(u))continue;const d=hyp(u.x-from.x,u.y-from.y)*(naval?1:1.2);if(d<bd){bd=d;best=u}}
-  for(const b of G.B){if(b.dead||b.o===p)continue;if(naval&&!BT[b.type].water)continue;const c=ctr(b);const d=hyp(c.x-from.x,c.y-from.y)*(b.type==='fazenda'||b.type==='muralha'?1.4:1);if(d<bd){bd=d;best=b}}
+  for(const u of G.U){if(u.dead||u.inT||ally(u.o,p)||u.o===GAIA)continue;if(naval&&!isNav(u))continue;const d=hyp(u.x-from.x,u.y-from.y)*(naval?1:1.2);if(d<bd){bd=d;best=u}}
+  for(const b of G.B){if(b.dead||ally(b.o,p))continue;if(naval&&!BT[b.type].water)continue;const c=ctr(b);const d=hyp(c.x-from.x,c.y-from.y)*(b.type==='fazenda'||b.type==='muralha'?1.4:1);if(d<bd){bd=d;best=b}}
   return best;
 }
 function intrNear(){return false}
@@ -98,7 +98,7 @@ function aiTick(p){
   if(dock&&dock.done>=1){
     const fishLeft=G.R.some(r=>!r.dead&&r.sub==='fish'&&hyp((r.tx+.5)*TS-ctr(dock).x,(r.ty+.5)*TS-ctr(dock).y)<26*TS);
     if(fishLeft&&fishers.length+dock.q.filter(q=>q==='pesc').length<D.fish&&dock.q.length<2&&afford(p,costOf(p,'pesc'))&&P.pop+queued<P.cap){pay(p,costOf(p,'pesc'));dock.q.push('pesc')}
-    const foeNav=G.U.some(u=>!u.dead&&u.o!==p&&u.o<NP&&isNav(u))||G.B.some(b=>!b.dead&&b.o!==p&&b.type==='doca');
+    const foeNav=G.U.some(u=>!u.dead&&foe(u.o,p)&&isNav(u))||G.B.some(b=>!b.dead&&foe(b.o,p)&&b.type==='doca');
     const nt=P.age>=UT.encour.age?'encour':P.age>=UT.galeao.age?'galeao':P.age>=UT.trir.age?'trir':'bguer';
     if(P.age>=1&&foeNav&&navy.length+dock.q.filter(q=>UT[q]&&UT[q].war).length<D.navy+P.age&&dock.q.length<2&&afford(p,costOf(p,nt))&&P.pop+queued<P.cap){pay(p,costOf(p,nt));dock.q.push(nt)}
   }
@@ -149,11 +149,11 @@ function aiTick(p){
     for(const t of opts){const c=costOf(p,t);if(spend(c)){pay(p,c);b.q.push(t);break}}}
   // defesa
   let intr=null,id=1e9;
-  for(const u of G.U){if(u.dead||u.inT||u.o===p||u.o===GAIA||isNav(u))continue;let near=false;for(const b of blds){if(distTo(u,b)<9*TS){near=true;break}}if(near){const d=hyp(u.x-hb.x,u.y-hb.y);if(d<id){id=d;intr=u}}}
+  for(const u of G.U){if(u.dead||u.inT||ally(u.o,p)||u.o===GAIA||isNav(u))continue;let near=false;for(const b of blds){if(distTo(u,b)<9*TS){near=true;break}}if(near){const d=hyp(u.x-hb.x,u.y-hb.y);if(d<id){id=d;intr=u}}}
   if(!intr&&AI.threat){const t=E.get(AI.threat);if(t&&!t.dead&&t.k==='u'&&hyp(t.x-hb.x,t.y-hb.y)<18*TS)intr=t;AI.threat=0}
   if(intr){for(const u of army){if(u.st!=='attack')orderAttack(u,intr)}for(const s of priests){if(s.st==='idle'&&s.faith>=100)orderConvert(s,intr)}}
   // ataque em ondas
-  if(!AI.atk&&G.t>=AI.nextAtk&&army.length>=AI.wave){AI.atk=true;AI.nextAtk=G.t+D.int;AI.wave+=D.inc;if(running)toast('⚠️ O exército inimigo está marchando contra você!');snd('alert')}
+  if(!AI.atk&&G.t>=AI.nextAtk&&army.length>=AI.wave){AI.atk=true;AI.nextAtk=G.t+D.int;AI.wave+=D.inc;if(running&&foe(p,0)){toast('⚠️ O exército inimigo está marchando contra você!');snd('alert')}}
   if(AI.atk){
     if(army.length<2)AI.atk=false;
     else{const tgt=nearestFoe(p,hb,false);if(tgt){for(const u of army){if(u.st==='idle'||(u.st==='move'&&!intr))orderAttack(u,tgt)}

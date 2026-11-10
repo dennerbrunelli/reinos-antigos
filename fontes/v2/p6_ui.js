@@ -447,6 +447,7 @@ function loadGame(){
 }
 function startGame(){
   RNG=mulberry32(G.seed+G.t|0);
+  if(G.rel&&G.rel.length!==G.P.length)G.rel=null;
   NP=G.P.length;// jogo novo já veio com NP certo; jogo salvo recupera NP a partir de quantos jogadores tem
   STAT=[];MODS=[];for(let p=0;p<NP;p++)recompute(p);
   G.tw=G.tw||new Array(NP).fill(0);G.st.city=G.st.city||new Array(NP).fill(0);for(const P of G.P)P.mil=P.mil||0;
@@ -535,14 +536,14 @@ function checkEnd(){
     if(!P.grace){P.grace=G.t||.01;if(running)toast(p===0?'⏳ Sem cidade e sem exército! Construa um Centro Urbano em 2 minutos.':'🏁 Um reino ficou sem cidade e sem exército: mais 2 minutos e ele cai.')}
     else if(G.t-P.grace>=GRACE_T)out[p]=true}
   if(out[0])return endGame(false,'Seu reino caiu.');
-  let allFoesOut=true;for(let p=1;p<NP;p++)if(!out[p]){allFoesOut=false;break}
+  let allFoesOut=true;for(let p=1;p<NP;p++)if(!out[p]&&!ally(p,0)){allFoesOut=false;break}
   if(allFoesOut)return endGame(true,NP===2?'Você derrotou o reino dos '+civOf(1).n+'!':'Você derrotou todos os reinos inimigos!');
   G.revealAI=NP===2&&!G.B.some(b=>!b.dead&&b.o===1&&b.type==='tc')&&!G.U.some(u=>!u.dead&&u.o===1&&u.type==='vill');
   const conq=G.cfg&&G.cfg.vic==='conq';
-  for(let o=0;o<NP&&!conq;o++){const w=G.B.find(b=>!b.dead&&b.o===o&&b.type==='maravilha'&&b.done>=1);if(w){G.won[o]+=1;if(G.won[o]>=WONDER_T)return endGame(o===0,o===0?'Sua Maravilha resistiu ao tempo!':'A Maravilha inimiga resistiu 5 minutos.')}else G.won[o]=0}
+  for(let o=0;o<NP&&!conq;o++){const w=G.B.find(b=>!b.dead&&b.o===o&&b.type==='maravilha'&&b.done>=1);if(w){G.won[o]+=1;if(G.won[o]>=WONDER_T)return endGame(ally(o,0),o===0?'Sua Maravilha resistiu ao tempo!':ally(o,0)?'A Maravilha do seu aliado resistiu ao tempo!':'A Maravilha inimiga resistiu 5 minutos.')}else G.won[o]=0}
   // vitória por território: 65% da terra por 3 minutos
-  for(let o=0;o<NP&&!conq;o++){if(domShare(o)>=TERR_WIN){G.tw[o]=(G.tw[o]||0)+1;if(G.tw[o]===1&&running)toast(o===0?'🗺 Você domina 65% da terra! Segure por 3 minutos.':'⚠️ O inimigo domina 65% da terra! Tome cidades dele em 3 minutos.');
-    if(G.tw[o]>=TERR_T)return endGame(o===0,o===0?'Seu império dominou a terra!':'O império inimigo dominou a terra.')}else G.tw[o]=0}
+  for(let o=0;o<NP&&!conq;o++){if(domShare(o)>=TERR_WIN){G.tw[o]=(G.tw[o]||0)+1;if(G.tw[o]===1&&running)toast(o===0?'🗺 Você domina 65% da terra! Segure por 3 minutos.':ally(o,0)?'🗺 Seu aliado domina 65% da terra! Ajude a segurar por 3 minutos.':'⚠️ O inimigo domina 65% da terra! Tome cidades dele em 3 minutos.');
+    if(G.tw[o]>=TERR_T)return endGame(ally(o,0),o===0?'Seu império dominou a terra!':ally(o,0)?'O império do seu aliado dominou a terra!':'O império inimigo dominou a terra.')}else G.tw[o]=0}
 }
 function goFull(){try{const d=document.documentElement;if(!document.fullscreenElement&&d.requestFullscreen)d.requestFullscreen({navigationUI:'hide'}).then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}).catch(()=>{})}catch(e){}
   try{if('wakeLock'in navigator)navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}}
@@ -593,7 +594,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 47';$('ver').textContent=VERSAO;
+const VERSAO='Versão 48';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';

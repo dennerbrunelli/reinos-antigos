@@ -21,7 +21,8 @@ function newGame(o){
   const civs=[o.civ];
   for(let p=1;p<NP;p++){
     const want=o.ais&&o.ais[p-1];
-    civs.push(want&&want!=='rand'&&CIVS.some(c=>c.id===want)?want:CIVS[(RNG()*CIVS.length)|0].id);
+    const free=CIVS.filter(c=>!civs.includes(c.id)),pool=free.length?free:CIVS;// sorteia sem repetir povo
+    civs.push(want&&want!=='rand'&&CIVS.some(c=>c.id===want)?want:pool[(RNG()*pool.length)|0].id);
   }
   const z=()=>new Array(NP).fill(0);
   G={v:2,seed,diff:o.diff,map:o.map,t:0,nid:1,U:[],B:[],R:[],pj:[],fx:[],carc:{},terr:new Array(N).fill(0),exp:new Array(N).fill(0),
@@ -78,6 +79,10 @@ function newGame(o){
   }
   // detalhes do mapa (florestas fechadas, anel de ouro, serras, muralhas da Arena) e caminho garantido entre as bases
   if(MP.extra){MP.extra({put,cluster,blob,st:starts,far});for(let i=1;i<starts.length;i++)ensurePath(starts[0],starts[i])}
+  // times: 'ffa' todos contra todos · 't2' dois times (você + metade das IAs) · 'vs' todas as IAs juntas contra você
+  G.rel=[];for(let p=0;p<NP;p++)G.rel.push(new Array(NP).fill(0));
+  {const tm=o.times||'ffa',team=p=>tm==='vs'?(p?1:0):tm==='t2'?p%2:p;// 't2': você (0) com 2,4,6 contra 1,3,5,7
+    for(let a=0;a<NP;a++)for(let b=0;b<NP;b++)if(a!==b&&team(a)===team(b))G.rel[a][b]=1}
   for(let p=1;p<NP;p++)G.P[p].ai={nextAtk:DIFF[o.diff].first,wave:DIFF[o.diff].wave,atk:false,threat:0};
   recountPop();
 }
@@ -219,7 +224,7 @@ function farmTaken(b,u){const w=b.wk&&E.get(b.wk);if(!w||w.dead||w===u)return fa
 function releaseFarm(u){if(u.st==='gather'){const f=E.get(u.tg);if(f&&f.k==='b'&&f.wk===u.id)f.wk=0}}
 function reset(u){releaseFarm(u);u.cv=0}
 function orderMove(u,x,y){reset(u);u.st='move';u.tg=0;setGoal(u,{x,y})}
-function orderAttack(u,t){if(!t||t.dead||t.o===u.o)return;reset(u);u.auto=0;u.st='attack';u.tg=t.id;u.mv=false;u.rp=0;u.fail=0}
+function orderAttack(u,t){if(!t||t.dead||ally(t.o,u.o))return;reset(u);u.auto=0;u.st='attack';u.tg=t.id;u.mv=false;u.rp=0;u.fail=0}
 function canGather(u,r){
   if(u.type==='pesc')return r.k==='r'&&r.sub==='fish';
   if(u.type!=='vill')return false;
@@ -237,7 +242,7 @@ function orderGather(u,r){
 function orderBuild(u,b){if(u.type!=='vill')return;reset(u);u.st='build';u.tg=b.id;u.mv=false;u.fail=0}
 function orderStop(u){reset(u);u.st='idle';u.tg=0;u.mv=false;u.path=null}
 function orderReturn(u,d){reset(u);u.st='return';u.tg=d.id;u.mv=false;u.fail=0}
-function orderConvert(u,t){if(!t||t.o===u.o||t.o===GAIA||t.k!=='u')return;reset(u);u.st='convert';u.tg=t.id;u.mv=false;u.fail=0}
+function orderConvert(u,t){if(!t||ally(t.o,u.o)||t.o===GAIA||t.k!=='u')return;reset(u);u.st='convert';u.tg=t.id;u.mv=false;u.fail=0}
 function orderHeal(u,t){reset(u);u.st='heal';u.tg=t.id;u.mv=false;u.fail=0}
 function orderBoard(u,boat){if(isNav(u))return;reset(u);u.st='board';u.tg=boat.id;u.mv=false;u.fail=0}
 function orderUnload(b,x,y){reset(b);b.st='unload';b.tg=0;b.ux=x;b.uy=y;setGoal(b,{rx:clamp(x/TS|0,0,MW-1),ry:clamp(y/TS|0,0,MH-1),rw:1,rh:1})}
@@ -254,9 +259,9 @@ function groupMove(us,x,y){
 function smartOrder(us,tgt,x,y,o){
   if(!us.length)return;
   const land=us.filter(u=>!isNav(u)),nav=us.filter(u=>isNav(u));
-  if(tgt&&tgt.k==='u'&&tgt.o!==o&&tgt.o!==GAIA){
+  if(tgt&&tgt.k==='u'&&!ally(tgt.o,o)&&tgt.o!==GAIA){
     for(const u of us){const T=ST(u);if(u.type==='sac')orderConvert(u,tgt);else if(T.atk>0&&!(isNav(u)&&!T.war))orderAttack(u,tgt);else if(!isNav(u))orderMove(u,tgt.x,tgt.y)}return'atk'}
-  if(tgt&&tgt.k==='b'&&tgt.o!==o){for(const u of us){const T=ST(u);if(T.atk>0&&u.type!=='sac'&&!(isNav(u)&&!T.war))orderAttack(u,tgt)}return'atk'}
+  if(tgt&&tgt.k==='b'&&!ally(tgt.o,o)){for(const u of us){const T=ST(u);if(T.atk>0&&u.type!=='sac'&&!(isNav(u)&&!T.war))orderAttack(u,tgt)}return'atk'}
   if(tgt&&tgt.k==='u'&&tgt.o===GAIA){for(const u of land){if(u.type==='vill'&&UT[tgt.type].food)orderGather(u,tgt);else if(ST(u).atk>0)orderAttack(u,tgt);else orderMove(u,tgt.x,tgt.y)}return'atk'}
   if(tgt&&tgt.k==='u'&&tgt.o===o){
     if(tgt.type==='trans'&&land.length){land.forEach(u=>orderBoard(u,tgt));return'own'}
@@ -316,7 +321,7 @@ function approach(u,e,dt,reach){
   else if(e.k==='u'){u.rp-=dt;if(u.rp<=0){u.rp=.8;const g=u.goal;if(g&&g.x!=null&&hyp(g.x-e.x,g.y-e.y)>TS*.8)setGoal(u,goalFor(e))}}
   if(moveAlong(u,dt)){u.mv=false;if(!inReach(u,e,reach)){u.fail++;
     // caminho bloqueado por muralha/prédio inimigo: ataca o que está no caminho
-    if(u.st==='attack'&&!u.pok&&u.o<NP&&ST(u).atk>0){let bb=null,bd=4*TS;for(const b of G.B){if(b.dead||b.o===u.o)continue;const d=distTo(u,b);if(d<bd){bd=d;bb=b}}if(bb&&bb!==e){u.tg=bb.id;u.fail=0}}}}
+    if(u.st==='attack'&&!u.pok&&u.o<NP&&ST(u).atk>0){let bb=null,bd=4*TS;for(const b of G.B){if(b.dead||ally(b.o,u.o))continue;const d=distTo(u,b);if(d<bd){bd=d;bb=b}}if(bb&&bb!==e){u.tg=bb.id;u.fail=0}}}}
   return false;
 }
 function findRes(sub,x,y,maxD,o){
@@ -443,7 +448,7 @@ function doBuild(u,T,dt){
 }
 function doAttack(u,T,dt){
   const t=E.get(u.tg);
-  if(!t||t.dead||u.fail>4||t.inT||(t.k==='u'&&t.o===u.o)){u.st='idle';u.scan=0;u.mv=false;return}
+  if(!t||t.dead||u.fail>4||t.inT||(t.k==='u'&&ally(t.o,u.o))||(t.k==='b'&&t.o!==u.o&&ally(t.o,u.o))){u.st='idle';u.scan=0;u.mv=false;return}
   if(u.o===0&&t.k==='u'&&!vis[tileOf(t.x,t.y)]&&distTo(u,t)>T.los*losMul()*TS){u.st='idle';return}
   if(u.o===GAIA&&(hyp(u.x-u.hx,u.y-u.hy)>8*TS||distTo(u,t)>6*TS)){u.hx=u.x;u.hy=u.y;u.st='idle';return}
   if(isNav(u)&&!T.war){u.st='idle';return}
@@ -457,12 +462,12 @@ function doAttack(u,T,dt){
       G.pj.push({x:u.x,y:u.y-12,sx:u.x,sy:u.y-12,tx:c.x,ty:c.y,tg:t.id,dmg:T.atk,att,t:0,T:Math.max(.25,hyp(c.x-u.x,c.y-u.y)/(kind==='s'?(UT[u.type].gun?380:220):kind==='b'?600:kind==='g'?900:420)),kind,home:kind!=='s'});
       snd(UT[u.type].gun?'shot':kind==='s'?'catapult':'arrow',u)}
     else{dealDmg(att,t,T.atk);snd(t.k==='b'?'hitb':t.o===GAIA?'flesh':T.cls==='elef'?'stomp':u.type==='vill'?'thud':'clash',u);
-      if(T.splash&&t.k==='u'){for(const v of G.U){if(v===t||v.dead||v.inT||v.o===u.o||v.o===GAIA)continue;if(hyp(v.x-t.x,v.y-t.y)<T.splash*TS)dealDmg(att,v,T.atk*.5)}}}
+      if(T.splash&&t.k==='u'){for(const v of G.U){if(v===t||v.dead||v.inT||ally(v.o,u.o)||v.o===GAIA)continue;if(hyp(v.x-t.x,v.y-t.y)<T.splash*TS)dealDmg(att,v,T.atk*.5)}}}
   }
 }
 function doConvert(u,T,dt){
   const t=E.get(u.tg);
-  if(!t||t.dead||t.inT||t.o===u.o||t.o===GAIA){u.st='idle';u.cv=0;return}
+  if(!t||t.dead||t.inT||ally(t.o,u.o)||t.o===GAIA){u.st='idle';u.cv=0;return}
   if(!approach(u,t,dt,T.rng*TS))return;
   faceTo(u,t.x,t.y);
   if(u.faith<100){u.cv=0;return}
@@ -533,7 +538,7 @@ function dealDmg(att,t,base){
   if(t.hp<=0){if(t.k==='b'&&t.type==='tc'&&t.done>=1){t.hp=0;if(!t.down)cityDown(t)}else kill(t,att.o)}
 }
 function onHit(t,att){
-  if(t.o===att.o)return;
+  if(ally(t.o,att.o))return;
   const a=E.get(att.id);
   if(t.k==='u'&&t.o===GAIA){
     if(UT[t.type].flee&&a){const dx=t.x-a.x,dy=t.y-a.y,d=hyp(dx,dy)||1;let x=t.x+dx/d*5*TS,y=t.y+dy/d*5*TS;x=clamp(x,TS,(MW-1)*TS);y=clamp(y,TS,(MH-1)*TS);if(pass[tileOf(x,y)]){t.st='move';setGoal(t,{x,y});t.fleeT=3}}
@@ -555,14 +560,14 @@ function nearestEnemy(u,range,withBld,anyOwner){
   let best=null,bs=1e9;
   const x0=clamp((u.x-range)/BC|0,0,BW-1),x1=clamp((u.x+range)/BC|0,0,BW-1),y0=clamp((u.y-range)/BC|0,0,BH-1),y1=clamp((u.y+range)/BC|0,0,BH-1);
   for(let by=y0;by<=y1;by++)for(let bx=x0;bx<=x1;bx++)for(const e of buckets[by*BW+bx]){
-    if(e.o===u.o||e.dead)continue;
+    if(ally(e.o,u.o)||e.dead)continue;
     if(anyOwner){if(e.o===GAIA||isNav(e))continue}
     else if(e.o===GAIA&&e.type!=='leao')continue;
     if(u.o<NP&&isNav(u)!==isNav(e)&&!(ST(u).rng>0))continue;
     const d=hyp(e.x-u.x,e.y-u.y);if(d>range)continue;
     const sc=d+(UT[e.type].cls==='vill'?TS*3:0);if(sc<bs){bs=sc;best=e}
   }
-  if(!best&&withBld){for(const b of G.B){if(b.dead||b.o===u.o)continue;const d=distTo(u,b);if(d<range&&d<bs){bs=d;best=b}}}
+  if(!best&&withBld){for(const b of G.B){if(b.dead||ally(b.o,u.o))continue;const d=distTo(u,b);if(d<range&&d<bs){bs=d;best=b}}}
   return best;
 }
 function separate(){
@@ -608,8 +613,8 @@ function updProj(dt){
     const f=Math.min(1,p.t/p.T);p.x=p.sx+(p.tx-p.sx)*f;p.y=p.sy+(p.ty-p.sy)*f;
     if(f>=1){p.done=true;
       if(p.kind==='s'){G.fx.push({k:'boom',x:p.tx,y:p.ty,t:0});snd('boom',p);
-        for(const u of G.U){if(u.dead||u.inT||u.o===p.att.o||u.o===GAIA)continue;if(hyp(u.x-p.tx,u.y-p.ty)<TS*1.1)dealDmg(p.att,u,p.dmg)}
-        for(const b of G.B){if(b.dead||b.o===p.att.o)continue;if(distTo({x:p.tx,y:p.ty},b)<TS*.6)dealDmg(p.att,b,p.dmg)}}
+        for(const u of G.U){if(u.dead||u.inT||ally(u.o,p.att.o)||u.o===GAIA)continue;if(hyp(u.x-p.tx,u.y-p.ty)<TS*1.1)dealDmg(p.att,u,p.dmg)}
+        for(const b of G.B){if(b.dead||ally(b.o,p.att.o))continue;if(distTo({x:p.tx,y:p.ty},b)<TS*.6)dealDmg(p.att,b,p.dmg)}}
       else{const t=E.get(p.tg);if(t&&!t.dead&&!t.inT){dealDmg(p.att,t,p.dmg);if(p.kind!=='b')snd(t.k==='b'?'hitb':t.o===GAIA?'flesh':'hit',p)}}
     }
   }

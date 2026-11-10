@@ -196,8 +196,8 @@ infoHTML=function(s){
 // ---------- comandos militares de verdade (usam as mesmas ordens do jogo) ----------
 function grpCenter(us){return us.reduce((a,u)=>({x:a.x+u.x/us.length,y:a.y+u.y/us.length}),{x:0,y:0})}
 function cmdAttack(us){const c=grpCenter(us);let best=null,bd=1e9;
-  for(const u of G.U){if(u.dead||u.inT||u.o!==1||!vis[tileOf(u.x,u.y)])continue;const d=hyp(u.x-c.x,u.y-c.y);if(d<bd){bd=d;best=u}}
-  for(const b of G.B){if(b.dead||b.o!==1||!G.exp[idx(b.tx,b.ty)])continue;const p=ctr(b),d=hyp(p.x-c.x,p.y-c.y)*1.3;if(d<bd){bd=d;best=b}}
+  for(const u of G.U){if(u.dead||u.inT||!foe(u.o,0)||!vis[tileOf(u.x,u.y)])continue;const d=hyp(u.x-c.x,u.y-c.y);if(d<bd){bd=d;best=u}}
+  for(const b of G.B){if(b.dead||!foe(b.o,0)||!G.exp[idx(b.tx,b.ty)])continue;const p=ctr(b),d=hyp(p.x-c.x,p.y-c.y)*1.3;if(d<bd){bd=d;best=b}}
   if(!best){toast('Nenhum inimigo à vista · explore primeiro');return}
   us.forEach(u=>orderAttack(u,best));const p=ctr(best);mark(p.x,p.y,'#ff5a4a')}
 function cmdScout(us){let n=0;for(const u of us){let p=null;for(let k=0;k<80&&!p;k++){const i=(Math.random()*N)|0;if(!G.exp[i]&&pass[i])p=i}

@@ -149,7 +149,16 @@ Só faz sentido depois do motor aceitar N jogadores. Vai precisar de:
    nações originais + Alemães, e as outras que o módulo de nações acrescenta).
    **Com isso o jogo já é jogável de ponta a ponta com até 8 jogadores reais** — falta só a
    diplomacia (Etapa 6) pra virar aliados em vez de todos-contra-todos.
-6. Diplomacia (aliar/guerra), IA respeitando alianças, vitória em time. **Próxima etapa.**
+6. ✅ **FEITO (Versão 48)** — Diplomacia. `G.rel[a][b]=1` = aliados; `ally(a,b)`/`foe(a,b)`/
+   `setRel(a,b,v)` em `p2_data.js`. Aliados não se atacam (ordens, mira automática, dano em
+   área, conversão, sabotagem, captura de cidade, atrito em território), dividem a visão do
+   mapa e vencem juntos (`checkEnd`). IA só mira em quem é inimigo dela.
+   Tela de configurar: opção "Alianças" (todos contra todos / dois times / todos contra você).
+   Em jogo: botão 🤝 (só com 3+ jogadores) abre o painel (`p6q_diplo.js`) para propor
+   aliança ou declarar guerra. A IA recusa se você a atacou nos últimos 90 s, se você traiu
+   a aliança nos últimos 5 min, ou se não sobraria nenhum inimigo. Quem se alia entra no seu
+   time (rompe com os seus inimigos). Teste: `dip48.js`.
+   Ainda não tem: IA propondo aliança por conta própria, tributo, e construir em terra aliada.
 
 Cada etapa sobe pro GitHub sozinha, testada, sem deixar o jogo quebrado no meio do
 caminho — do jeito que venho fazendo com guarnecimento, Alarme, Espião e som.

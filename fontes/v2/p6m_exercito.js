@@ -20,7 +20,7 @@ const doAttackSab=doAttack;
 doAttack=function(u,T,dt){
   if(u.type!=='espia'){doAttackSab(u,T,dt);return}
   const t=E.get(u.tg);
-  if(t&&t.k==='b'&&!t.dead&&t.o!==u.o&&!t.inT){
+  if(t&&t.k==='b'&&!t.dead&&!ally(t.o,u.o)&&!t.inT){
     if(!approach(u,t,dt,24))return;
     u.work=true;const c=ctr(t);faceTo(u,c.x,c.y);
     if(u.cd<=0){u.cd=SABO_CD;t.sabo=G.t+SABO_T;G.fx.push({k:'glow',x:t.x,y:t.y,t:0});
@@ -34,13 +34,13 @@ updBld=function(b,dt){if(b.sabo>G.t)return;updBldSab(b,dt)};
 const ronAIesp=ronAI;
 ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){
   ronAIesp(p,blds,has,any,build,htx,hty,toward,vills,army,res);
-  if(p!==1)return;
+  if(p===0)return;
   const qt=blds.find(b=>b.type==='quartel'&&b.done>=1);
   const mine=G.U.filter(u=>!u.dead&&u.o===p);
   const cnt=t=>mine.filter(u=>u.type===t).length+blds.reduce((s,b)=>s+b.q.filter(q=>q===t).length,0);
   if(qt&&qt.q.length<2&&army.length>=6&&cnt('espia')<1&&afford(p,costOf(p,'espia'))){pay(p,costOf(p,'espia'));qt.q.push('espia')}
   for(const u of mine){if(u.type!=='espia'||u.st!=='idle')continue;
-    const tgt=G.B.find(b=>!b.dead&&b.o===0&&!(b.sabo>G.t)&&(b.type==='tc'||b.type==='quartel'||b.type==='fundicao'||b.type==='biblioteca'));
+    const tgt=G.B.find(b=>!b.dead&&foe(b.o,p)&&!(b.sabo>G.t)&&(b.type==='tc'||b.type==='quartel'||b.type==='fundicao'||b.type==='biblioteca'));
     if(tgt)orderAttack(u,tgt)}};
 
 // ---------- melhoria por era: +6% de ataque e de vida por era do dono ----------
@@ -59,7 +59,7 @@ function exTick(){if(!G||!G.P||!G.U)return;
     G._em[o]=m;if(o===0&&m>old)toast('⬆ Exército na '+AGES[G.P[0].age]+': +'+Math.round((m-1)*100)+'% de ataque e de vida')}
   // espião: perto de uma base inimiga, mostra o que ela tem (uma vez a cada 30 s por espião)
   for(const u of G.U){if(u.dead||u.o!==0||u.type!=='espia'||u.inT)continue;if((u.spyT||0)>G.t)continue;
-    let e=null,bd=6*TS;for(const b of G.B){if(b.dead||b.o===0)continue;const d=distTo(u,b);if(d<bd){bd=d;e=b}}
+    let e=null,bd=6*TS;for(const b of G.B){if(b.dead||!foe(b.o,0))continue;const d=distTo(u,b);if(d<bd){bd=d;e=b}}
     if(!e)continue;u.spyT=G.t+30;const P=G.P[e.o].res||{};
     toast('🕵️ Espião na base inimiga · 🍖'+(P.food|0)+' 🪵'+(P.wood|0)+' 🪙'+(P.gold|0)+' · riqueza '+(P.wealth|0))}
   // patrulha: quem fica parado volta para o outro ponto

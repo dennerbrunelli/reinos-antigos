@@ -114,7 +114,7 @@ let TAPCTX=false;
 function orderLabel(us,t){const vill=us.some(u=>u.type==='vill');
   if(!t)return'🚶 Mover';
   if(t.k==='u'&&t.o===0){if(t.type==='trans')return'⛵ Embarcar';if(us.every(u=>u.type==='sac'))return'✨ Curar';return'🚶 Mover'}
-  if(t.o!==0&&t.o<NP)return us.every(u=>u.type==='sac')?'✨ Converter':'⚔ Atacar';
+  if(foe(t.o,0))return us.every(u=>u.type==='sac')?'✨ Converter':'⚔ Atacar';
   if(t.k==='u'&&t.o===GAIA)return vill?'🏹 Caçar':'⚔ Atacar';
   if(t.k==='r')return vill||us.some(u=>u.type==='pesc')?(t.sub==='tree'?'🪓 Cortar madeira':t.sub==='gold'||t.sub==='stone'?'⛏ Minerar metal':t.sub==='fish'?'🎣 Pescar':t.sub==='carc'?'🍖 Recolher carne':'🧺 Colher frutas'):'🚶 Mover';
   if(t.k==='b'&&t.o===0)return t.done<1?'🔨 Construir':t.type==='fazenda'?'🌾 Cultivar':t.hp<t.mhp?'🔧 Consertar':'📦 Levar recursos';

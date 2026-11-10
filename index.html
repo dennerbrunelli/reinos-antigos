@@ -650,7 +650,12 @@ function saveOpt(){try{localStorage.setItem('reinos_opt2',JSON.stringify(OPT))}c
 let UI={page:0,sig:'',idleIdx:0,lastAlert:null,alertT:-99,mk:null};
 let RNG=Math.random;
 let STAT=[],MODS=[];
-let NP=2;// número de jogadores reais nesta partida (2 a MAX_PLAYERS); bichos/ruínas usam GAIA, nunca um índice real
+let NP=2;
+// diplomacia: G.rel[a][b]=1 quando a e b são aliados (sempre simétrico). GAIA nunca é aliado de ninguém.
+function ally(a,b){return a===b||!!(typeof G!=='undefined'&&G&&G.rel&&G.rel[a]&&G.rel[a][b])}
+function foe(a,b){return a!==b&&a<NP&&b<NP&&!ally(a,b)}
+function setRel(a,b,v){if(a===b||a>=NP||b>=NP)return;if(!G.rel)G.rel=[];for(let p=0;p<NP;p++)if(!G.rel[p])G.rel[p]=new Array(NP).fill(0);G.rel[a][b]=G.rel[b][a]=v?1:0;
+  if(v)for(const u of G.U){if(u.dead||u.st!=='attack'&&u.st!=='convert')continue;const t=E.get(u.tg);if(t&&((u.o===a&&t.o===b)||(u.o===b&&t.o===a))){u.st='idle';u.tg=0;u.mv=false}}}// número de jogadores reais nesta partida (2 a MAX_PLAYERS); bichos/ruínas usam GAIA, nunca um índice real
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const getE=id=>E.get(id);
 const tileOf=(x,y)=>idx(clamp(x/TS|0,0,MW-1),clamp(y/TS|0,0,MH-1));
@@ -698,7 +703,8 @@ function newGame(o){
   const civs=[o.civ];
   for(let p=1;p<NP;p++){
     const want=o.ais&&o.ais[p-1];
-    civs.push(want&&want!=='rand'&&CIVS.some(c=>c.id===want)?want:CIVS[(RNG()*CIVS.length)|0].id);
+    const free=CIVS.filter(c=>!civs.includes(c.id)),pool=free.length?free:CIVS;// sorteia sem repetir povo
+    civs.push(want&&want!=='rand'&&CIVS.some(c=>c.id===want)?want:pool[(RNG()*pool.length)|0].id);
   }
   const z=()=>new Array(NP).fill(0);
   G={v:2,seed,diff:o.diff,map:o.map,t:0,nid:1,U:[],B:[],R:[],pj:[],fx:[],carc:{},terr:new Array(N).fill(0),exp:new Array(N).fill(0),
@@ -755,6 +761,10 @@ function newGame(o){
   }
   // detalhes do mapa (florestas fechadas, anel de ouro, serras, muralhas da Arena) e caminho garantido entre as bases
   if(MP.extra){MP.extra({put,cluster,blob,st:starts,far});for(let i=1;i<starts.length;i++)ensurePath(starts[0],starts[i])}
+  // times: 'ffa' todos contra todos · 't2' dois times (você + metade das IAs) · 'vs' todas as IAs juntas contra você
+  G.rel=[];for(let p=0;p<NP;p++)G.rel.push(new Array(NP).fill(0));
+  {const tm=o.times||'ffa',team=p=>tm==='vs'?(p?1:0):tm==='t2'?p%2:p;// 't2': você (0) com 2,4,6 contra 1,3,5,7
+    for(let a=0;a<NP;a++)for(let b=0;b<NP;b++)if(a!==b&&team(a)===team(b))G.rel[a][b]=1}
   for(let p=1;p<NP;p++)G.P[p].ai={nextAtk:DIFF[o.diff].first,wave:DIFF[o.diff].wave,atk:false,threat:0};
   recountPop();
 }
@@ -896,7 +906,7 @@ function farmTaken(b,u){const w=b.wk&&E.get(b.wk);if(!w||w.dead||w===u)return fa
 function releaseFarm(u){if(u.st==='gather'){const f=E.get(u.tg);if(f&&f.k==='b'&&f.wk===u.id)f.wk=0}}
 function reset(u){releaseFarm(u);u.cv=0}
 function orderMove(u,x,y){reset(u);u.st='move';u.tg=0;setGoal(u,{x,y})}
-function orderAttack(u,t){if(!t||t.dead||t.o===u.o)return;reset(u);u.auto=0;u.st='attack';u.tg=t.id;u.mv=false;u.rp=0;u.fail=0}
+function orderAttack(u,t){if(!t||t.dead||ally(t.o,u.o))return;reset(u);u.auto=0;u.st='attack';u.tg=t.id;u.mv=false;u.rp=0;u.fail=0}
 function canGather(u,r){
   if(u.type==='pesc')return r.k==='r'&&r.sub==='fish';
   if(u.type!=='vill')return false;
@@ -914,7 +924,7 @@ function orderGather(u,r){
 function orderBuild(u,b){if(u.type!=='vill')return;reset(u);u.st='build';u.tg=b.id;u.mv=false;u.fail=0}
 function orderStop(u){reset(u);u.st='idle';u.tg=0;u.mv=false;u.path=null}
 function orderReturn(u,d){reset(u);u.st='return';u.tg=d.id;u.mv=false;u.fail=0}
-function orderConvert(u,t){if(!t||t.o===u.o||t.o===GAIA||t.k!=='u')return;reset(u);u.st='convert';u.tg=t.id;u.mv=false;u.fail=0}
+function orderConvert(u,t){if(!t||ally(t.o,u.o)||t.o===GAIA||t.k!=='u')return;reset(u);u.st='convert';u.tg=t.id;u.mv=false;u.fail=0}
 function orderHeal(u,t){reset(u);u.st='heal';u.tg=t.id;u.mv=false;u.fail=0}
 function orderBoard(u,boat){if(isNav(u))return;reset(u);u.st='board';u.tg=boat.id;u.mv=false;u.fail=0}
 function orderUnload(b,x,y){reset(b);b.st='unload';b.tg=0;b.ux=x;b.uy=y;setGoal(b,{rx:clamp(x/TS|0,0,MW-1),ry:clamp(y/TS|0,0,MH-1),rw:1,rh:1})}
@@ -931,9 +941,9 @@ function groupMove(us,x,y){
 function smartOrder(us,tgt,x,y,o){
   if(!us.length)return;
   const land=us.filter(u=>!isNav(u)),nav=us.filter(u=>isNav(u));
-  if(tgt&&tgt.k==='u'&&tgt.o!==o&&tgt.o!==GAIA){
+  if(tgt&&tgt.k==='u'&&!ally(tgt.o,o)&&tgt.o!==GAIA){
     for(const u of us){const T=ST(u);if(u.type==='sac')orderConvert(u,tgt);else if(T.atk>0&&!(isNav(u)&&!T.war))orderAttack(u,tgt);else if(!isNav(u))orderMove(u,tgt.x,tgt.y)}return'atk'}
-  if(tgt&&tgt.k==='b'&&tgt.o!==o){for(const u of us){const T=ST(u);if(T.atk>0&&u.type!=='sac'&&!(isNav(u)&&!T.war))orderAttack(u,tgt)}return'atk'}
+  if(tgt&&tgt.k==='b'&&!ally(tgt.o,o)){for(const u of us){const T=ST(u);if(T.atk>0&&u.type!=='sac'&&!(isNav(u)&&!T.war))orderAttack(u,tgt)}return'atk'}
   if(tgt&&tgt.k==='u'&&tgt.o===GAIA){for(const u of land){if(u.type==='vill'&&UT[tgt.type].food)orderGather(u,tgt);else if(ST(u).atk>0)orderAttack(u,tgt);else orderMove(u,tgt.x,tgt.y)}return'atk'}
   if(tgt&&tgt.k==='u'&&tgt.o===o){
     if(tgt.type==='trans'&&land.length){land.forEach(u=>orderBoard(u,tgt));return'own'}
@@ -993,7 +1003,7 @@ function approach(u,e,dt,reach){
   else if(e.k==='u'){u.rp-=dt;if(u.rp<=0){u.rp=.8;const g=u.goal;if(g&&g.x!=null&&hyp(g.x-e.x,g.y-e.y)>TS*.8)setGoal(u,goalFor(e))}}
   if(moveAlong(u,dt)){u.mv=false;if(!inReach(u,e,reach)){u.fail++;
     // caminho bloqueado por muralha/prédio inimigo: ataca o que está no caminho
-    if(u.st==='attack'&&!u.pok&&u.o<NP&&ST(u).atk>0){let bb=null,bd=4*TS;for(const b of G.B){if(b.dead||b.o===u.o)continue;const d=distTo(u,b);if(d<bd){bd=d;bb=b}}if(bb&&bb!==e){u.tg=bb.id;u.fail=0}}}}
+    if(u.st==='attack'&&!u.pok&&u.o<NP&&ST(u).atk>0){let bb=null,bd=4*TS;for(const b of G.B){if(b.dead||ally(b.o,u.o))continue;const d=distTo(u,b);if(d<bd){bd=d;bb=b}}if(bb&&bb!==e){u.tg=bb.id;u.fail=0}}}}
   return false;
 }
 function findRes(sub,x,y,maxD,o){
@@ -1120,7 +1130,7 @@ function doBuild(u,T,dt){
 }
 function doAttack(u,T,dt){
   const t=E.get(u.tg);
-  if(!t||t.dead||u.fail>4||t.inT||(t.k==='u'&&t.o===u.o)){u.st='idle';u.scan=0;u.mv=false;return}
+  if(!t||t.dead||u.fail>4||t.inT||(t.k==='u'&&ally(t.o,u.o))||(t.k==='b'&&t.o!==u.o&&ally(t.o,u.o))){u.st='idle';u.scan=0;u.mv=false;return}
   if(u.o===0&&t.k==='u'&&!vis[tileOf(t.x,t.y)]&&distTo(u,t)>T.los*losMul()*TS){u.st='idle';return}
   if(u.o===GAIA&&(hyp(u.x-u.hx,u.y-u.hy)>8*TS||distTo(u,t)>6*TS)){u.hx=u.x;u.hy=u.y;u.st='idle';return}
   if(isNav(u)&&!T.war){u.st='idle';return}
@@ -1134,12 +1144,12 @@ function doAttack(u,T,dt){
       G.pj.push({x:u.x,y:u.y-12,sx:u.x,sy:u.y-12,tx:c.x,ty:c.y,tg:t.id,dmg:T.atk,att,t:0,T:Math.max(.25,hyp(c.x-u.x,c.y-u.y)/(kind==='s'?(UT[u.type].gun?380:220):kind==='b'?600:kind==='g'?900:420)),kind,home:kind!=='s'});
       snd(UT[u.type].gun?'shot':kind==='s'?'catapult':'arrow',u)}
     else{dealDmg(att,t,T.atk);snd(t.k==='b'?'hitb':t.o===GAIA?'flesh':T.cls==='elef'?'stomp':u.type==='vill'?'thud':'clash',u);
-      if(T.splash&&t.k==='u'){for(const v of G.U){if(v===t||v.dead||v.inT||v.o===u.o||v.o===GAIA)continue;if(hyp(v.x-t.x,v.y-t.y)<T.splash*TS)dealDmg(att,v,T.atk*.5)}}}
+      if(T.splash&&t.k==='u'){for(const v of G.U){if(v===t||v.dead||v.inT||ally(v.o,u.o)||v.o===GAIA)continue;if(hyp(v.x-t.x,v.y-t.y)<T.splash*TS)dealDmg(att,v,T.atk*.5)}}}
   }
 }
 function doConvert(u,T,dt){
   const t=E.get(u.tg);
-  if(!t||t.dead||t.inT||t.o===u.o||t.o===GAIA){u.st='idle';u.cv=0;return}
+  if(!t||t.dead||t.inT||ally(t.o,u.o)||t.o===GAIA){u.st='idle';u.cv=0;return}
   if(!approach(u,t,dt,T.rng*TS))return;
   faceTo(u,t.x,t.y);
   if(u.faith<100){u.cv=0;return}
@@ -1210,7 +1220,7 @@ function dealDmg(att,t,base){
   if(t.hp<=0){if(t.k==='b'&&t.type==='tc'&&t.done>=1){t.hp=0;if(!t.down)cityDown(t)}else kill(t,att.o)}
 }
 function onHit(t,att){
-  if(t.o===att.o)return;
+  if(ally(t.o,att.o))return;
   const a=E.get(att.id);
   if(t.k==='u'&&t.o===GAIA){
     if(UT[t.type].flee&&a){const dx=t.x-a.x,dy=t.y-a.y,d=hyp(dx,dy)||1;let x=t.x+dx/d*5*TS,y=t.y+dy/d*5*TS;x=clamp(x,TS,(MW-1)*TS);y=clamp(y,TS,(MH-1)*TS);if(pass[tileOf(x,y)]){t.st='move';setGoal(t,{x,y});t.fleeT=3}}
@@ -1232,14 +1242,14 @@ function nearestEnemy(u,range,withBld,anyOwner){
   let best=null,bs=1e9;
   const x0=clamp((u.x-range)/BC|0,0,BW-1),x1=clamp((u.x+range)/BC|0,0,BW-1),y0=clamp((u.y-range)/BC|0,0,BH-1),y1=clamp((u.y+range)/BC|0,0,BH-1);
   for(let by=y0;by<=y1;by++)for(let bx=x0;bx<=x1;bx++)for(const e of buckets[by*BW+bx]){
-    if(e.o===u.o||e.dead)continue;
+    if(ally(e.o,u.o)||e.dead)continue;
     if(anyOwner){if(e.o===GAIA||isNav(e))continue}
     else if(e.o===GAIA&&e.type!=='leao')continue;
     if(u.o<NP&&isNav(u)!==isNav(e)&&!(ST(u).rng>0))continue;
     const d=hyp(e.x-u.x,e.y-u.y);if(d>range)continue;
     const sc=d+(UT[e.type].cls==='vill'?TS*3:0);if(sc<bs){bs=sc;best=e}
   }
-  if(!best&&withBld){for(const b of G.B){if(b.dead||b.o===u.o)continue;const d=distTo(u,b);if(d<range&&d<bs){bs=d;best=b}}}
+  if(!best&&withBld){for(const b of G.B){if(b.dead||ally(b.o,u.o))continue;const d=distTo(u,b);if(d<range&&d<bs){bs=d;best=b}}}
   return best;
 }
 function separate(){
@@ -1285,8 +1295,8 @@ function updProj(dt){
     const f=Math.min(1,p.t/p.T);p.x=p.sx+(p.tx-p.sx)*f;p.y=p.sy+(p.ty-p.sy)*f;
     if(f>=1){p.done=true;
       if(p.kind==='s'){G.fx.push({k:'boom',x:p.tx,y:p.ty,t:0});snd('boom',p);
-        for(const u of G.U){if(u.dead||u.inT||u.o===p.att.o||u.o===GAIA)continue;if(hyp(u.x-p.tx,u.y-p.ty)<TS*1.1)dealDmg(p.att,u,p.dmg)}
-        for(const b of G.B){if(b.dead||b.o===p.att.o)continue;if(distTo({x:p.tx,y:p.ty},b)<TS*.6)dealDmg(p.att,b,p.dmg)}}
+        for(const u of G.U){if(u.dead||u.inT||ally(u.o,p.att.o)||u.o===GAIA)continue;if(hyp(u.x-p.tx,u.y-p.ty)<TS*1.1)dealDmg(p.att,u,p.dmg)}
+        for(const b of G.B){if(b.dead||ally(b.o,p.att.o))continue;if(distTo({x:p.tx,y:p.ty},b)<TS*.6)dealDmg(p.att,b,p.dmg)}}
       else{const t=E.get(p.tg);if(t&&!t.dead&&!t.inT){dealDmg(p.att,t,p.dmg);if(p.kind!=='b')snd(t.k==='b'?'hitb':t.o===GAIA?'flesh':'hit',p)}}
     }
   }
@@ -1411,13 +1421,13 @@ function updCities(dt){
   for(const t of G.B){if(t.dead||t.type!=='tc'||t.done<1)continue;
     if(!t.down){if(t.hp>0)continue;cityDown(t)}
     const c=ctr(t),R=(CAPT_R+t.sz/2)*TS;let att=0,ao=-1,def=0;
-    for(const u of G.U){if(u.dead||u.inT||u.o>=NP||!canCapture(u))continue;if(hyp(u.x-c.x,u.y-c.y)>R)continue;if(u.o===t.o)def++;else{att++;ao=u.o}}
+    for(const u of G.U){if(u.dead||u.inT||u.o>=NP||!canCapture(u))continue;if(hyp(u.x-c.x,u.y-c.y)>R)continue;if(ally(u.o,t.o))def++;else{att++;ao=u.o}}
     if(att&&!def&&!(t.imm>G.t)){t.cp=(t.cp||0)+dt;t.cpo=ao;if(t.cp>=CAPT_T)captureCity(t,ao)}
     else{t.cp=Math.max(0,(t.cp||0)-dt*.5);
       if(!att){t.hp=Math.min(t.mhp,t.hp+t.mhp*.01*dt);if(t.hp>=t.mhp*.25){t.down=0;t.cp=0;if(t.o===0)toast('🏛 Seu Centro Urbano voltou a funcionar.')}}}}
   // atrito: quem fica no território inimigo vai perdendo vida aos poucos (nunca morre disso)
   for(const u of G.U){if(u.dead||u.inT||u.o>=NP||isNav(u))continue;const d=DOM[tileOf(u.x,u.y)];
-    if(d>=0&&d!==u.o&&!(u.sup>G.t)){u.att=(u.att||0)+dt;if(u.att>ATTR_DELAY){const mh=ST(u).hp,fl=mh*ATTR_FLOOR;if(u.hp>fl)u.hp=Math.max(fl,u.hp-mh*ATTR_RATE*dt*Math.max(.25,1-.12*((G.P[u.o]&&G.P[u.o].mil)||0)))}}
+    if(d>=0&&!ally(d,u.o)&&!(u.sup>G.t)){u.att=(u.att||0)+dt;if(u.att>ATTR_DELAY){const mh=ST(u).hp,fl=mh*ATTR_FLOOR;if(u.hp>fl)u.hp=Math.max(fl,u.hp-mh*ATTR_RATE*dt*Math.max(.25,1-.12*((G.P[u.o]&&G.P[u.o].mil)||0)))}}
     else if(u.att)u.att=0}
 }
 
@@ -1738,8 +1748,8 @@ function findResLimited(sub,hb,maxD,tgc,lim){
 }
 function nearestFoe(p,from,naval){
   let best=null,bd=1e9;
-  for(const u of G.U){if(u.dead||u.inT||u.o===p||u.o===GAIA)continue;if(naval&&!isNav(u))continue;const d=hyp(u.x-from.x,u.y-from.y)*(naval?1:1.2);if(d<bd){bd=d;best=u}}
-  for(const b of G.B){if(b.dead||b.o===p)continue;if(naval&&!BT[b.type].water)continue;const c=ctr(b);const d=hyp(c.x-from.x,c.y-from.y)*(b.type==='fazenda'||b.type==='muralha'?1.4:1);if(d<bd){bd=d;best=b}}
+  for(const u of G.U){if(u.dead||u.inT||ally(u.o,p)||u.o===GAIA)continue;if(naval&&!isNav(u))continue;const d=hyp(u.x-from.x,u.y-from.y)*(naval?1:1.2);if(d<bd){bd=d;best=u}}
+  for(const b of G.B){if(b.dead||ally(b.o,p))continue;if(naval&&!BT[b.type].water)continue;const c=ctr(b);const d=hyp(c.x-from.x,c.y-from.y)*(b.type==='fazenda'||b.type==='muralha'?1.4:1);if(d<bd){bd=d;best=b}}
   return best;
 }
 function intrNear(){return false}
@@ -1819,7 +1829,7 @@ function aiTick(p){
   if(dock&&dock.done>=1){
     const fishLeft=G.R.some(r=>!r.dead&&r.sub==='fish'&&hyp((r.tx+.5)*TS-ctr(dock).x,(r.ty+.5)*TS-ctr(dock).y)<26*TS);
     if(fishLeft&&fishers.length+dock.q.filter(q=>q==='pesc').length<D.fish&&dock.q.length<2&&afford(p,costOf(p,'pesc'))&&P.pop+queued<P.cap){pay(p,costOf(p,'pesc'));dock.q.push('pesc')}
-    const foeNav=G.U.some(u=>!u.dead&&u.o!==p&&u.o<NP&&isNav(u))||G.B.some(b=>!b.dead&&b.o!==p&&b.type==='doca');
+    const foeNav=G.U.some(u=>!u.dead&&foe(u.o,p)&&isNav(u))||G.B.some(b=>!b.dead&&foe(b.o,p)&&b.type==='doca');
     const nt=P.age>=UT.encour.age?'encour':P.age>=UT.galeao.age?'galeao':P.age>=UT.trir.age?'trir':'bguer';
     if(P.age>=1&&foeNav&&navy.length+dock.q.filter(q=>UT[q]&&UT[q].war).length<D.navy+P.age&&dock.q.length<2&&afford(p,costOf(p,nt))&&P.pop+queued<P.cap){pay(p,costOf(p,nt));dock.q.push(nt)}
   }
@@ -1870,11 +1880,11 @@ function aiTick(p){
     for(const t of opts){const c=costOf(p,t);if(spend(c)){pay(p,c);b.q.push(t);break}}}
   // defesa
   let intr=null,id=1e9;
-  for(const u of G.U){if(u.dead||u.inT||u.o===p||u.o===GAIA||isNav(u))continue;let near=false;for(const b of blds){if(distTo(u,b)<9*TS){near=true;break}}if(near){const d=hyp(u.x-hb.x,u.y-hb.y);if(d<id){id=d;intr=u}}}
+  for(const u of G.U){if(u.dead||u.inT||ally(u.o,p)||u.o===GAIA||isNav(u))continue;let near=false;for(const b of blds){if(distTo(u,b)<9*TS){near=true;break}}if(near){const d=hyp(u.x-hb.x,u.y-hb.y);if(d<id){id=d;intr=u}}}
   if(!intr&&AI.threat){const t=E.get(AI.threat);if(t&&!t.dead&&t.k==='u'&&hyp(t.x-hb.x,t.y-hb.y)<18*TS)intr=t;AI.threat=0}
   if(intr){for(const u of army){if(u.st!=='attack')orderAttack(u,intr)}for(const s of priests){if(s.st==='idle'&&s.faith>=100)orderConvert(s,intr)}}
   // ataque em ondas
-  if(!AI.atk&&G.t>=AI.nextAtk&&army.length>=AI.wave){AI.atk=true;AI.nextAtk=G.t+D.int;AI.wave+=D.inc;if(running)toast('⚠️ O exército inimigo está marchando contra você!');snd('alert')}
+  if(!AI.atk&&G.t>=AI.nextAtk&&army.length>=AI.wave){AI.atk=true;AI.nextAtk=G.t+D.int;AI.wave+=D.inc;if(running&&foe(p,0)){toast('⚠️ O exército inimigo está marchando contra você!');snd('alert')}}
   if(AI.atk){
     if(army.length<2)AI.atk=false;
     else{const tgt=nearestFoe(p,hb,false);if(tgt){for(const u of army){if(u.st==='idle'||(u.st==='move'&&!intr))orderAttack(u,tgt)}
@@ -2247,8 +2257,8 @@ function circOff(r){if(circCache[r])return circCache[r];const a=[];for(let y=-r;
 function updVis(){
   vis.fill(0);
   const mark=(cx,cy,r)=>{const o=circOff(r);for(let i=0;i<o.length;i+=2){const x=cx+o[i],y=cy+o[i+1];if(x>=0&&y>=0&&x<MW&&y<MH){const j=y*MW+x;vis[j]=1;G.exp[j]=1}}};
-  for(const u of G.U)if(!u.dead&&!u.inT&&u.o===0)mark(u.x/TS|0,u.y/TS|0,Math.max(2,Math.round(ST(u).los*losMul())));
-  for(const b of G.B)if(!b.dead&&b.o===0)mark(b.tx+(b.sz>>1),b.ty+(b.sz>>1),BT[b.type].los+(b.sz>>1));
+  for(const u of G.U)if(!u.dead&&!u.inT&&ally(u.o,0))mark(u.x/TS|0,u.y/TS|0,Math.max(2,Math.round(ST(u).los*losMul())));
+  for(const b of G.B)if(!b.dead&&ally(b.o,0))mark(b.tx+(b.sz>>1),b.ty+(b.sz>>1),BT[b.type].los+(b.sz>>1));
   if(G.revealAI)for(const b of G.B)if(!b.dead&&b.o===1)for(let y=b.ty;y<b.ty+b.sz;y++)for(let x=b.tx;x<b.tx+b.sz;x++)G.exp[idx(x,y)]=1;
   fogDirty=true;
 }
@@ -2326,8 +2336,8 @@ function render(){
   const selSet=new Set(SEL);
   for(const b of G.B){if(b.dead)continue;const X=b.tx*TS,Y=b.ty*TS,W=b.sz*TS;if(!inV(X,Y))continue;
     if(b.done<1&&b.type!=='fazenda'){ctx.fillStyle='rgba(120,90,50,.5)';ctx.fillRect(X+2,Y+2,W-4,W-4);ctx.strokeStyle='#e8c88a';ctx.setLineDash([5,4]);ctx.lineWidth=1.4;ctx.strokeRect(X+2,Y+2,W-4,W-4);ctx.setLineDash([])}
-    if(selSet.has(b.id)){ctx.strokeStyle=b.o===0?'#fff':'#ff6a5a';ctx.lineWidth=2;ctx.strokeRect(X,Y,W,W)}}
-  for(const id of SEL){const u=E.get(id);if(!u||u.k!=='u'||u.inT)continue;ctx.strokeStyle=u.o===0?'#fff':u.o===GAIA?'#ffe08a':'#ff6a5a';ctx.lineWidth=1.6;const r=isNav(u)?22:UT[u.type].cls==='elef'?16:10;ctx.beginPath();ctx.arc(u.x,u.y,r,0,7);ctx.stroke()}
+    if(selSet.has(b.id)){ctx.strokeStyle=b.o===0?'#fff':ally(b.o,0)?'#7dffa0':'#ff6a5a';ctx.lineWidth=2;ctx.strokeRect(X,Y,W,W)}}
+  for(const id of SEL){const u=E.get(id);if(!u||u.k!=='u'||u.inT)continue;ctx.strokeStyle=u.o===0?'#fff':u.o===GAIA?'#ffe08a':ally(u.o,0)?'#7dffa0':'#ff6a5a';ctx.lineWidth=1.6;const r=isNav(u)?22:UT[u.type].cls==='elef'?16:10;ctx.beginPath();ctx.arc(u.x,u.y,r,0,7);ctx.stroke()}
   for(const id of SEL){const r=E.get(id);if(!r||r.k!=='r')continue;ctx.strokeStyle='#ffe08a';ctx.lineWidth=1.6;ctx.strokeRect(r.walk?r.x-12:r.tx*TS,r.walk?r.y-12:r.ty*TS,24,24)}
   if(placing)drawPlacingFlat();
   if(UI.mk&&UI.mk.t<.6){const k=UI.mk;ctx.strokeStyle=k.c;ctx.lineWidth=2;ctx.beginPath();ctx.arc(k.x,k.y,14*(1-k.t)+2,0,7);ctx.stroke()}
@@ -3515,6 +3525,7 @@ function loadGame(){
 }
 function startGame(){
   RNG=mulberry32(G.seed+G.t|0);
+  if(G.rel&&G.rel.length!==G.P.length)G.rel=null;
   NP=G.P.length;// jogo novo já veio com NP certo; jogo salvo recupera NP a partir de quantos jogadores tem
   STAT=[];MODS=[];for(let p=0;p<NP;p++)recompute(p);
   G.tw=G.tw||new Array(NP).fill(0);G.st.city=G.st.city||new Array(NP).fill(0);for(const P of G.P)P.mil=P.mil||0;
@@ -3603,14 +3614,14 @@ function checkEnd(){
     if(!P.grace){P.grace=G.t||.01;if(running)toast(p===0?'⏳ Sem cidade e sem exército! Construa um Centro Urbano em 2 minutos.':'🏁 Um reino ficou sem cidade e sem exército: mais 2 minutos e ele cai.')}
     else if(G.t-P.grace>=GRACE_T)out[p]=true}
   if(out[0])return endGame(false,'Seu reino caiu.');
-  let allFoesOut=true;for(let p=1;p<NP;p++)if(!out[p]){allFoesOut=false;break}
+  let allFoesOut=true;for(let p=1;p<NP;p++)if(!out[p]&&!ally(p,0)){allFoesOut=false;break}
   if(allFoesOut)return endGame(true,NP===2?'Você derrotou o reino dos '+civOf(1).n+'!':'Você derrotou todos os reinos inimigos!');
   G.revealAI=NP===2&&!G.B.some(b=>!b.dead&&b.o===1&&b.type==='tc')&&!G.U.some(u=>!u.dead&&u.o===1&&u.type==='vill');
   const conq=G.cfg&&G.cfg.vic==='conq';
-  for(let o=0;o<NP&&!conq;o++){const w=G.B.find(b=>!b.dead&&b.o===o&&b.type==='maravilha'&&b.done>=1);if(w){G.won[o]+=1;if(G.won[o]>=WONDER_T)return endGame(o===0,o===0?'Sua Maravilha resistiu ao tempo!':'A Maravilha inimiga resistiu 5 minutos.')}else G.won[o]=0}
+  for(let o=0;o<NP&&!conq;o++){const w=G.B.find(b=>!b.dead&&b.o===o&&b.type==='maravilha'&&b.done>=1);if(w){G.won[o]+=1;if(G.won[o]>=WONDER_T)return endGame(ally(o,0),o===0?'Sua Maravilha resistiu ao tempo!':ally(o,0)?'A Maravilha do seu aliado resistiu ao tempo!':'A Maravilha inimiga resistiu 5 minutos.')}else G.won[o]=0}
   // vitória por território: 65% da terra por 3 minutos
-  for(let o=0;o<NP&&!conq;o++){if(domShare(o)>=TERR_WIN){G.tw[o]=(G.tw[o]||0)+1;if(G.tw[o]===1&&running)toast(o===0?'🗺 Você domina 65% da terra! Segure por 3 minutos.':'⚠️ O inimigo domina 65% da terra! Tome cidades dele em 3 minutos.');
-    if(G.tw[o]>=TERR_T)return endGame(o===0,o===0?'Seu império dominou a terra!':'O império inimigo dominou a terra.')}else G.tw[o]=0}
+  for(let o=0;o<NP&&!conq;o++){if(domShare(o)>=TERR_WIN){G.tw[o]=(G.tw[o]||0)+1;if(G.tw[o]===1&&running)toast(o===0?'🗺 Você domina 65% da terra! Segure por 3 minutos.':ally(o,0)?'🗺 Seu aliado domina 65% da terra! Ajude a segurar por 3 minutos.':'⚠️ O inimigo domina 65% da terra! Tome cidades dele em 3 minutos.');
+    if(G.tw[o]>=TERR_T)return endGame(ally(o,0),o===0?'Seu império dominou a terra!':ally(o,0)?'O império do seu aliado dominou a terra!':'O império inimigo dominou a terra.')}else G.tw[o]=0}
 }
 function goFull(){try{const d=document.documentElement;if(!document.fullscreenElement&&d.requestFullscreen)d.requestFullscreen({navigationUI:'hide'}).then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}).catch(()=>{})}catch(e){}
   try{if('wakeLock'in navigator)navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}}
@@ -3661,7 +3672,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 47';$('ver').textContent=VERSAO;
+const VERSAO='Versão 48';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -3869,8 +3880,8 @@ infoHTML=function(s){
 // ---------- comandos militares de verdade (usam as mesmas ordens do jogo) ----------
 function grpCenter(us){return us.reduce((a,u)=>({x:a.x+u.x/us.length,y:a.y+u.y/us.length}),{x:0,y:0})}
 function cmdAttack(us){const c=grpCenter(us);let best=null,bd=1e9;
-  for(const u of G.U){if(u.dead||u.inT||u.o!==1||!vis[tileOf(u.x,u.y)])continue;const d=hyp(u.x-c.x,u.y-c.y);if(d<bd){bd=d;best=u}}
-  for(const b of G.B){if(b.dead||b.o!==1||!G.exp[idx(b.tx,b.ty)])continue;const p=ctr(b),d=hyp(p.x-c.x,p.y-c.y)*1.3;if(d<bd){bd=d;best=b}}
+  for(const u of G.U){if(u.dead||u.inT||!foe(u.o,0)||!vis[tileOf(u.x,u.y)])continue;const d=hyp(u.x-c.x,u.y-c.y);if(d<bd){bd=d;best=u}}
+  for(const b of G.B){if(b.dead||!foe(b.o,0)||!G.exp[idx(b.tx,b.ty)])continue;const p=ctr(b),d=hyp(p.x-c.x,p.y-c.y)*1.3;if(d<bd){bd=d;best=b}}
   if(!best){toast('Nenhum inimigo à vista · explore primeiro');return}
   us.forEach(u=>orderAttack(u,best));const p=ctr(best);mark(p.x,p.y,'#ff5a4a')}
 function cmdScout(us){let n=0;for(const u of us){let p=null;for(let k=0;k<80&&!p;k++){const i=(Math.random()*N)|0;if(!G.exp[i]&&pass[i])p=i}
@@ -4187,7 +4198,7 @@ let TAPCTX=false;
 function orderLabel(us,t){const vill=us.some(u=>u.type==='vill');
   if(!t)return'🚶 Mover';
   if(t.k==='u'&&t.o===0){if(t.type==='trans')return'⛵ Embarcar';if(us.every(u=>u.type==='sac'))return'✨ Curar';return'🚶 Mover'}
-  if(t.o!==0&&t.o<NP)return us.every(u=>u.type==='sac')?'✨ Converter':'⚔ Atacar';
+  if(foe(t.o,0))return us.every(u=>u.type==='sac')?'✨ Converter':'⚔ Atacar';
   if(t.k==='u'&&t.o===GAIA)return vill?'🏹 Caçar':'⚔ Atacar';
   if(t.k==='r')return vill||us.some(u=>u.type==='pesc')?(t.sub==='tree'?'🪓 Cortar madeira':t.sub==='gold'||t.sub==='stone'?'⛏ Minerar metal':t.sub==='fish'?'🎣 Pescar':t.sub==='carc'?'🍖 Recolher carne':'🧺 Colher frutas'):'🚶 Mover';
   if(t.k==='b'&&t.o===0)return t.done<1?'🔨 Construir':t.type==='fazenda'?'🌾 Cultivar':t.hp<t.mhp?'🔧 Consertar':'📦 Levar recursos';
@@ -4338,6 +4349,7 @@ window.__RA.autoTick=autoTick;
 const SOPT={
   partida:[
     {k:'opon',n:'Oponentes',v:[['1','1'],['2','2'],['3','3'],['4','4'],['5','5'],['6','6'],['7','7']]},
+    {k:'times',n:'Alianças',v:[['ffa','⚔ Todos contra todos'],['t2','🤝 Dois times'],['vs','😈 Todos contra você']]},
     {k:'diff',n:'Inimigo',v:[['facil','🙂 Fácil'],['normal','😐 Normal'],['dificil','😠 Difícil']]},
     {k:'res',n:'Recursos iniciais',v:[['pouco','Pouco'],['normal','Normal'],['muito','Muito']]},
     {k:'era',n:'Era inicial',v:[['0','🏺 Antiga'],['1','🏛 Clássica'],['2','🏰 Medieval'],['3','💥 Pólvora']]},
@@ -4347,7 +4359,7 @@ const SOPT={
     {k:'hora',n:'Hora do dia',v:[['aman','🌅 Amanhecer'],['dia','☀️ Dia'],['tarde','🌇 Entardecer'],['noite','🌙 Noite'],['rand','🎲']]},
     {k:'est',n:'Estação',v:[['0','🌸 Primavera'],['1','☀️ Verão'],['2','🍂 Outono'],['3','❄️ Inverno'],['rand','🎲']]},
     {k:'clima',n:'Clima',v:[['clear','🌤 Limpo'],['rain','🌧 Chuva'],['storm','⛈ Tempestade'],['snow','🌨 Neve'],['rand','🎲']]}]};
-const SDEF={size:'med',map:'mar',diff:'normal',res:'normal',era:'0',vic:'padrao',vel:'1',hora:'dia',est:'0',clima:'clear',opon:'1'};
+const SDEF={size:'med',map:'mar',diff:'normal',res:'normal',era:'0',vic:'padrao',vel:'1',hora:'dia',est:'0',clima:'clear',opon:'1',times:'ffa'};
 SETUP=Object.assign({civ:'gregos'},SDEF,OPT.setup||{},{civ:OPT.civ||'gregos',map:OPT.map||'mar',diff:OPT.diff||'normal'});
 const SRES={pouco:{food:100,wood:100,gold:50,wealth:20,know:0},normal:null,muito:{food:600,wood:600,gold:300,wealth:200,know:100}};
 const optLbl=(k,v)=>{if(k==='map')return v==='rand'?'🎲 Aleatório':(MAPS[v]?MAPS[v].ic+' '+MAPS[v].n:v);if(k==='size')return MAPSZ[v]?MAPSZ[v].n+' ('+MAPSZ[v].s+'×'+MAPSZ[v].s+')':v;for(const g of[...SOPT.partida,...SOPT.amb])if(g.k===k){const c=g.v.find(x=>x[0]===v);return c?c[1]+(v==='rand'?' Aleatório':''):v}return v};
@@ -4370,9 +4382,9 @@ const updSetup0=updSetup;
 updSetup=function(){updSetup0();
   document.querySelectorAll('#setup [data-ok]').forEach(b=>b.classList.toggle('on',String(SETUP[b.dataset.ok])===b.dataset.ov));
   const m=MAPS[SETUP.map];$('mapd').innerHTML=SETUP.map==='rand'?'🎲 Um dos 15 mapas, sorteado na hora.':m?'<b>'+m.ic+' '+m.n+'</b> ('+m.src+', dificuldade '+'★'.repeat(m.dif)+'): '+m.d:'';
-  const sum=[['📐','size'],['🗺','map'],['👥','opon'],['😐','diff'],['💰','res'],['📜','era'],['🏆','vic'],['⏩','vel'],['🕐','hora'],['🍃','est'],['🌤','clima']];
+  const sum=[['📐','size'],['🗺','map'],['👥','opon'],['🤝','times'],['😐','diff'],['💰','res'],['📜','era'],['🏆','vic'],['⏩','vel'],['🕐','hora'],['🍃','est'],['🌤','clima']];
   const maxPl=(MAPSZ[SETUP.size]||MAPSZ.med).pl||2,wantPl=(+SETUP.opon)+1;
-  $('sumr').innerHTML=sum.map(([ic,k])=>'<div><b>'+{size:'Tamanho',map:'Mapa',opon:'Oponentes',diff:'Inimigo',res:'Recursos',era:'Era',vic:'Vitória',vel:'Velocidade',hora:'Hora',est:'Estação',clima:'Clima'}[k]+':</b> '+optLbl(k,String(SETUP[k]))+'</div>').join('')
+  $('sumr').innerHTML=sum.map(([ic,k])=>'<div><b>'+{size:'Tamanho',map:'Mapa',opon:'Oponentes',times:'Alianças',diff:'Inimigo',res:'Recursos',era:'Era',vic:'Vitória',vel:'Velocidade',hora:'Hora',est:'Estação',clima:'Clima'}[k]+':</b> '+optLbl(k,String(SETUP[k]))+'</div>').join('')
     +(wantPl>maxPl?'<div>⚠️ Este tamanho de mapa aguenta bem até '+(maxPl-1)+' oponente(s); vamos limitar pra isso.</div>':'');
   const S=SEASONS[SETUP.est==='rand'?0:+SETUP.est],tip=[];
   if(SETUP.est!=='rand')tip.push(S.ic+' '+S.n+': '+SEFX[+SETUP.est]);
@@ -4980,7 +4992,7 @@ const doAttackSab=doAttack;
 doAttack=function(u,T,dt){
   if(u.type!=='espia'){doAttackSab(u,T,dt);return}
   const t=E.get(u.tg);
-  if(t&&t.k==='b'&&!t.dead&&t.o!==u.o&&!t.inT){
+  if(t&&t.k==='b'&&!t.dead&&!ally(t.o,u.o)&&!t.inT){
     if(!approach(u,t,dt,24))return;
     u.work=true;const c=ctr(t);faceTo(u,c.x,c.y);
     if(u.cd<=0){u.cd=SABO_CD;t.sabo=G.t+SABO_T;G.fx.push({k:'glow',x:t.x,y:t.y,t:0});
@@ -4994,13 +5006,13 @@ updBld=function(b,dt){if(b.sabo>G.t)return;updBldSab(b,dt)};
 const ronAIesp=ronAI;
 ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){
   ronAIesp(p,blds,has,any,build,htx,hty,toward,vills,army,res);
-  if(p!==1)return;
+  if(p===0)return;
   const qt=blds.find(b=>b.type==='quartel'&&b.done>=1);
   const mine=G.U.filter(u=>!u.dead&&u.o===p);
   const cnt=t=>mine.filter(u=>u.type===t).length+blds.reduce((s,b)=>s+b.q.filter(q=>q===t).length,0);
   if(qt&&qt.q.length<2&&army.length>=6&&cnt('espia')<1&&afford(p,costOf(p,'espia'))){pay(p,costOf(p,'espia'));qt.q.push('espia')}
   for(const u of mine){if(u.type!=='espia'||u.st!=='idle')continue;
-    const tgt=G.B.find(b=>!b.dead&&b.o===0&&!(b.sabo>G.t)&&(b.type==='tc'||b.type==='quartel'||b.type==='fundicao'||b.type==='biblioteca'));
+    const tgt=G.B.find(b=>!b.dead&&foe(b.o,p)&&!(b.sabo>G.t)&&(b.type==='tc'||b.type==='quartel'||b.type==='fundicao'||b.type==='biblioteca'));
     if(tgt)orderAttack(u,tgt)}};
 
 // ---------- melhoria por era: +6% de ataque e de vida por era do dono ----------
@@ -5019,7 +5031,7 @@ function exTick(){if(!G||!G.P||!G.U)return;
     G._em[o]=m;if(o===0&&m>old)toast('⬆ Exército na '+AGES[G.P[0].age]+': +'+Math.round((m-1)*100)+'% de ataque e de vida')}
   // espião: perto de uma base inimiga, mostra o que ela tem (uma vez a cada 30 s por espião)
   for(const u of G.U){if(u.dead||u.o!==0||u.type!=='espia'||u.inT)continue;if((u.spyT||0)>G.t)continue;
-    let e=null,bd=6*TS;for(const b of G.B){if(b.dead||b.o===0)continue;const d=distTo(u,b);if(d<bd){bd=d;e=b}}
+    let e=null,bd=6*TS;for(const b of G.B){if(b.dead||!foe(b.o,0))continue;const d=distTo(u,b);if(d<bd){bd=d;e=b}}
     if(!e)continue;u.spyT=G.t+30;const P=G.P[e.o].res||{};
     toast('🕵️ Espião na base inimiga · 🍖'+(P.food|0)+' 🪵'+(P.wood|0)+' 🪙'+(P.gold|0)+' · riqueza '+(P.wealth|0))}
   // patrulha: quem fica parado volta para o outro ponto
@@ -5294,6 +5306,53 @@ Object.assign(POWER,{
   russos:{n:'Inverno Russo',ic:'❄️',d:'Cura 35% da vida de todas as suas tropas perto da capital.',cd:150,dur:0,on(o){healNear(o,35)}},
   espanhois:{n:'Galeões de Prata',ic:'💰',d:'Ganha 100 de ouro e 100 de riqueza na hora.',cd:150,dur:0,on(o){G.P[o].res.gold+=100;G.P[o].res.wealth+=100}},
 });
+// =========================================================
+// DIPLOMACIA: alianças e guerra entre nações (painel 🤝, só aparece com 3+ jogadores)
+// G.rel[a][b]=1 → aliados. Aliados não se atacam, dividem a visão do mapa e vencem juntos.
+// =========================================================
+const DIP_CD=60,DIP_PEACE=90,DIP_GRUDGE=300;
+function dipAlive(p){return G.U.some(u=>!u.dead&&u.o===p)||G.B.some(b=>!b.dead&&b.o===p&&b.type!=='fazenda'&&b.type!=='muralha')}
+function dipInit(){if(!G.rel||G.rel.length!==NP){G.rel=[];for(let p=0;p<NP;p++)G.rel.push(new Array(NP).fill(0))}
+  if(!G.dip||G.dip.hit.length!==NP)G.dip={hit:new Array(NP).fill(-999),ask:new Array(NP).fill(-999),war:new Array(NP).fill(-999)}}
+// guarda quando o jogador feriu cada nação (a IA não aceita paz de quem acabou de atacar)
+const onHitDip=onHit;
+onHit=function(t,att){if(att&&att.o===0&&t.o>0&&t.o<NP&&G.dip)G.dip.hit[t.o]=G.t;onHitDip(t,att)};
+// a IA decide se aceita a aliança. Devolve '' se aceita, ou o motivo da recusa.
+function dipWhyNot(p){dipInit();const D=G.dip;
+  if(!dipAlive(p))return'Esse reino já caiu.';
+  if(ally(p,0))return'Vocês já são aliados.';
+  if(G.t-D.ask[p]<DIP_CD)return'Eles ainda estão pensando na última proposta. Espere '+Math.ceil(DIP_CD-(G.t-D.ask[p]))+' s.';
+  if(G.t-D.war[p]<DIP_GRUDGE)return'Você quebrou a aliança com eles há pouco. Não confiam em você ainda.';
+  if(G.t-D.hit[p]<DIP_PEACE)return'Você atacou esse reino há pouco. Pare de atacar por '+Math.ceil(DIP_PEACE-(G.t-D.hit[p]))+' s.';
+  let other=false;for(let q=1;q<NP;q++)if(q!==p&&dipAlive(q)&&!ally(q,0))other=true;
+  if(!other)return'Não sobraria nenhum inimigo. Eles preferem lutar.';
+  return''}
+function dipPropose(p){const w=dipWhyNot(p);if(w){toast('🤝 '+civOf(p).n+': '+w);snd('click');if(G.dip&&dipAlive(p)&&!ally(p,0)&&G.t-G.dip.ask[p]>=DIP_CD)G.dip.ask[p]=G.t;dipDraw();return false}
+  G.dip.ask[p]=G.t;setRel(0,p,1);
+  // entra no seu time: fica aliado dos seus aliados e rompe com os seus inimigos
+  for(let q=1;q<NP;q++)if(q!==p)setRel(p,q,ally(q,0)?1:0);domDirty=true;toast('🤝 Aliança firmada com os '+civOf(p).n+'!');snd('done');dipDraw();return true}
+function dipWar(p){if(!ally(p,0)||p===0)return;dipInit();setRel(0,p,0);for(let q=1;q<NP;q++)if(q!==p&&ally(q,0))setRel(p,q,0);G.dip.war[p]=G.t;toast('⚔ Você declarou guerra aos '+civOf(p).n+'!');snd('alert');dipDraw()}
+function dipDraw(){const el=$('dipp');if(!el||el.style.display==='none')return;dipInit();
+  let h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b>🤝 Diplomacia</b><button id="dipx" class="tb">✕</button></div>';
+  for(let p=1;p<NP;p++){const al=dipAlive(p),a=ally(p,0);
+    h+='<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-top:1px solid #0003">'
+      +'<span style="width:14px;height:14px;border-radius:3px;border:1px solid #000;background:'+COL[p].m+';flex:none"></span>'
+      +'<span style="flex:1;min-width:0"><b>'+civOf(p).n+'</b><br><small>'+(!al?'☠ Derrotado':a?'🤝 Aliado':'⚔ Em guerra')+'</small></span>'
+      +(al?'<button class="dipb" data-p="'+p+'" data-a="'+(a?'war':'ally')+'" style="font-size:12px;padding:5px 8px;border-radius:4px;border:1px solid #6b5434;background:'+(a?'#e9b0a4':'#bfe3b0')+';color:#2a1a08;font-weight:700">'+(a?'Declarar guerra':'Propor aliança')+'</button>':'')
+      +'</div>'}
+  h+='<small style="display:block;margin-top:6px;opacity:.8">Aliados não se atacam, dividem a visão do mapa e vencem juntos.</small>';
+  el.innerHTML=h;$('dipx').onclick=()=>{el.style.display='none'};
+  el.querySelectorAll('.dipb').forEach(b=>b.onclick=()=>{const p=+b.dataset.p;if(b.dataset.a==='ally')dipPropose(p);else dipWar(p)})}
+function dipSetup(){dipInit();
+  let b=$('bdip');if(!b){b=document.createElement('button');b.id='bdip';b.className='tb';b.setAttribute('aria-label','Diplomacia');b.textContent='🤝';$('bui').parentNode.insertBefore(b,$('bui'));
+    b.onclick=()=>{snd('click');const el=$('dipp');el.style.display=el.style.display==='none'?'block':'none';dipDraw()}}
+  let el=$('dipp');if(!el){el=document.createElement('div');el.id='dipp';
+    el.style.cssText='display:none;position:absolute;top:40px;right:8px;width:250px;max-width:70vw;max-height:70vh;overflow:auto;z-index:60;background:linear-gradient(#f3e4be,#d8c08c);color:#2a1a08;border:2px solid #8a6a2a;border-radius:6px;padding:8px;font-size:13px;box-shadow:0 4px 14px #000a';
+    $('hud').appendChild(el)}
+  el.style.display='none';b.style.display=NP>2?'':'none'}
+const startGameDip=startGame;
+startGame=function(){startGameDip();dipSetup()};
+window.__RA.startGame=startGame;
 </script>
 </body>
 </html>
