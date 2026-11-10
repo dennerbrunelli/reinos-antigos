@@ -96,8 +96,26 @@ function killSnd(e){if(!running||!G)return;const ui=e.k==='u';if(!ui&&e.k!=='b')
   if(e.k==='b'){if(e.type==='fazenda'||e.type==='muralha')return;snd('collapse',ctr(e));return}
   snd(e.o===2?({gaz:'bleat',leao:'roar',elfs:'trumpet'}[e.type]):isNav(e)?'sink':'die',e)}
 // música ambiente: escala antiga (frígia dominante), lira dedilhada, bordão e tambor
-const MUS={on:false,t:0,beat:0,timer:0,motif:[],scale:[0,1,4,5,7,8,10],root:146.83,bar:0};
+const MUS={on:false,t:0,beat:0,timer:0,motif:[],scale:[0,1,4,5,7,8,10],root:146.83,bar:0,mood:'paz'};
 let MUSH=0;
+// clima geral do jogo (além do calor momentâneo do combate): muda a escala/tom da música,
+// só na virada de frase (a cada 4 compassos), pra não trocar de tom no meio de uma nota.
+// Paz = relaxada; Corrida por era = mais brilhante/ambiciosa; Crise = grave e pesada;
+// Vitória à vista = maior e triunfante. Pedido do Denner: a música deve contar o que o
+// jogador está vivendo, não só a guerra.
+const MOODS={
+  paz:{scale:[0,1,4,5,7,8,10],root:146.83,energy:0},
+  corrida:{scale:[0,2,4,7,9,11],root:174.61,energy:.28},
+  crise:{scale:[0,1,3,5,7,8,10],root:116.54,energy:.3},
+  vitoria:{scale:[0,2,4,7,9,11],root:195.998,energy:.4},
+};
+function moodNow(){
+  if(!G||!G.P||!G.B||!running)return'paz';
+  const tc0=G.B.find(b=>!b.dead&&b.o===0&&b.type==='tc');
+  if((tc0&&tc0.down)||G.P[0].grace||(G.tw&&G.tw[1]>=1))return'crise';
+  if((G.won&&G.won[0]>=1)||(G.tw&&G.tw[0]>=1))return'vitoria';
+  if(G.B.some(b=>!b.dead&&b.o===0&&(b.type==='tc'||b.type==='biblioteca')&&b.q&&b.q.includes('age')))return'corrida';
+  return'paz'}
 function newMotif(){MUS.motif=[];for(let i=0;i<8;i++)MUS.motif.push(Math.random()<.25?null:((Math.random()*9)|0))}
 function musicStart(){if(!OPT.mus||MUS.on||!audio())return;MUS.on=true;MUS.t=AC.currentTime+.2;MUS.beat=0;newMotif();
   MUS.dr=[];for(const f of[73.42,110]){const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=f;g.gain.value=.0001;g.gain.linearRampToValueAtTime(.05,AC.currentTime+3);o.connect(g);g.connect(MG);o.start();MUS.dr.push([o,g])}
@@ -108,7 +126,8 @@ function pluck(f,t,v){const o=AC.createOscillator(),o2=AC.createOscillator(),g=A
 function musicTick(){
   if(!AC||!MUS.on)return;
   MUSH=Math.max(0,MUSH-.006); // esfria sozinho quando a briga passa
-  const h=MUSH,bt=.46-.15*h; // na paz, andamento mais lento (relaxa e prende o jogador); na guerra, acelera (tensão)
+  const moodKey=moodNow(),mood=MOODS[moodKey]||MOODS.paz;
+  const h=Math.min(1,MUSH+mood.energy),bt=.46-.15*h; // na paz, andamento mais lento (relaxa e prende o jogador); na guerra/crise/corrida, acelera (tensão)
   if(MG)MG.gain.setTargetAtTime(.2*(1+.35*h),AC.currentTime,.6); // um pouco mais alto quando está quente
   while(MUS.t<AC.currentTime+.4){
     const t=MUS.t,b=MUS.beat%16,dt=t-AC.currentTime;
@@ -118,7 +137,9 @@ function musicTick(){
     if(h>.4&&b%4===0)noise(.04,.06*h,2600,1.2,dt,MG,'highpass'); // percussão extra de guerra
     if(b%2===0){const n=MUS.motif[(b/2+(MUS.bar%2?3:0))%8];if(n!=null){const sc=MUS.scale,deg=sc[n%7],oct=n>=7?2:1;const f=MUS.root*Math.pow(2,deg/12)*oct;pluck(f,t,.07+Math.random()*.03+h*.03);if(Math.random()<.25+.2*h)pluck(f*1.5,t+bt,.04)}}
     MUS.t+=bt;MUS.beat++;
-    if(MUS.beat%16===0){MUS.bar++;if(MUS.bar%4===0){newMotif();if(Math.random()<.4)MUS.scale=MUS.scale[2]===4?[0,2,3,5,7,8,10]:[0,1,4,5,7,8,10]}}
+    if(MUS.beat%16===0){MUS.bar++;if(MUS.bar%4===0){newMotif();
+      if(MUS.mood!==moodKey){MUS.mood=moodKey;MUS.scale=mood.scale.slice();MUS.root=mood.root}
+      else if(moodKey==='paz'&&Math.random()<.4)MUS.scale=MUS.scale[2]===4?[0,2,3,5,7,8,10]:[0,1,4,5,7,8,10]}}
   }
 }
 
@@ -569,7 +590,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 43';$('ver').textContent=VERSAO;
+const VERSAO='Versão 44';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
