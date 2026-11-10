@@ -13,6 +13,25 @@ function setMapSize(s){if(s===MW&&occ.length===s*s)return;MW=MH=s;N=s*s;
   BW=Math.ceil(MW*TS/BC);BH=Math.ceil(MH*TS/BC);buckets=Array.from({length:BW*BH},()=>[]);
   fogC.width=MW;fogC.height=MH;fogI=fogG.createImageData(MW,MH);fogDirty=true;
   mmBase.width=MW*2;mmBase.height=MH*2;MS=MMW/2/MW;mmDirty=true}
+// ---------- Etapa 1 do plano de multijogador (ver PLANO_multijogador.md): gera N posições
+// iniciais bem espalhadas pelo mapa, num anel ao redor do centro. Ainda NÃO é usado pela
+// partida de verdade (hoje `newGame` continua usando só 2 cantos fixos) — isto é só a
+// função geométrica, testada sozinha, antes de encaixar no resto do motor.
+function genStarts(n,margin){
+  margin=margin==null?12:margin;
+  const cx=MW/2,cy=MH/2,R=Math.max(1,Math.min(MW,MH)/2-margin);
+  const a0=typeof RNG==='function'?RNG():Math.random(); // gira o anel (0-1; se o RNG da partida existir, usa ele)
+  const pts=[];
+  for(let i=0;i<n;i++){
+    const a=a0*Math.PI*2+i*(Math.PI*2/n);
+    let x=Math.round(cx+Math.cos(a)*R),y=Math.round(cy+Math.sin(a)*R);
+    x=Math.max(margin,Math.min(MW-1-margin,x));y=Math.max(margin,Math.min(MH-1-margin,y));
+    pts.push([x,y]);
+  }
+  return pts;
+}
+// menor distância entre quaisquer dois pontos iniciais (pra checar se não ficaram colados)
+function startsMinDist(pts){let m=Infinity;for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++)m=Math.min(m,hyp(pts[i][0]-pts[j][0],pts[i][1]-pts[j][1]));return m===Infinity?0:m}
 // ---------- ferramentas de desenho do mapa ----------
 const setW=(x,y,v)=>{x=Math.round(x);y=Math.round(y);if(inMap(x,y))G.terr[idx(x,y)]=v};
 function lake(cx,cy,r,v){blob(cx,cy,r,(x,y)=>{G.terr[idx(x,y)]=v??1})}
