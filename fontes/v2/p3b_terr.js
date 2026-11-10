@@ -10,7 +10,7 @@ const TERR_WIN=.65,TERR_T=180,GRACE_T=120,CAP_PEN=120;
 // prédios que podem ficar em terra neutra (fora da fronteira); o resto só dentro da sua fronteira
 const NEUTRAL_OK={deposito:1,celeiro:1,doca:1,torre:1,muralha:1,tc:1};
 let DOM=new Int8Array(N).fill(-1),DOMS=new Float32Array(N);
-let domDirty=true,domEdges=[[],[]],DOMCNT=[0,0],LANDN=0;
+let domDirty=true,domEdges=[[],[],[],[],[],[],[],[]],DOMCNT=new Array(MAX_PLAYERS).fill(0),LANDN=0;
 
 // raio de influência de um prédio pronto (capital 13, cidade 10, torre 4)
 function infR(b){const cv=(G.P[b.o]&&G.P[b.o].cvc)||0;if(b.type==='torre')return INF_TORRE;if(b.type==='forte')return 8+cv;if(b.type==='tc')return(b.id===G.P[b.o].capId?INF_CAP:INF_CITY)+cv;return 0}
@@ -18,14 +18,15 @@ function infR(b){const cv=(G.P[b.o]&&G.P[b.o].cvc)||0;if(b.type==='torre')return
 // calcula o dono de cada quadrado: quem tem a influência mais forte ali
 function calcDom(){
   DOM.fill(-1);DOMS.fill(0);
-  for(const b of G.B){if(b.dead||b.o>1||b.done<1)continue;const r=infR(b);if(!r)continue;
+  for(const b of G.B){if(b.dead||b.o>=NP||b.done<1)continue;const r=infR(b);if(!r)continue;
     const c=ctr(b),cx=c.x/TS,cy=c.y/TS;
     for(let y=Math.max(0,Math.floor(cy-r));y<=Math.min(MH-1,Math.floor(cy+r));y++)
       for(let x=Math.max(0,Math.floor(cx-r));x<=Math.min(MW-1,Math.floor(cx+r));x++){
         const s=r-hyp(x+.5-cx,y+.5-cy);if(s<=0)continue;const i=y*MW+x;if(s>DOMS[i]){DOMS[i]=s;DOM[i]=b.o}}}
-  const cnt=[0,0];let land=0;
+  const cnt=new Array(NP).fill(0);let land=0;
   for(let i=0;i<N;i++)if(G.terr[i]===0){land++;const d=DOM[i];if(d>=0)cnt[d]++}
-  domEdges=[msEdges(0),msEdges(1)];DOMCNT=cnt;LANDN=land;domDirty=false;mmDirty=true;
+  const edges=[];for(let p=0;p<NP;p++)edges.push(msEdges(p));
+  domEdges=edges;DOMCNT=cnt;LANDN=land;domDirty=false;mmDirty=true;
 }
 // contorno suave do território (quadrados em marcha): corta os cantos em diagonal em vez de fazer escadinha.
 // cada trecho guarda: ponto A, ponto B e a direção para dentro do território (em quadrados)
@@ -46,14 +47,14 @@ const domShare=o=>LANDN?DOMCNT[o]/LANDN:0;
 
 // por que não dá para construir aqui? ('' = pode)
 function domWhy(type,tx,ty,o){
-  if(o>1||!G)return'';const sz=BT[type].sz,en=1-o,need=!NEUTRAL_OK[type];
+  if(o>=NP||!G)return'';const sz=BT[type].sz,need=!NEUTRAL_OK[type];
   for(let y=ty;y<ty+sz;y++)for(let x=tx;x<tx+sz;x++){const d=DOM[y*MW+x];
-    if(d===en)return'⛔ Não dá para construir no território inimigo';
+    if(d>=0&&d<NP&&d!==o)return'⛔ Não dá para construir no território inimigo';
     if(need&&d!==o)return'🚩 Só dentro da sua fronteira (a linha '+(o===0?'azul':'vermelha')+')'}
   if(type==='tc'){const cx=tx+sz/2,cy=ty+sz/2;let n=0;
     for(const b of G.B){if(b.dead||b.type!=='tc')continue;const d=hyp(b.tx+b.sz/2-cx,b.ty+b.sz/2-cy);
       if(b.o===o){n++;if(d<CITY_MIN_OWN)return'🏘 Cidade nova: pelo menos '+CITY_MIN_OWN+' quadrados longe das suas cidades'}
-      else if(b.o<2&&d<CITY_MIN_EN)return'🏘 Cidade nova: pelo menos '+CITY_MIN_EN+' quadrados longe das cidades inimigas'}
+      else if(b.o<NP&&d<CITY_MIN_EN)return'🏘 Cidade nova: pelo menos '+CITY_MIN_EN+' quadrados longe das cidades inimigas'}
     if(n>=cityMax(o))return'🏘 Limite de '+cityMax(o)+' cidades · pesquise Cívica na Biblioteca para fundar mais'}
   return''}
 
@@ -72,7 +73,7 @@ const canCapture=u=>{const k=UT[u.type].cls;return k!=='vill'&&k!=='cerco'&&k!==
 function cityDown(t){
   t.down=1;t.cp=0;
   if(t.o===0){toast('⚠️ Seu Centro Urbano foi derrubado! Mande soldados ou o inimigo toma a cidade.');snd('alert');UI.lastAlert={x:ctr(t).x,y:ctr(t).y,t:G.t}}
-  else if(t.o===1&&running)toast('🏰 Centro Urbano inimigo derrubado! Fique perto com soldados para tomar a cidade.');
+  else if(t.o!==0&&t.o<NP&&running)toast('🏰 Centro Urbano inimigo derrubado! Fique perto com soldados para tomar a cidade.');
 }
 function captureCity(t,no){
   const old=t.o,wasCap=G.P[old].capId===t.id,c=ctr(t),R=infR(t)*TS;
@@ -96,16 +97,16 @@ function captureCity(t,no){
 }
 // roda a cada meio segundo: tomada de cidades, recuperação e atrito
 function updCities(dt){
-  for(let p=0;p<2;p++)ensureCapital(p);
+  for(let p=0;p<NP;p++)ensureCapital(p);
   for(const t of G.B){if(t.dead||t.type!=='tc'||t.done<1)continue;
     if(!t.down){if(t.hp>0)continue;cityDown(t)}
     const c=ctr(t),R=(CAPT_R+t.sz/2)*TS;let att=0,ao=-1,def=0;
-    for(const u of G.U){if(u.dead||u.inT||u.o>1||!canCapture(u))continue;if(hyp(u.x-c.x,u.y-c.y)>R)continue;if(u.o===t.o)def++;else{att++;ao=u.o}}
+    for(const u of G.U){if(u.dead||u.inT||u.o>=NP||!canCapture(u))continue;if(hyp(u.x-c.x,u.y-c.y)>R)continue;if(u.o===t.o)def++;else{att++;ao=u.o}}
     if(att&&!def&&!(t.imm>G.t)){t.cp=(t.cp||0)+dt;t.cpo=ao;if(t.cp>=CAPT_T)captureCity(t,ao)}
     else{t.cp=Math.max(0,(t.cp||0)-dt*.5);
       if(!att){t.hp=Math.min(t.mhp,t.hp+t.mhp*.01*dt);if(t.hp>=t.mhp*.25){t.down=0;t.cp=0;if(t.o===0)toast('🏛 Seu Centro Urbano voltou a funcionar.')}}}}
   // atrito: quem fica no território inimigo vai perdendo vida aos poucos (nunca morre disso)
-  for(const u of G.U){if(u.dead||u.inT||u.o>1||isNav(u))continue;const d=DOM[tileOf(u.x,u.y)];
+  for(const u of G.U){if(u.dead||u.inT||u.o>=NP||isNav(u))continue;const d=DOM[tileOf(u.x,u.y)];
     if(d>=0&&d!==u.o&&!(u.sup>G.t)){u.att=(u.att||0)+dt;if(u.att>ATTR_DELAY){const mh=ST(u).hp,fl=mh*ATTR_FLOOR;if(u.hp>fl)u.hp=Math.max(fl,u.hp-mh*ATTR_RATE*dt*Math.max(.25,1-.12*((G.P[u.o]&&G.P[u.o].mil)||0)))}}
     else if(u.att)u.att=0}
 }

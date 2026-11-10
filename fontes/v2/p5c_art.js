@@ -25,7 +25,7 @@ function gaWalk(k,m,img){
   const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const g=c.getContext('2d');g.drawImage(img,0,0);
   const D=g.getImageData(0,0,c.width,c.height).data,cls=(UT[k]||UT[k.slice(0,-1)]||{cls:'animal'}).cls;
   const hum=!['cav','arqcav','elef','cerco','animal','navio'].includes(cls);
-  const S=SHEET[k+(m.team?0:2)],axs=S.ax*SS,ays=S.ay*SS;
+  const S=SHEET[k+(m.team?0:GAIA)],axs=S.ax*SS,ays=S.ay*SS;
   const stat=(r,f)=>{let top=1e9,bot=-1;const x0=Math.round(f*fw),y0=Math.round(r*fh),W=Math.round(fw),H=Math.round(fh);
     for(let y=0;y<H;y++){const o=((y0+y)*c.width+x0)*4;for(let x=0;x<W;x++)if(D[o+x*4+3]>140){if(y<top)top=y;bot=y;break}}
     if(bot<0)return null;const h=bot-top;let sx=0,n=0,fl=1e9,fr=-1;
@@ -44,16 +44,16 @@ function applyGPTArt(){
   // unidades: folha 8 (ou 9 com o caído) colunas x 2 linhas, igual às do código
   for(const k in GPTART.u){const m=GPTART.u[k];
     for(const v of m.team?[0,1]:[2]){const img=GA['u_'+k+'_'+v];if(!img)continue;const nc=m.dead?9:8;
-      const w=img.width/nc/SS,h=img.height/(m.rows||2)/SS,kx=w/m.w,ky=h/m.h;
-      SHEET[k+v]={c:img,w,h,ax:m.ax*kx,ay:m.ay*ky,gpt:1,dead:m.dead,wf:m.wf||0,ws:m.ws||0,wcyc:m.wf?(UT[k]&&['merc','cav','arqcav','elef','cerco'].includes(UT[k].cls)&&k!=='mercador'?w*.8:m.ay*ky*.95):0};delete META[k+v]}
+      const w=img.width/nc/SS,h=img.height/(m.rows||2)/SS,kx=w/m.w,ky=h/m.h,sk=v===2?GAIA:v;
+      SHEET[k+sk]={c:img,w,h,ax:m.ax*kx,ay:m.ay*ky,gpt:1,dead:m.dead,wf:m.wf||0,ws:m.ws||0,wcyc:m.wf?(UT[k]&&['merc','cav','arqcav','elef','cerco'].includes(UT[k].cls)&&k!=='mercador'?w*.8:m.ay*ky*.95):0};delete META[k+sk]}
     const im0=GA['u_'+k+'_'+(m.team?0:2)];if(im0&&!WALK[k]&&!m.walk8&&!m.wf)try{gaWalk(k,m,im0)}catch(e){WALK[k]={hum:0,seq:[1,2,3,4],fx:[],cyc:40}}}
   // prédios gregos (azul para o jogador, vermelho para o inimigo)
   const B=GPTART.b.grego;
-  for(let o=0;o<2;o++){const st=civOf(o).st,BS=GPTART.b[st];if(!BS)continue;
+  for(let o=0;o<NP;o++){const st=civOf(o).st,BS=GPTART.b[st];if(!BS)continue;
     for(const t in BS){if(GA_NOWALL[t]||!BT[t])continue;const m=BS[t],img=GA['b_'+st+'_'+m.at+'_'+o];if(!img)continue;
       const c=gaCut(img,m.r);SPR['b'+t+o]={c,dk:o===0?c:darkCopy(c),W:m.W,H:m.H,top:m.top,bt:m.bt,gpt:1}}}
   // prédios iguais para todos os povos (Biblioteca, Forte)
-  const BC=GPTART.b.comum;if(BC)for(let o=0;o<2;o++)for(const t in BC){if(!BT[t]||(SPR['b'+t+o]&&SPR['b'+t+o].gpt))continue;const m=BC[t],img=GA['b_comum_'+m.at+'_'+o];if(!img)continue;const c=gaCut(img,m.r);SPR['b'+t+o]={c,dk:o===0?c:darkCopy(c),W:m.W,H:m.H,top:m.top,bt:m.bt,gpt:1}}
+  const BC=GPTART.b.comum;if(BC)for(let o=0;o<NP;o++)for(const t in BC){if(!BT[t]||(SPR['b'+t+o]&&SPR['b'+t+o].gpt))continue;const m=BC[t],img=GA['b_comum_'+m.at+'_'+o];if(!img)continue;const c=gaCut(img,m.r);SPR['b'+t+o]={c,dk:o===0?c:darkCopy(c),W:m.W,H:m.H,top:m.top,bt:m.bt,gpt:1}}
   // recursos raros e ruínas (versão azul e vermelha)
   if(GPTART.x)for(const k in GPTART.x){const m=GPTART.x[k];for(const v of[0,1]){const img=GA['x_'+m.at+'_'+v];if(!img)continue;SPR['x_'+k+'_'+v]={c:gaCut(img,m.r),w:m.W,h:m.H,ax:m.xc,ay:m.cy}}}
   // alicerce (obra) para todos os estilos
@@ -66,7 +66,7 @@ function applyGPTArt(){
   {const s=nat('fish');if(s){const f={c:s.c,dk:s.dk,w:s.m.W,h:s.m.H,ax:s.m.W/2,ay:s.m.H/2-4};SPR.fish0=f;SPR.fish1=f}}
   for(const nm of['carc','carcE']){const s=nat(nm);if(s)SPR[nm]={c:s.c,dk:s.dk,w:s.m.W,h:s.m.H,ax:s.m.xc,ay:s.m.cy}}
   // miniaturas dos botões e do painel
-  for(const k in GPTART.u){const o=GPTART.u[k].team?0:2;if(!SHEET[k+o]||!SHEET[k+o].gpt)continue;const t=k==='guerA'?'guerA':k;THUMB['u'+t]=gaThumb(frameCanvas(k+o,0,0),40)}
+  for(const k in GPTART.u){const o=GPTART.u[k].team?0:GAIA;if(!SHEET[k+o]||!SHEET[k+o].gpt)continue;const t=k==='guerA'?'guerA':k;THUMB['u'+t]=gaThumb(frameCanvas(k+o,0,0),40)}
   for(const t in BT){const s=SPR['b'+t+'0'];if(s&&s.gpt)THUMB['b'+t]=gaThumb(s.c,40)}
   for(const k of['berry','gold','stone','carc'])if(SPR[k])THUMB['r'+k]=gaThumb(SPR[k].c,40);
   if(SPR.fish1)THUMB.rfish1=gaThumb(SPR.fish1.c,40);if(SPR.tree0)THUMB.rtree=gaThumb(SPR.tree0.c,40);

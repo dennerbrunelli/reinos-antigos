@@ -285,19 +285,19 @@ function bldCanvas(type,o){
 }
 function buildSprites(){
   SPR={};THUMB={};
-  for(let o=0;o<2;o++){
+  for(let o=0;o<MAX_PLAYERS;o++){
     for(const t in BT){if(t==='fazenda')continue;SPR['b'+t+o]=bldCanvas(t,o)}
     for(const t in UT){if(UT[t].cls==='animal')continue;const sp=UT[t].spr;const[c,g]=mkC(sp[0],sp[1]);paintUnit(g,t,COL[o],0);SPR['u'+t+o]=c}
     {const sp=UT.guer.spr;const[c,g]=mkC(sp[0],sp[1]);paintUnit(g,'guer',COL[o],1);SPR['uguerA'+o]=c}
   }
-  for(const t of['gaz','elfs','leao']){const sp=UT[t].spr;const[c,g]=mkC(sp[0],sp[1]);paintUnit(g,t,COL[2],0);SPR['u'+t+'2']=c}
+  for(const t of['gaz','elfs','leao']){const sp=UT[t].spr;const[c,g]=mkC(sp[0],sp[1]);paintUnit(g,t,COL[GAIA],0);SPR['u'+t+GAIA]=c}
   for(let v=0;v<4;v++){const[c,g]=mkC(44,70);paintTree(g,v);SPR['tree'+v]={c,dk:darkCopy(c)}}
   for(const k of['berry','gold','stone','fish0','fish1','carc']){const[c,g]=mkC(48,36);paintRes(g,k);SPR[k]={c,dk:darkCopy(c)}}
   // miniaturas para os botões
   const th=(src,sw,sh2,size)=>{const bb=bbox(src);const c=document.createElement('canvas');c.width=c.height=size*2;const g=c.getContext('2d');const s=Math.min(size*2/bb.w,size*2/bb.h)*.94;g.drawImage(src,bb.x,bb.y,bb.w,bb.h,(c.width-bb.w*s)/2,(c.height-bb.h*s)/2,bb.w*s,bb.h*s);return c.toDataURL()};
   for(const t in BT){if(t==='fazenda')continue;const s=SPR['b'+t+'0'];THUMB['b'+t]=th(s.c,s.c.width,s.c.height,40)}
   {const[c,g]=mkC(96,56);const P=(x,y)=>[48+(x-y),4+(x+y)/2];paintFarmIcon(g,P);THUMB.bfazenda=th(c,c.width,c.height,40)}
-  for(const t in UT){const s=SPR['u'+t+(UT[t].cls==='animal'?2:0)];THUMB['u'+t]=th(s,s.width,s.height,40)}
+  for(const t in UT){const s=SPR['u'+t+(UT[t].cls==='animal'?GAIA:0)];THUMB['u'+t]=th(s,s.width,s.height,40)}
   THUMB.uguerA=th(SPR.uguerA0,SPR.uguerA0.width,SPR.uguerA0.height,40);
   for(const k of['berry','gold','stone','fish1','carc'])THUMB['r'+k]=th(SPR[k].c,SPR[k].c.width,SPR[k].c.height,40);
   THUMB.rtree=th(SPR.tree0.c,SPR.tree0.c.width,SPR.tree0.c.height,40);
@@ -383,7 +383,7 @@ function drawMM(){
   for(const b of G.B){if(b.dead)continue;if(b.o!==0&&!G.exp[idx(b.tx,b.ty)])continue;mg.fillStyle=COL[b.o].m;mg.fillRect(b.tx*2,b.ty*2,b.sz*2,b.sz*2)}
   mg.setTransform(MS,MS/2,-MS,MS/2,MMW/2,0);mg.imageSmoothingEnabled=true;mg.drawImage(fogC,0,0);
   mg.setTransform(1,0,0,1,0,0);
-  for(const u of G.U){if(u.dead||u.inT)continue;if(u.o!==0&&!vis[tileOf(u.x,u.y)])continue;const p=mmXY(u.x,u.y);mg.fillStyle=u.o===2?'#e8d8a8':COL[u.o].l;mg.fillRect(p[0]-1.5,p[1]-1.5,3,3)}
+  for(const u of G.U){if(u.dead||u.inT)continue;if(u.o!==0&&!vis[tileOf(u.x,u.y)])continue;const p=mmXY(u.x,u.y);mg.fillStyle=u.o===GAIA?'#e8d8a8':COL[u.o].l;mg.fillRect(p[0]-1.5,p[1]-1.5,3,3)}
   const c=[scrToW(0,TOPH),scrToW(VW,TOPH),scrToW(VW,VH-PANH),scrToW(0,VH-PANH)].map(w=>mmXY(w.x,w.y));
   mg.strokeStyle='#fff';mg.lineWidth=1.5;mg.beginPath();mg.moveTo(...c[0]);for(const p of c)mg.lineTo(...p);mg.closePath();mg.stroke();
   if(UI.lastAlert&&G.t-UI.lastAlert.t<6&&((G.t*4|0)%2)){const p=mmXY(UI.lastAlert.x,UI.lastAlert.y);mg.strokeStyle='#f33';mg.lineWidth=2.5;mg.beginPath();mg.arc(p[0],p[1],9,0,7);mg.stroke()}
@@ -423,15 +423,15 @@ function render(){
     ctx.globalAlpha=.22+.2*ph;const tx=-p[3]*12,ty=p[2]*12,cx=p[0]-p[2]*o,cy=p[1]-p[3]*o;ctx.beginPath();ctx.moveTo(cx-tx,cy-ty);ctx.quadraticCurveTo(cx+p[2]*2,cy+p[3]*2,cx+tx,cy+ty);ctx.stroke()}
   ctx.globalAlpha=1;
   // fronteiras: faixa na cor de cada dono, do lado de dentro do território
-  for(let o=0;o<2;o++){const L=domEdges[o];if(!L.length)continue;ctx.beginPath();let n=0;
+  for(let o=0;o<NP;o++){const L=domEdges[o];if(!L.length)continue;ctx.beginPath();let n=0;
     for(let k=0;k<L.length;k+=6){const ax=L[k],ay=L[k+1],bx=L[k+2],by=L[k+3],nx=L[k+4],ny=L[k+5],mx=(ax+bx)*TS/2,my=(ay+by)*TS/2;
       if(mx<x0||mx>x1||my<y0||my>y1)continue;if(!G.exp[idx(clamp(Math.floor((ax+bx)/2+nx*.5),0,MW-1),clamp(Math.floor((ay+by)/2+ny*.5),0,MH-1))])continue;
       ctx.moveTo(ax*TS+nx*3,ay*TS+ny*3);ctx.lineTo(bx*TS+nx*3,by*TS+ny*3);n++}
-    if(!n)continue;ctx.lineCap='round';ctx.strokeStyle=COL[o].m;ctx.globalAlpha=.24;ctx.lineWidth=12;ctx.stroke();ctx.strokeStyle=o?'#ff5040':'#4f97ff';ctx.globalAlpha=1;ctx.lineWidth=3;ctx.stroke();ctx.strokeStyle=COL[o].l;ctx.globalAlpha=.7;ctx.lineWidth=1;ctx.stroke()}
+    if(!n)continue;ctx.lineCap='round';ctx.strokeStyle=COL[o].m;ctx.globalAlpha=.24;ctx.lineWidth=12;ctx.stroke();ctx.strokeStyle=o===0?'#4f97ff':COL[o].m;ctx.globalAlpha=1;ctx.lineWidth=3;ctx.stroke();ctx.strokeStyle=COL[o].l;ctx.globalAlpha=.7;ctx.lineWidth=1;ctx.stroke()}
   ctx.globalAlpha=1;ctx.lineCap='butt';
   // coisas no chão
   for(const f of G.fx){if(!inV(f.x,f.y))continue;
-    if(f.k==='corpse'&&f.o<2&&!(SHEET[(f.sk||f.ty)+f.o]||{}).dead){ctx.globalAlpha=Math.max(0,1-f.t/12)*.6;ctx.fillStyle='#3a2a1c';ctx.beginPath();ctx.arc(f.x+3,f.y+2,5,0,7);ctx.fill()}
+    if(f.k==='corpse'&&f.o<NP&&!(SHEET[(f.sk||f.ty)+f.o]||{}).dead){ctx.globalAlpha=Math.max(0,1-f.t/12)*.6;ctx.fillStyle='#3a2a1c';ctx.beginPath();ctx.arc(f.x+3,f.y+2,5,0,7);ctx.fill()}
     if(f.k==='rubble'&&!f.w){ctx.globalAlpha=Math.max(0,1-f.t/25)*.9;for(let i=0;i<f.s*f.s*4;i++){ctx.fillStyle=i%2?'#5a4a3a':'#3a2e22';ctx.fillRect(f.x+((i*37)%(f.s*TS)),f.y+((i*53)%(f.s*TS)),5,4)}}}
   ctx.globalAlpha=1;
   for(const b of G.B){if(b.dead||b.type!=='fazenda')continue;if(b.o!==0&&!G.exp[idx(b.tx,b.ty)])continue;const X=b.tx*TS,Y=b.ty*TS,W=b.sz*TS;if(!inV(X+W/2,Y+W/2))continue;
@@ -443,7 +443,7 @@ function render(){
   for(const b of G.B){if(b.dead)continue;const X=b.tx*TS,Y=b.ty*TS,W=b.sz*TS;if(!inV(X,Y))continue;
     if(b.done<1&&b.type!=='fazenda'){ctx.fillStyle='rgba(120,90,50,.5)';ctx.fillRect(X+2,Y+2,W-4,W-4);ctx.strokeStyle='#e8c88a';ctx.setLineDash([5,4]);ctx.lineWidth=1.4;ctx.strokeRect(X+2,Y+2,W-4,W-4);ctx.setLineDash([])}
     if(selSet.has(b.id)){ctx.strokeStyle=b.o===0?'#fff':'#ff6a5a';ctx.lineWidth=2;ctx.strokeRect(X,Y,W,W)}}
-  for(const id of SEL){const u=E.get(id);if(!u||u.k!=='u'||u.inT)continue;ctx.strokeStyle=u.o===0?'#fff':u.o===2?'#ffe08a':'#ff6a5a';ctx.lineWidth=1.6;const r=isNav(u)?22:UT[u.type].cls==='elef'?16:10;ctx.beginPath();ctx.arc(u.x,u.y,r,0,7);ctx.stroke()}
+  for(const id of SEL){const u=E.get(id);if(!u||u.k!=='u'||u.inT)continue;ctx.strokeStyle=u.o===0?'#fff':u.o===GAIA?'#ffe08a':'#ff6a5a';ctx.lineWidth=1.6;const r=isNav(u)?22:UT[u.type].cls==='elef'?16:10;ctx.beginPath();ctx.arc(u.x,u.y,r,0,7);ctx.stroke()}
   for(const id of SEL){const r=E.get(id);if(!r||r.k!=='r')continue;ctx.strokeStyle='#ffe08a';ctx.lineWidth=1.6;ctx.strokeRect(r.walk?r.x-12:r.tx*TS,r.walk?r.y-12:r.ty*TS,24,24)}
   if(placing)drawPlacingFlat();
   if(UI.mk&&UI.mk.t<.6){const k=UI.mk;ctx.strokeStyle=k.c;ctx.lineWidth=2;ctx.beginPath();ctx.arc(k.x,k.y,14*(1-k.t)+2,0,7);ctx.stroke()}
@@ -453,7 +453,7 @@ function render(){
   // ----- desenhos em pé (sem inclinação)
   ctx.setTransform(s,0,0,s,ox,oy);
   // corpos caídos (arte do GPT), por baixo de tudo
-  for(const f of G.fx){if(f.k!=='corpse'||f.o>1)continue;const S=SHEET[(f.sk||f.ty)+f.o];if(!S||!S.dead||!inV(f.x,f.y))continue;if(f.o!==0&&!vis[tileOf(f.x,f.y)])continue;
+  for(const f of G.fx){if(f.k!=='corpse'||f.o>=NP)continue;const S=SHEET[(f.sk||f.ty)+f.o];if(!S||!S.dead||!inV(f.x,f.y))continue;if(f.o!==0&&!vis[tileOf(f.x,f.y)])continue;
     const I=f.x-f.y,J=(f.x+f.y)/2;ctx.globalAlpha=clamp(1.4-f.t/9,0,1);ctx.save();ctx.translate(I,J);if(f.fc<0)ctx.scale(-1,1);ctx.drawImage(S.c,8*S.w*SS,0,S.w*SS,S.h*SS,-S.ax,-S.ay,S.w,S.h);ctx.restore()}
   ctx.globalAlpha=1;
   drawList.length=0;
@@ -505,7 +505,7 @@ function render(){
   ctx.setTransform(DPR,0,0,DPR,0,0);
   drawAtmos();
   if(selBox){ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.fillStyle='rgba(255,255,255,.12)';const x=Math.min(selBox.x0,selBox.x1),y=Math.min(selBox.y0,selBox.y1),w=Math.abs(selBox.x1-selBox.x0),h=Math.abs(selBox.y1-selBox.y0);ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h)}
-  if(inputMode==='pad'){const c=PAD.cx,y=PAD.cy;const h=hoverEnt;ctx.fillStyle=h?(h.k==='r'||h.o===2?'#ffe08a':h.o===0?'#fff':'#ff6a5a'):'#f2e2b0';ctx.strokeStyle='#2a1808';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(c,y);ctx.lineTo(c+15,y+6);ctx.lineTo(c+7,y+8);ctx.lineTo(c+4,y+16);ctx.closePath();ctx.fill();ctx.stroke()}
+  if(inputMode==='pad'){const c=PAD.cx,y=PAD.cy;const h=hoverEnt;ctx.fillStyle=h?(h.k==='r'||h.o===GAIA?'#ffe08a':h.o===0?'#fff':'#ff6a5a'):'#f2e2b0';ctx.strokeStyle='#2a1808';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(c,y);ctx.lineTo(c+15,y+6);ctx.lineTo(c+7,y+8);ctx.lineTo(c+4,y+16);ctx.closePath();ctx.fill();ctx.stroke()}
 }
 function drawUnit(u,selSet){
   const T=ST(u),sp=UT[u.type].spr;const I=u.x-u.y,J=(u.x+u.y)/2;

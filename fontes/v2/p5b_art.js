@@ -253,7 +253,7 @@ function bldCanvas(type,o){
 }
 function buildSprites(){
   SPR={};THUMB={};SHEET={};META={};
-  for(let o=0;o<2;o++){
+  for(let o=0;o<NP;o++){
     const C=COL[o],skin=SKINS[civOf(o).st]||'#d6a174';
     for(const t in BT){if(t==='fazenda')continue;SPR['b'+t+o]=bldCanvas(t,o)}
     for(const t of['vill','guer','guerA','espa','hopl','arq','arqc','sac']){const sp=UT[t==='guerA'?'guer':t].spr;mkSheet(t+o,sp[0],sp[1],sp[2],sp[3],(g,ax,ay,fr,dir,meta)=>drawHuman(g,ax,ay,HUM[t],C,skin,fr,dir===1,meta))}
@@ -264,13 +264,13 @@ function buildSprites(){
     for(const t of['pesc','trans','bguer','trir']){const sp=UT[t].spr;mkSheet(t+o,sp[0],sp[1],sp[2],sp[3],(g,ax,ay,fr)=>boat(g,ax,ay,t,C,fr))}
     extraSheets(o,C,skin);
   }
-  for(const t of['gaz','leao','elfs']){const sp=UT[t].spr;mkSheet(t+'2',sp[0],sp[1],sp[2],sp[3],(g,ax,ay,fr)=>animal(g,ax,ay,t,fr))}
+  for(const t of['gaz','leao','elfs']){const sp=UT[t].spr;mkSheet(t+GAIA,sp[0],sp[1],sp[2],sp[3],(g,ax,ay,fr)=>animal(g,ax,ay,t,fr))}
   for(let v=0;v<8;v++){const[c,g]=mkC(60,92);paintTree(g,v);SPR['tree'+v]={c,dk:darkCopy(c),w:60,h:92,ax:30,ay:84}}
   for(const k of['berry','gold','stone','fish0','fish1','carc']){const[c,g]=mkC(60,48);paintRes(g,k);SPR[k]={c,dk:darkCopy(c),w:60,h:48,ax:30,ay:k==='carc'?28:40}}
   const th=(src,size)=>{const bb=bbox(src);const c=document.createElement('canvas');c.width=c.height=size*2;const g=c.getContext('2d');const s=Math.min(size*2/bb.w,size*2/bb.h)*.94;g.drawImage(src,bb.x,bb.y,bb.w,bb.h,(c.width-bb.w*s)/2,(c.height-bb.h*s)/2,bb.w*s,bb.h*s);return c.toDataURL()};
   for(const t in BT){if(t==='fazenda')continue;THUMB['b'+t]=th(SPR['b'+t+'0'].c,40)}
   {const[c,g]=mkC(96,56);const P=(x,y)=>[48+(x-y),4+(x+y)/2];paintFarmIcon(g,P);THUMB.bfazenda=th(c,40)}
-  for(const t in UT){THUMB['u'+t]=th(frameCanvas(t+(UT[t].cls==='animal'?2:0),0,0),40)}
+  for(const t in UT){THUMB['u'+t]=th(frameCanvas(t+(UT[t].cls==='animal'?GAIA:0),0,0),40)}
   THUMB.uguerA=th(frameCanvas('guerA0',0,0),40);
   for(const k of['berry','gold','stone','fish1','carc'])THUMB['r'+k]=th(SPR[k].c,40);
   THUMB.rtree=th(SPR.tree0.c,40);

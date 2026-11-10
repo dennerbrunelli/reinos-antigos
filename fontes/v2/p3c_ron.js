@@ -48,13 +48,13 @@ const RARE={
   marmore:{n:'Mármore',ic:'🪨',d:'Mercados rendem +50% de riqueza'},
   seda:{n:'Seda',ic:'🧵',d:'Caravanas +25%'},
   ervas:{n:'Ervas',ic:'🌿',d:'Tropas se curam devagar dentro da sua fronteira'}};
-let RAREON=[{},{}];
+let RAREON=[{},{}];// reposto com tamanho NP a cada ronTick
 function rareGath(o,cat){const R=RAREON[o]||{};let m=1;
   if(R.uvas&&(cat==='food'||cat==='farm'||cat==='hunt'))m*=1.08;
   if(R.sal&&(cat==='hunt'||cat==='fish'||cat==='fishb'))m*=1.15;
   if(R.cedro&&cat==='wood')m*=1.1;if(R.gemas&&cat==='gold')m*=1.1;return m}
-function ronGath(o,cat){return o>1?1:(1+.05*lvl(o,'com'))*rareGath(o,cat)}
-function ronSpd(u){let m=1;if(u.haste>G.t)m*=1.4;if(u.o<2&&RAREON[u.o].cavalos){const c=UT[u.type].cls;if(c==='cav'||c==='arqcav')m*=1.1}return m}
+function ronGath(o,cat){return o>=NP?1:(1+.05*lvl(o,'com'))*rareGath(o,cat)}
+function ronSpd(u){let m=1;if(u.haste>G.t)m*=1.4;if(u.o<NP&&RAREON[u.o]&&RAREON[u.o].cavalos){const c=UT[u.type].cls;if(c==='cav'||c==='arqcav')m*=1.1}return m}
 
 // ---------- mapa: recursos raros e ruínas ----------
 function ronMap(){
@@ -124,18 +124,18 @@ let ronAcc=0;
 function ronTick(dt){
   if(!G.rare){G.rare=[];G.ruins=[]}
   // impostos: cada cidade rende riqueza conforme a Cívica
-  for(let o=0;o<2;o++){const c=lvl(o,'cvc');if(!c)continue;const n=G.B.filter(b=>!b.dead&&b.o===o&&b.type==='tc'&&b.done>=1&&!b.down).length;const g=n*5*c*dt/60;G.P[o].res.wealth+=g;if(o===0)incAdd('wealth',g)}
+  for(let o=0;o<NP;o++){const c=lvl(o,'cvc');if(!c)continue;const n=G.B.filter(b=>!b.dead&&b.o===o&&b.type==='tc'&&b.done>=1&&!b.down).length;const g=n*5*c*dt/60;G.P[o].res.wealth+=g;if(o===0)incAdd('wealth',g)}
   ronAcc+=dt;if(ronAcc<.5)return;const st=ronAcc;ronAcc=0;
   // raros ativos
-  RAREON=[{},{}];for(const r of G.rare){const w=r.w&&E.get(r.w);if(w&&!w.dead&&w.type==='mercador'&&w.st==='rare'&&!w.mv&&DOM[idx(r.x,r.y)]===w.o&&hyp((r.x+.5)*TS-w.x,(r.y+1.4)*TS-w.y)<TS*1.6)RAREON[w.o][r.kind]=1}
+  RAREON=[];for(let p=0;p<NP;p++)RAREON.push({});for(const r of G.rare){const w=r.w&&E.get(r.w);if(w&&!w.dead&&w.type==='mercador'&&w.st==='rare'&&!w.mv&&DOM[idx(r.x,r.y)]===w.o&&hyp((r.x+.5)*TS-w.x,(r.y+1.4)*TS-w.y)<TS*1.6)RAREON[w.o][r.kind]=1}
   // general: aura de coragem; carroça: cura e protege do atrito
-  for(const a of G.U){if(a.dead||a.inT||a.o>1)continue;
+  for(const a of G.U){if(a.dead||a.inT||a.o>=NP)continue;
     if(a.type==='general'){for(const u of G.U){if(u.dead||u.o!==a.o||u===a||!isMil(u))continue;if(hyp(u.x-a.x,u.y-a.y)<5*TS)u.aura=G.t+.7}}
     else if(a.type==='carroca'){for(const u of G.U){if(u.dead||u.o!==a.o||u.inT||u===a||isNav(u))continue;if(hyp(u.x-a.x,u.y-a.y)<6*TS){u.sup=G.t+.7;u.att=0;const mh=ST(u).hp;if(u.hp<mh)u.hp=Math.min(mh,u.hp+1.5*st)}}}}
   // ervas: cura lenta dentro da fronteira
-  for(let o=0;o<2;o++)if(RAREON[o].ervas)for(const u of G.U){if(u.dead||u.o!==o||u.inT)continue;if(DOM[tileOf(u.x,u.y)]===o){const mh=ST(u).hp;if(u.hp<mh)u.hp=Math.min(mh,u.hp+.3*st)}}
+  for(let o=0;o<NP;o++)if(RAREON[o].ervas)for(const u of G.U){if(u.dead||u.o!==o||u.inT)continue;if(DOM[tileOf(u.x,u.y)]===o){const mh=ST(u).hp;if(u.hp<mh)u.hp=Math.min(mh,u.hp+.3*st)}}
   // ruínas: o primeiro que chegar leva o prêmio
-  for(const r of G.ruins){if(r.done)continue;const x=(r.x+.5)*TS,y=(r.y+.5)*TS;for(const u of G.U){if(u.dead||u.inT||u.o>1||isNav(u))continue;if(Math.abs(u.x-x)<TS*1.5&&Math.abs(u.y-y)<TS*1.5){ruinLoot(r,u);break}}}
+  for(const r of G.ruins){if(r.done)continue;const x=(r.x+.5)*TS,y=(r.y+.5)*TS;for(const u of G.U){if(u.dead||u.inT||u.o>=NP||isNav(u))continue;if(Math.abs(u.x-x)<TS*1.5&&Math.abs(u.y-y)<TS*1.5){ruinLoot(r,u);break}}}
 }
 // general: marcha forçada (tropas perto andam 40% mais rápido por 12 s; espera 60 s)
 function forcedMarch(g){if(g.abT>G.t)return false;g.abT=G.t+60;for(const u of G.U){if(u.dead||u.o!==g.o||!isMil(u))continue;if(hyp(u.x-g.x,u.y-g.y)<6*TS)u.haste=G.t+12}

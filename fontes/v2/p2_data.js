@@ -24,7 +24,12 @@ const AGECOST=[null,{food:350,wealth:60},{food:700,wealth:150,know:100},{food:10
 const AGETIME=[0,50,65,80,95,110,130,150];
 // para avançar de era: ter 2 prédios diferentes desta lista (da era atual)
 const AGEREQ=[null,['celeiro','deposito','quartel','doca'],['mercado','arquearia','estabulo'],['templo','academia','oficina']];
-const COL=[{m:'#2f6fd8',d:'#1b438c',l:'#a7c8ff'},{m:'#cf3328',d:'#86201a',l:'#ffab9f'},{m:'#c8b890',d:'#8a7a5a',l:'#eee'}];
+// cores por time: 0-7 são times reais (até 8 jogadores, Mapa Gigante); COL[GAIA] é o neutro (bichos/ruínas)
+const MAX_PLAYERS=8;
+const COL=[{m:'#2f6fd8',d:'#1b438c',l:'#a7c8ff'},{m:'#cf3328',d:'#86201a',l:'#ffab9f'},{m:'#38a048',d:'#1f6b2a',l:'#aef0b8'},
+  {m:'#d9a62a',d:'#8f6c14',l:'#ffe59a'},{m:'#9048c9',d:'#5c2a89',l:'#d7b6f5'},{m:'#2bb0b0',d:'#15696e',l:'#a6eeee'},
+  {m:'#e8722a',d:'#9c4813',l:'#ffc399'},{m:'#c23d8e',d:'#7a2259',l:'#f5aede'},{m:'#c8b890',d:'#8a7a5a',l:'#eee'}];
+const GAIA=MAX_PLAYERS;// dono especial "ninguém" (bichos, ruínas, recursos) — sempre o slot logo após os 8 times
 
 // ---------- UNIDADES ----------
 // hp vida · atk ataque · arm armadura · rng alcance (quadrados) · spd velocidade (quadrados/s) · cd intervalo de ataque
@@ -153,7 +158,8 @@ try{const o=JSON.parse(localStorage.getItem('reinos_opt2')||'null');if(o)OPT=Obj
 function saveOpt(){try{localStorage.setItem('reinos_opt2',JSON.stringify(OPT))}catch(e){}}
 let UI={page:0,sig:'',idleIdx:0,lastAlert:null,alertT:-99,mk:null};
 let RNG=Math.random;
-let STAT=[null,null],MODS=[null,null];
+let STAT=[],MODS=[];
+let NP=2;// número de jogadores reais nesta partida (2 a MAX_PLAYERS); bichos/ruínas usam GAIA, nunca um índice real
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const getE=id=>E.get(id);
 const tileOf=(x,y)=>idx(clamp(x/TS|0,0,MW-1),clamp(y/TS|0,0,MH-1));
@@ -163,7 +169,7 @@ function pay(p,c){const r=G.P[p].res;for(const k in c)r[k]-=c[k]}
 function refund(p,c){const r=G.P[p].res;for(const k in c)r[k]+=c[k]}
 const isNav=u=>!!UT[u.type].naval;
 const passFor=u=>UT[u.type].naval?wpass:pass;
-function ST(u){return u.o<2&&STAT[u.o]?STAT[u.o][u.type]:UT[u.type]}
+function ST(u){return u.o<NP&&STAT[u.o]?STAT[u.o][u.type]:UT[u.type]}
 function costOf(p,t){return STAT[p]?STAT[p][t].cost:UT[t].cost}
 function freshMods(){return{gath:{food:1,hunt:1,fish:1,fishb:1,farm:1,wood:1,gold:1,stone:1,know:1,wealth:1,oil:1},farmFood:0,conv:1,heal:1,costMul:{},bldHp:{},tower:{atk:0,rng:0}}}
 // recalcula os números de um jogador (povo + tecnologias)
@@ -177,4 +183,4 @@ function recompute(p){
   if(old)for(const u of G.U){if(u.dead||u.o!==p)continue;const d=T[u.type].hp-old[u.type].hp;if(d>0)u.hp+=d}
   for(const b of G.B){if(b.dead||b.o!==p)continue;const nh=bldMaxHp(b);if(nh>b.mhp){if(b.done>=1)b.hp+=nh-b.mhp;b.mhp=nh}}
 }
-function bldMaxHp(b){const m=b.o<2?MODS[b.o]:null;return Math.round(BT[b.type].hp*(m&&m.bldHp[b.type]||1))}
+function bldMaxHp(b){const m=b.o<NP?MODS[b.o]:null;return Math.round(BT[b.type].hp*(m&&m.bldHp[b.type]||1))}

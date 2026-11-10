@@ -109,13 +109,39 @@ Só faz sentido depois do motor aceitar N jogadores. Vai precisar de:
    partida (não deixar escolher mais oponentes do que o mapa aguenta).
    **Ainda não está ligado ao jogo de verdade** — é só a função geométrica, pronta pra ser
    usada quando a Etapa 2 vier (hoje `newGame()` continua com os 2 cantos fixos de sempre).
-2. `NP`, `G.P` com N posições, e os 51 pontos virando `o<NP`/`o>=NP`/`for(p=0;p<NP;p++)`,
-   num jogo ainda só com `NP=2` (deve rodar **idêntico** ao de hoje — teste de regressão
-   completo, os mesmos testes que já uso).
-3. Repetir a geração de posições iniciais pros outros mapas.
-4. IA rodando pra todos os `NP-1` oponentes (sem diplomacia ainda — todos contra todos).
+2. ✅ **FEITO (Versão 46)** — `NP` (jogadores reais) e `GAIA` (dono "ninguém" — bichos,
+   ruínas, carcaças — hoje fixo em `MAX_PLAYERS=8`, nunca colide com um jogador real) criados
+   em `p2_data.js`. Os 51 pontos do catálogo viraram `o<NP`/`o>=NP`/`for(p=0;p<NP;p++)`, e
+   durante a varredura apareceram **mais de 30 pontos extras** que o grep original não pegou
+   (toda checagem `.o===2` que queria dizer "é bicho/ruína", mais um punhado de `.o===1` que
+   queria dizer "é o inimigo" em `p3_world.js`, `p6m_exercito.js`, `p6d_ron_ui.js`,
+   `p6h_eras.js`) — todos corrigidos também, com `.o===GAIA` e `.o!==0&&.o<NP` no lugar.
+   `newGame(o)` agora aceita `o.np` (2 a 8, limitado pelo `pl` do tamanho do mapa) e `o.ais`
+   (lista de povos pros oponentes); sem esses campos, roda exatamente como antes (`NP=2`,
+   2 cantos fixos). `COL` ganhou 8 cores de time distintas + 1 neutra pra `GAIA`.
+   `buildSprites()`, `checkEnd()`, `calcDom()`, o mercado, a universidade, o espião, os
+   poderes especiais e a IA (`aiTick` agora roda pra `p` de 1 até `NP-1`, não só pra `p=1`)
+   foram todos generalizados.
+   **Testado**: suíte de regressão completa (14 testes) passando sem diferença nenhuma com
+   `NP=2` (comportamento idêntico ao de antes); e dois testes novos, `np4.js` (4 jogadores,
+   mapa Grande) e `np8.js` (8 jogadores, mapa Gigante) — ambos de pé, cada jogador com sua
+   cor, sua cidade, seu território, sua economia, zero erro de JavaScript, `checkEnd()` sem
+   quebrar. **Ainda não ligado na tela de configurar partida** — por enquanto só dá pra
+   testar chamando `newGame({...,np:4,ais:[...]})` direto no console; a Etapa 5 é expor isso
+   na UI.
+   Limitação conhecida (cosmética, não afeta a jogabilidade): a tela de fim de jogo e o HUD
+   de "Maravilha/Território do inimigo" ainda falam de "o inimigo" no singular — com 3+
+   jogadores eles mostram só o que o jogador 1 está fazendo, não o pior entre todos. Fica
+   pra quando a tela de configurar partida (Etapa 5) entrar.
+3. Repetir a geração de posições iniciais pros outros mapas (hoje só o algoritmo genérico do
+   `genStarts` é usado pra qualquer N>2; os mapas especiais — Arena, Cordilheira — têm seus
+   próprios ajustes extras que generalizamos parcialmente: Arena já cerca todas as N bases
+   de muralha, Cordilheira ainda decora só o caminho entre os jogadores 0 e 1).
+4. ✅ **FEITO junto com a Etapa 2** — IA rodando pra todos os `NP-1` oponentes (sem
+   diplomacia ainda — todos contra todos, cada aldeão e soldado de cada IA se defende e
+   persegue qualquer outro jogador real, não só o jogador 0).
 5. Tela de configurar partida: escolher quantos oponentes (até o máximo de nações
-   disponível) e o povo de cada um.
+   disponível pelo tamanho do mapa) e o povo de cada um. **Esta é a próxima etapa.**
 6. Diplomacia (aliar/guerra), IA respeitando alianças, vitória em time.
 
 Cada etapa sobe pro GitHub sozinha, testada, sem deixar o jogo quebrado no meio do

@@ -31,7 +31,7 @@ function campUsed(o,b){let n=0;const c=ctr(b);for(const u of G.U)if(!u.dead&&u.o
 // pode trabalhar aqui? (null = pode; texto = motivo)
 function nodeBlock(u,r){if(!r||r.k!=='r'||r.walk)return null;const o=u.o,max=NODE_MAX[r.sub];
   if(max&&(workers().get(r.id)||0)>=max&&!(u.st==='gather'&&u.tg===r.id))return'cheio';
-  if(r.sub==='tree'&&u.type==='vill'&&o<2){const cp=campNear(o,r);if(!cp)return'Madeira: construa um Acampamento de lenhadores perto da floresta';
+  if(r.sub==='tree'&&u.type==='vill'&&o<NP){const cp=campNear(o,r);if(!cp)return'Madeira: construa um Acampamento de lenhadores perto da floresta';
     if(!(u.st==='gather'&&u.tg===r.id)&&campUsed(o,cp)>=campCap(cp))return'Este acampamento já está com '+campCap(cp)+' lenhadores (máximo pelas árvores em volta)'}
   return null}
 const orderGather7=orderGather;
@@ -40,16 +40,16 @@ orderGather=function(u,r){const why=nodeBlock(u,r);
   return orderGather7(u,r)};
 const findRes7=findRes;
 findRes=function(sub,x,y,maxD,o){if(!NODE_MAX[sub]||sub==='berry')return findRes7(sub,x,y,maxD,o);
-  let best=null,bd=maxD*TS;const W=workers(),cps=sub==='tree'&&o!=null&&o<2?campsOf(o):null;
+  let best=null,bd=maxD*TS;const W=workers(),cps=sub==='tree'&&o!=null&&o<NP?campsOf(o):null;
   for(const r of G.R){if(r.dead||r.sub!==sub||(r.bad&&G.t-r.bad<120))continue;if((W.get(r.id)||0)>=NODE_MAX[sub])continue;const c=ctr(r),d=hyp(c.x-x,c.y-y);if(d>=bd)continue;
     if(cps&&!cps.some(b=>hyp(ctr(b).x-c.x,ctr(b).y-c.y)<CAMP_R*TS))continue;bd=d;best=r}
   return best};
 const findResLimited7=findResLimited;
 findResLimited=function(sub,hb,maxD,tgc,lim){if(sub!=='tree'&&!NODE_MAX[sub])return findResLimited7(sub,hb,maxD,tgc,lim);
-  const o=DOM[idx(clamp(hb.x/TS|0,0,MW-1),clamp(hb.y/TS|0,0,MH-1))];return findRes(sub,hb.x,hb.y,maxD,o>=0&&o<2?o:undefined)};
+  const o=DOM[idx(clamp(hb.x/TS|0,0,MW-1),clamp(hb.y/TS|0,0,MH-1))];return findRes(sub,hb.x,hb.y,maxD,o>=0&&o<NP?o:undefined)};
 // ---------- reforço dos prédios (um de cada por cidade, até 16 quadrados) ----------
 const BOOSTB={farm:'celeiro',food:'celeiro',wood:'serraria',gold:'fundicao',stone:'fundicao',oil:'refinaria'};
-function boostOf(o,cat,r){const t=BOOSTB[cat==='farm'?'farm':cat];if(!t||o>1)return 1;const c=ctr(r);
+function boostOf(o,cat,r){const t=BOOSTB[cat==='farm'?'farm':cat];if(!t||o>=NP)return 1;const c=ctr(r);
   return G.B.some(b=>!b.dead&&b.o===o&&b.type===t&&b.done>=1&&hyp(ctr(b).x-c.x,ctr(b).y-c.y)<BOOST_R*TS)?BOOST:1}
 // ---------- coleta sem carregar ----------
 const FINITE={berry:1,carc:1};const INCA={};let INCT=0;
@@ -57,7 +57,7 @@ doGather=function(u,T,dt){
   let r=E.get(u.tg);
   if(!r&&G.carc[u.tg]){const c=E.get(G.carc[u.tg]);if(c){u.tg=c.id;u.lastRes=c.id;u.lsub='carc';r=c}}
   if(r&&r.k==='u'){// caçando um animal vivo
-    if(r.dead||r.o!==2){u.st='idle';return}
+    if(r.dead||r.o!==GAIA){u.st='idle';return}
     const HW=HUNTW[huntTier(u.o)];if(!approach(u,r,dt,HW.rng*TS))return;
     faceTo(u,r.x,r.y);u.work=true;u.hunting=G.t;
     if(u.cd<=0){u.cd=HW.cd;u.an+=2;u.shotT=G.t;G.pj.push({x:u.x,y:u.y-12,sx:u.x,sy:u.y-12,tx:r.x,ty:r.y,tg:r.id,dmg:ST(u).atk+HW.bon,att:{o:u.o,id:u.id},t:0,T:Math.max(.12,hyp(r.x-u.x,r.y-u.y)/HW.v),kind:HW.pk,home:true});snd(HW.snd,u)}
@@ -67,13 +67,13 @@ doGather=function(u,T,dt){
     let nr=findRes(u.lsub,c.x,c.y,u.lsub==='farm'?10:9,u.o);if(!nr&&u.lsub==='carc'&&u.hunt)nr=findRes(u.hunt,c.x,c.y,10,u.o);
     if(nr&&(u.fail<=3||nr!==r)){if(orderGather(u,nr)===false)u.st='idle';u.fail=0}else u.st='idle';return}
   // madeira sem acampamento (o acampamento caiu): para
-  if(r.k==='r'&&r.sub==='tree'&&u.type==='vill'&&u.o<2&&!campNear(u.o,r)){u.st='idle';if(u.o===0&&!(UI.campT>G.t)){UI.campT=G.t+20;toast('🪓 Lenhadores parados: falta um Acampamento de lenhadores perto da floresta')}return}
+  if(r.k==='r'&&r.sub==='tree'&&u.type==='vill'&&u.o<NP&&!campNear(u.o,r)){u.st='idle';if(u.o===0&&!(UI.campT>G.t)){UI.campT=G.t+20;toast('🪓 Lenhadores parados: falta um Acampamento de lenhadores perto da floresta')}return}
   if(!approach(u,r,dt,r.walk?18:(isNav(u)?30:24)))return;
   u.work=true;u.an+=dt*8;const c=ctr(r);faceTo(u,c.x,c.y);
   const cat=gatherCat(u,r),rt=r.k==='r'?r.rt:'food';
-  const rate=GATH[cat]*(u.o<2?MODS[u.o].gath[cat]:1)*gmult(u.o)*seasonGath(cat)*ronGath(u.o,cat)*boostOf(u.o,cat,r)*(cat==='farm'?FARM_MUL:1);
+  const rate=GATH[cat]*(u.o<NP?MODS[u.o].gath[cat]:1)*gmult(u.o)*seasonGath(cat)*ronGath(u.o,cat)*boostOf(u.o,cat,r)*(cat==='farm'?FARM_MUL:1);
   let a=rate*dt;if(r.k==='r'&&FINITE[r.sub]){a=Math.min(a,r.amt);r.amt-=a;if(r.amt<=.001)kill(r)}
-  if(u.o<2){const g=capAdd(u.o,rt,a);G.P[u.o].res[rt]+=g;G.st.gath[u.o]+=g;if(u.o===0){INCA[rt]=(INCA[rt]||0)+g;if(G.t-INCT>=1||G.t<INCT){for(const k in INCA)if(INCA[k]>0)incAdd(k,INCA[k]);for(const k in INCA)INCA[k]=0;INCT=G.t}}}
+  if(u.o<NP){const g=capAdd(u.o,rt,a);G.P[u.o].res[rt]+=g;G.st.gath[u.o]+=g;if(u.o===0){INCA[rt]=(INCA[rt]||0)+g;if(G.t-INCT>=1||G.t<INCT){for(const k in INCA)if(INCA[k]>0)incAdd(k,INCA[k]);for(const k in INCA)INCA[k]=0;INCT=G.t}}}
   u.carry=0;
   {const ber=u.lsub==='berry',ph=ber?(u.an/2|0)%3:(u.an/1.4|0)%3;if(ph!==u._ph&&(ber||ph===0)){const k=cat==='wood'?'chop':cat==='gold'||cat==='stone'?'mine':cat==='farm'?'hoe':cat==='hunt'?'flesh':ber?'leaves':cat==='fish'||cat==='fishb'?'splash':'';if(k&&(ber?ph===0:true))snd(k,u)}u._ph=ph}};
 // fazenda com 1 aldeão rende mais (no Rise a fazenda é a base da comida)
@@ -87,7 +87,7 @@ function cityOf(o,x,y){let best=null,bd=18*TS;for(const b of G.B){if(b.dead||b.o
 function farmsOf(tc){let n=0;for(const b of G.B)if(!b.dead&&b.o===tc.o&&b.type==='fazenda'&&cityOf(tc.o,ctr(b).x,ctr(b).y)===tc)n++;return n}
 const validSite7=validSite;
 validSite=function(type,tx,ty,margin,o){if(!validSite7(type,tx,ty,margin,o))return false;
-  if(type==='fazenda'&&o<2){const tc=cityOf(o,(tx+1.5)*TS,(ty+1.5)*TS);if(!tc||farmsOf(tc)>=FARMS_CITY)return false}return true};
+  if(type==='fazenda'&&o<NP){const tc=cityOf(o,(tx+1.5)*TS,(ty+1.5)*TS);if(!tc||farmsOf(tc)>=FARMS_CITY)return false}return true};
 const canBuildType7=canBuildType;
 canBuildType=function(p,t){const r=canBuildType7(p,t);if(r)return r;if(t==='fazenda'){const tcs=G.B.filter(b=>!b.dead&&b.o===p&&b.type==='tc');if(tcs.length&&tcs.every(tc=>farmsOf(tc)>=FARMS_CITY))return'Máximo de '+FARMS_CITY+' fazendas por cidade: funde outra cidade'}return null};
 // ---------- desenhos dos prédios novos ----------

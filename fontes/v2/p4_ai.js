@@ -11,13 +11,13 @@ function findSite(type,cx,cy,minR,maxR){
 }
 function findResLimited(sub,hb,maxD,tgc,lim){
   let best=null,bd=maxD*TS;
-  if(UT[sub]){for(const a of G.U){if(a.dead||a.o!==2||a.type!==sub)continue;if((tgc.get(a.id)||0)>=lim)continue;const d=hyp(a.x-hb.x,a.y-hb.y);if(d<bd){bd=d;best=a}}return best}
+  if(UT[sub]){for(const a of G.U){if(a.dead||a.o!==GAIA||a.type!==sub)continue;if((tgc.get(a.id)||0)>=lim)continue;const d=hyp(a.x-hb.x,a.y-hb.y);if(d<bd){bd=d;best=a}}return best}
   for(const r of G.R){if(r.dead||r.sub!==sub||(r.bad&&G.t-r.bad<120))continue;if(sub==='fish'&&r.deep)continue;if((tgc.get(r.id)||0)>=lim)continue;const c=ctr(r),d=hyp(c.x-hb.x,c.y-hb.y);if(d<bd){bd=d;best=r}}
   return best;
 }
 function nearestFoe(p,from,naval){
   let best=null,bd=1e9;
-  for(const u of G.U){if(u.dead||u.inT||u.o===p||u.o===2)continue;if(naval&&!isNav(u))continue;const d=hyp(u.x-from.x,u.y-from.y)*(naval?1:1.2);if(d<bd){bd=d;best=u}}
+  for(const u of G.U){if(u.dead||u.inT||u.o===p||u.o===GAIA)continue;if(naval&&!isNav(u))continue;const d=hyp(u.x-from.x,u.y-from.y)*(naval?1:1.2);if(d<bd){bd=d;best=u}}
   for(const b of G.B){if(b.dead||b.o===p)continue;if(naval&&!BT[b.type].water)continue;const c=ctr(b);const d=hyp(c.x-from.x,c.y-from.y)*(b.type==='fazenda'||b.type==='muralha'?1.4:1);if(d<bd){bd=d;best=b}}
   return best;
 }
@@ -98,7 +98,7 @@ function aiTick(p){
   if(dock&&dock.done>=1){
     const fishLeft=G.R.some(r=>!r.dead&&r.sub==='fish'&&hyp((r.tx+.5)*TS-ctr(dock).x,(r.ty+.5)*TS-ctr(dock).y)<26*TS);
     if(fishLeft&&fishers.length+dock.q.filter(q=>q==='pesc').length<D.fish&&dock.q.length<2&&afford(p,costOf(p,'pesc'))&&P.pop+queued<P.cap){pay(p,costOf(p,'pesc'));dock.q.push('pesc')}
-    const foeNav=G.U.some(u=>!u.dead&&u.o!==p&&u.o<2&&isNav(u))||G.B.some(b=>!b.dead&&b.o!==p&&b.type==='doca');
+    const foeNav=G.U.some(u=>!u.dead&&u.o!==p&&u.o<NP&&isNav(u))||G.B.some(b=>!b.dead&&b.o!==p&&b.type==='doca');
     const nt=P.age>=UT.encour.age?'encour':P.age>=UT.galeao.age?'galeao':P.age>=UT.trir.age?'trir':'bguer';
     if(P.age>=1&&foeNav&&navy.length+dock.q.filter(q=>UT[q]&&UT[q].war).length<D.navy+P.age&&dock.q.length<2&&afford(p,costOf(p,nt))&&P.pop+queued<P.cap){pay(p,costOf(p,nt));dock.q.push(nt)}
   }
@@ -149,7 +149,7 @@ function aiTick(p){
     for(const t of opts){const c=costOf(p,t);if(spend(c)){pay(p,c);b.q.push(t);break}}}
   // defesa
   let intr=null,id=1e9;
-  for(const u of G.U){if(u.dead||u.inT||u.o===p||u.o===2||isNav(u))continue;let near=false;for(const b of blds){if(distTo(u,b)<9*TS){near=true;break}}if(near){const d=hyp(u.x-hb.x,u.y-hb.y);if(d<id){id=d;intr=u}}}
+  for(const u of G.U){if(u.dead||u.inT||u.o===p||u.o===GAIA||isNav(u))continue;let near=false;for(const b of blds){if(distTo(u,b)<9*TS){near=true;break}}if(near){const d=hyp(u.x-hb.x,u.y-hb.y);if(d<id){id=d;intr=u}}}
   if(!intr&&AI.threat){const t=E.get(AI.threat);if(t&&!t.dead&&t.k==='u'&&hyp(t.x-hb.x,t.y-hb.y)<18*TS)intr=t;AI.threat=0}
   if(intr){for(const u of army){if(u.st!=='attack')orderAttack(u,intr)}for(const s of priests){if(s.st==='idle'&&s.faith>=100)orderConvert(s,intr)}}
   // ataque em ondas

@@ -23,7 +23,7 @@ function autoTarget(cat,x,y,cnt){
   const lim=r=>{const n=cnt.get(r.id)||0;return n<(r.sub==='tree'||r.sub==='gold'||r.sub==='stone'?6:r.k==='u'?3:3)};
   const pick=(sub,R)=>{let best=null,bd=R*TS;
     if(sub==='farm')return findRes('farm',x,y,R,0);
-    if(UT[sub]){for(const a of G.U){if(a.dead||a.o!==2||a.type!==sub||!G.exp[tileOf(a.x,a.y)]||!lim(a))continue;if(UT[sub].fight)continue;const d=hyp(a.x-x,a.y-y);if(d<bd){bd=d;best=a}}return best}
+    if(UT[sub]){for(const a of G.U){if(a.dead||a.o!==GAIA||a.type!==sub||!G.exp[tileOf(a.x,a.y)]||!lim(a))continue;if(UT[sub].fight)continue;const d=hyp(a.x-x,a.y-y);if(d<bd){bd=d;best=a}}return best}
     for(const r of G.R){if(r.dead||r.sub!==sub||(r.bad&&G.t-r.bad<120)||!G.exp[r.walk?tileOf(r.x,r.y):idx(r.tx,r.ty)]||!lim(r))continue;if(r.sub==='fish'&&r.deep)continue;
       if(!r.walk&&DOM[idx(r.tx,r.ty)]===1)continue;const c=ctr(r),d=hyp(c.x-x,c.y-y);if(d<bd){bd=d;best=r}}return best};
   if(cat==='food')return pick('carc',14)||pick('berry',16)||pick('farm',18)||pick('gaz',14)||pick('fish',10);

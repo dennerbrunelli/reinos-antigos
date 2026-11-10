@@ -37,7 +37,7 @@ const SGAP={leaves:170,hoe:230,flesh:200,splash:300,chop:220,mine:220,hammer:260
 // loja/elevador: andamento e volume puxam o clima de quem está jogando, pedido pelo Denner)
 const COMBAT_SND={clash:1,hitb:.8,hit:.5,thud:.6,stomp:.7,arrow:.4,bow:.4,knife:.5,shot:1,catapult:.8,boom:1,die:.3};
 function snd(k,e){
-  if(k&&COMBAT_SND[k]&&(!e||e.o!==2))MUSH=Math.min(1,MUSH+COMBAT_SND[k]*.1);
+  if(k&&COMBAT_SND[k]&&(!e||e.o!==GAIA))MUSH=Math.min(1,MUSH+COMBAT_SND[k]*.1);
   if(!OPT.snd||!k)return;
   let pan=0,vol=1;
   if(e&&running){const p=w2s(e.x,e.y);if(p.x<-60||p.x>VW+60||p.y<TOPH-30||p.y>VH+30)return;
@@ -94,7 +94,7 @@ function snd(k,e){
 function killSnd(e){if(!running||!G)return;const ui=e.k==='u';if(!ui&&e.k!=='b')return;
   if(e.o!==0&&!(vis&&vis[ui?tileOf(e.x,e.y):idx(e.tx,e.ty)]))return;
   if(e.k==='b'){if(e.type==='fazenda'||e.type==='muralha')return;snd('collapse',ctr(e));return}
-  snd(e.o===2?({gaz:'bleat',leao:'roar',elfs:'trumpet'}[e.type]):isNav(e)?'sink':'die',e)}
+  snd(e.o===GAIA?({gaz:'bleat',leao:'roar',elfs:'trumpet'}[e.type]):isNav(e)?'sink':'die',e)}
 // música ambiente: escala antiga (frígia dominante), lira dedilhada, bordão e tambor
 const MUS={on:false,t:0,beat:0,timer:0,motif:[],scale:[0,1,4,5,7,8,10],root:146.83,bar:0,mood:'paz'};
 let MUSH=0;
@@ -217,7 +217,7 @@ function infoHTML(s){
   const e=s[0];
   if(e.k==='r'){const nm={tree:'Árvore',berry:'Arbusto de frutas',gold:'Mina de metal',stone:'Minério de metal',fish:e.deep?'Cardume (só barcos)':'Peixes',carc:'Carne de caça',oil:'Petróleo (Era Industrial)'}[e.sub];
     return x+por(THUMB['r'+(e.sub==='fish'?'fish1':e.sub)]||THUMB.rtree)+'<div class="bd"><div class="t">'+nm+'</div><div class="st">'+rimg(e.rt)+' '+Math.ceil(e.amt)+' de '+RNM[e.rt]+'</div></div>'}
-  if(e.k==='u'){const T=ST(e);const own=e.o===0?'':e.o===2?'':' <span style="color:#ff8a7a">(inimigo)</span>';
+  if(e.k==='u'){const T=ST(e);const own=e.o===0?'':e.o===GAIA?'':' <span style="color:#ff8a7a">(inimigo)</span>';
     const stt={idle:'Parado',move:'Andando',gather:e.lsub==='farm'?'Cultivando':e.lsub==='tree'?'Cortando madeira':e.lsub==='gold'||e.lsub==='stone'?'Minerando metal':e.lsub==='fish'?'Pescando':UT[e.lsub]||e.lsub==='carc'?'Caçando'+(e.hunting&&G.t-e.hunting<2?' com '+HUNTW[huntTier(e.o)].n:''):'Colhendo frutas',
       return:'Levando recursos',build:'Construindo',attack:'Atacando',convert:'Convertendo',heal:'Curando',board:'Embarcando',unload:'Indo desembarcar',study:'Estudando (gera conhecimento)',trade:'Levando mercadorias (rota de comércio)',rare:'Cuidando de um recurso raro'}[e.st]||'';
     let st='❤️'+Math.ceil(e.hp)+'/'+T.hp+(T.atk?' ⚔️'+T.atk:'')+(T.arm?' 🛡️'+T.arm:'')+(T.rng?' 🎯'+T.rng:'');
@@ -292,7 +292,7 @@ function clickAt(sx,sy,add){
     if((vs.length&&(e.done<1||e.hp<e.mhp||e.type==='fazenda'||(BT[e.type].drop&&vs.some(v=>v.carry>0))))||(fb.length&&e.type==='doca')){smartOrder(ownUnits,e,w.x,w.y,0);mark(w.x,w.y,'#6f6');return}
     SEL=[e.id];snd('sel');updHUD();return}
   if(ownUnits.length){const r=smartOrder(ownUnits,e,w.x,w.y,0);mark(w.x,w.y,r==='atk'?'#ff5a4a':r==='res'?'#ffe08a':'#7f7');return}
-  if(s.length===1&&s[0].k==='b'&&s[0].o===0&&BT[s[0].type].train&&s[0].done>=1){s[0].rally={x:w.x,y:w.y,id:e&&(e.k==='r'||e.o===2)?e.id:0};mark(w.x,w.y,'#6cf');return}
+  if(s.length===1&&s[0].k==='b'&&s[0].o===0&&BT[s[0].type].train&&s[0].done>=1){s[0].rally={x:w.x,y:w.y,id:e&&(e.k==='r'||e.o===GAIA)?e.id:0};mark(w.x,w.y,'#6cf');return}
   if(e){SEL=[e.id];updHUD();return}
   if(s.length){SEL=[];updHUD()}
 }
@@ -447,8 +447,10 @@ function loadGame(){
 }
 function startGame(){
   RNG=mulberry32(G.seed+G.t|0);
-  STAT=[null,null];recompute(0);recompute(1);
-  G.tw=G.tw||[0,0];G.st.city=G.st.city||[0,0];for(const P of G.P)P.mil=P.mil||0;ensureCapital(0);ensureCapital(1);calcDom();
+  NP=G.P.length;// jogo novo já veio com NP certo; jogo salvo recupera NP a partir de quantos jogadores tem
+  STAT=[];MODS=[];for(let p=0;p<NP;p++)recompute(p);
+  G.tw=G.tw||new Array(NP).fill(0);G.st.city=G.st.city||new Array(NP).fill(0);for(const P of G.P)P.mil=P.mil||0;
+  for(let p=0;p<NP;p++)ensureCapital(p);calcDom();
   buildSprites();buildTerrain();mmDirty=true;
   SEL=[];placing=null;UI.sig='';UI.lastAlert=null;UI.page=0;
   const tc=G.B.find(b=>b.o===0&&b.type==='tc');const c=tc?ctr(tc):{x:G.starts[0][0]*TS,y:G.starts[0][1]*TS};
@@ -528,17 +530,18 @@ function checkEnd(){
   // cai quem fica sem cidade, sem tropas e sem quartéis; só com aldeões, tem 2 minutos para reconstruir
   const strong=p=>G.B.some(b=>!b.dead&&b.o===p&&b.done>=1&&(b.type==='tc'||(BT[b.type].pg===1&&b.type!=='muralha')))||G.U.some(u=>!u.dead&&u.o===p&&isMil(u));
   const some=p=>G.U.some(u=>!u.dead&&u.o===p)||G.B.some(b=>!b.dead&&b.o===p&&b.type!=='fazenda'&&b.type!=='muralha');
-  const out=[false,false];
-  for(let p=0;p<2;p++){const P=G.P[p];if(strong(p)){P.grace=0;continue}if(!some(p)){out[p]=true;continue}
-    if(!P.grace){P.grace=G.t||.01;if(running)toast(p===0?'⏳ Sem cidade e sem exército! Construa um Centro Urbano em 2 minutos.':'🏁 O inimigo ficou sem cidade e sem exército: mais 2 minutos e ele cai.')}
+  const out=new Array(NP).fill(false);
+  for(let p=0;p<NP;p++){const P=G.P[p];if(strong(p)){P.grace=0;continue}if(!some(p)){out[p]=true;continue}
+    if(!P.grace){P.grace=G.t||.01;if(running)toast(p===0?'⏳ Sem cidade e sem exército! Construa um Centro Urbano em 2 minutos.':'🏁 Um reino ficou sem cidade e sem exército: mais 2 minutos e ele cai.')}
     else if(G.t-P.grace>=GRACE_T)out[p]=true}
-  if(out[1])return endGame(true,'Você derrotou o reino dos '+civOf(1).n+'!');
   if(out[0])return endGame(false,'Seu reino caiu.');
-  G.revealAI=!G.B.some(b=>!b.dead&&b.o===1&&b.type==='tc')&&!G.U.some(u=>!u.dead&&u.o===1&&u.type==='vill');
+  let allFoesOut=true;for(let p=1;p<NP;p++)if(!out[p]){allFoesOut=false;break}
+  if(allFoesOut)return endGame(true,NP===2?'Você derrotou o reino dos '+civOf(1).n+'!':'Você derrotou todos os reinos inimigos!');
+  G.revealAI=NP===2&&!G.B.some(b=>!b.dead&&b.o===1&&b.type==='tc')&&!G.U.some(u=>!u.dead&&u.o===1&&u.type==='vill');
   const conq=G.cfg&&G.cfg.vic==='conq';
-  for(let o=0;o<2&&!conq;o++){const w=G.B.find(b=>!b.dead&&b.o===o&&b.type==='maravilha'&&b.done>=1);if(w){G.won[o]+=1;if(G.won[o]>=WONDER_T)return endGame(o===0,o===0?'Sua Maravilha resistiu ao tempo!':'A Maravilha inimiga resistiu 5 minutos.')}else G.won[o]=0}
+  for(let o=0;o<NP&&!conq;o++){const w=G.B.find(b=>!b.dead&&b.o===o&&b.type==='maravilha'&&b.done>=1);if(w){G.won[o]+=1;if(G.won[o]>=WONDER_T)return endGame(o===0,o===0?'Sua Maravilha resistiu ao tempo!':'A Maravilha inimiga resistiu 5 minutos.')}else G.won[o]=0}
   // vitória por território: 65% da terra por 3 minutos
-  for(let o=0;o<2&&!conq;o++){if(domShare(o)>=TERR_WIN){G.tw[o]=(G.tw[o]||0)+1;if(G.tw[o]===1&&running)toast(o===0?'🗺 Você domina 65% da terra! Segure por 3 minutos.':'⚠️ O inimigo domina 65% da terra! Tome cidades dele em 3 minutos.');
+  for(let o=0;o<NP&&!conq;o++){if(domShare(o)>=TERR_WIN){G.tw[o]=(G.tw[o]||0)+1;if(G.tw[o]===1&&running)toast(o===0?'🗺 Você domina 65% da terra! Segure por 3 minutos.':'⚠️ O inimigo domina 65% da terra! Tome cidades dele em 3 minutos.');
     if(G.tw[o]>=TERR_T)return endGame(o===0,o===0?'Seu império dominou a terra!':'O império inimigo dominou a terra.')}else G.tw[o]=0}
 }
 function goFull(){try{const d=document.documentElement;if(!document.fullscreenElement&&d.requestFullscreen)d.requestFullscreen({navigationUI:'hide'}).then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}).catch(()=>{})}catch(e){}
@@ -566,7 +569,7 @@ function step(dt){
   if(domDirty)calcDom();
   acc.city+=dt;if(acc.city>=.5){updCities(acc.city);acc.city=0}
   acc.vis+=dt;if(acc.vis>.25){acc.vis=0;updVis()}
-  acc.ai+=dt;if(acc.ai>1){acc.ai=0;aiTick(1);recountPop()}
+  acc.ai+=dt;if(acc.ai>1){acc.ai=0;for(let p=1;p<NP;p++)aiTick(p);recountPop()}
   acc.end+=dt;if(acc.end>1){acc.end=0;checkEnd()}
 }
 function frame(ts){
@@ -590,7 +593,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 45';$('ver').textContent=VERSAO;
+const VERSAO='Versão 46';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';

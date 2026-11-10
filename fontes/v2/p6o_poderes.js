@@ -20,7 +20,7 @@ const POWER={
   choson:{n:'Hino de Guerra',ic:'🎺',d:'Todas as tropas 15% mais fortes por 20 s.',cd:150,dur:20,on(o){bfSet(o,'atk',1.15,20)}},
 };
 // buffs por jogador: G.bf[o][chave] = {m, until, cls}
-function bfSet(o,k,m,secs,cls){if(!G.bf)G.bf=[{},{}];G.bf[o][k]={m,until:G.t+secs,cls:cls||null}}
+function bfSet(o,k,m,secs,cls){if(!G.bf)G.bf=[];while(G.bf.length<=o)G.bf.push({});G.bf[o][k]={m,until:G.t+secs,cls:cls||null}}
 function bfm(u,k){const B=G.bf&&G.bf[u.o];if(!B)return 1;const b=B[k];if(!b||G.t>=b.until)return 1;if(b.cls&&!b.cls.includes(UT[u.type].cls))return 1;return b.m}
 function pwO(o,k){const b=G.bf&&G.bf[o]&&G.bf[o][k];return b&&G.t<b.until?b.m:1}
 function healNear(o,pct){const c=ctr(G.B.find(b=>!b.dead&&b.o===o&&b.type==='tc')||{tx:0,ty:0,sz:1});let n=0;
@@ -28,7 +28,7 @@ function healNear(o,pct){const c=ctr(G.B.find(b=>!b.dead&&b.o===o&&b.type==='tc'
   return n}
 // tempo de espera por jogador
 function pwUse(o){const P=civOf(o),pw=POWER[P.id];if(!pw){toast('Este povo não tem poder especial');return}
-  G.pwT=G.pwT||[0,0];if(G.t<G.pwT[o]){toast('⚡ '+pw.n+' pronto em '+Math.ceil(G.pwT[o]-G.t)+' s');return}
+  G.pwT=G.pwT||[];while(G.pwT.length<=o)G.pwT.push(0);if(G.t<G.pwT[o]){toast('⚡ '+pw.n+' pronto em '+Math.ceil(G.pwT[o]-G.t)+' s');return}
   G.pwT[o]=G.t+pw.cd;pw.on(o);snd('click');
   if(o===0&&pw.dur===0&&pw.n!=='Oráculo')toast(pw.ic+' '+pw.n+': '+pw.d);
   if(o===0&&pw.dur>0)toast(pw.ic+' '+pw.n+' ativo por '+pw.dur+' s')}
@@ -43,7 +43,7 @@ getCmds=function(){const out=getCmdsPw();const s=selEnts();const e=s[0];
   return out};
 // velocidade, ataque e colheita passam pelos buffs
 const STPw=ST;
-ST=function(u){const T=STPw(u);if(!u||u.k!=='u'||u.o>1||typeof G==='undefined'||!G||!G.bf||!T)return T;
+ST=function(u){const T=STPw(u);if(!u||u.k!=='u'||u.o>=NP||typeof G==='undefined'||!G||!G.bf||!T)return T;
   const ma=bfm(u,'atk'),ms=bfm(u,'spd');if(ma===1&&ms===1)return T;
   let c=PW_UP.get(T);if(!c){c={};PW_UP.set(T,c)}const key=ma+'|'+ms;let v=c[key];
   if(!v){v=c[key]=Object.assign({},T,{atk:T.atk*ma,spd:T.spd*ms})}return v};

@@ -47,20 +47,20 @@ ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){
 const EM=o=>1+.06*(G&&G.P&&G.P[o]?G.P[o].age:0);
 const ST_UP=new WeakMap();
 const ST0=ST;
-ST=function(u){const T=ST0(u);if(!u||u.k!=='u'||u.o>1||typeof G==='undefined'||!G||!T||!isMil(u))return T;
+ST=function(u){const T=ST0(u);if(!u||u.k!=='u'||u.o>=NP||typeof G==='undefined'||!G||!T||!isMil(u))return T;
   const m=EM(u.o);if(m<=1.0001)return T;
   let c=ST_UP.get(T);if(!c){c={};ST_UP.set(T,c)}let v=c[m];if(!v){v=c[m]=Object.assign({},T,{atk:T.atk*m,hp:T.hp*m})}return v};
 
 // ---------- espião, melhoria e lembrete de era: rodam junto com a economia ----------
 function exTick(){if(!G||!G.P||!G.U)return;
-  if(!G._em)G._em=[EM(0),EM(1)];
-  for(const o of[0,1]){const m=EM(o),old=G._em[o];if(Math.abs(m-old)<1e-9)continue;
+  if(!G._em||G._em.length<NP){G._em=[];for(let p=0;p<NP;p++)G._em.push(EM(p))}
+  for(let o=0;o<NP;o++){const m=EM(o),old=G._em[o];if(Math.abs(m-old)<1e-9)continue;
     const k=m/old;for(const u of G.U){if(u.dead||u.o!==o||!isMil(u))continue;u.hp=Math.min(u.hp*k,ST(u).hp)}
     G._em[o]=m;if(o===0&&m>old)toast('⬆ Exército na '+AGES[G.P[0].age]+': +'+Math.round((m-1)*100)+'% de ataque e de vida')}
   // espião: perto de uma base inimiga, mostra o que ela tem (uma vez a cada 30 s por espião)
   for(const u of G.U){if(u.dead||u.o!==0||u.type!=='espia'||u.inT)continue;if((u.spyT||0)>G.t)continue;
-    let e=null,bd=6*TS;for(const b of G.B){if(b.dead||b.o!==1)continue;const d=distTo(u,b);if(d<bd){bd=d;e=b}}
-    if(!e)continue;u.spyT=G.t+30;const P=G.P[1].res||{};
+    let e=null,bd=6*TS;for(const b of G.B){if(b.dead||b.o===0)continue;const d=distTo(u,b);if(d<bd){bd=d;e=b}}
+    if(!e)continue;u.spyT=G.t+30;const P=G.P[e.o].res||{};
     toast('🕵️ Espião na base inimiga · 🍖'+(P.food|0)+' 🪵'+(P.wood|0)+' 🪙'+(P.gold|0)+' · riqueza '+(P.wealth|0))}
   // patrulha: quem fica parado volta para o outro ponto
   for(const u of G.U){if(u.dead||!u.patrol||u.st!=='idle')continue;

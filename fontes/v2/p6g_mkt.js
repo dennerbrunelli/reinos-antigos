@@ -8,17 +8,19 @@
 // =========================================================
 const TRADE_K=['food','wood','gold'],TRADE_N=100,TRADE_IC={food:'🍖',wood:'🪵',gold:'⛓'};
 const CAP_BASE=300,CAP_AGE=60,CAP_COM=120;
-function capOf(o,k){return Math.round((CAP_BASE+CAP_AGE*G.P[o].age+CAP_COM*lvl(o,'com'))*(o===1?Math.max(1,DIFF[G.diff].gm):1))}
-function capInit(){if(!G.cap)G.cap=[{},{}];if(!G.capHit)G.capHit=[{},{}];if(!G.mkt)G.mkt=[{food:1,wood:1,gold:1},{food:1,wood:1,gold:1}]}
+function capOf(o,k){return Math.round((CAP_BASE+CAP_AGE*G.P[o].age+CAP_COM*lvl(o,'com'))*(o!==0&&o<NP?Math.max(1,DIFF[G.diff].gm):1))}
+function capInit(){if(!G.cap||G.cap.length<NP){G.cap=[];for(let p=0;p<NP;p++)G.cap.push({})}
+  if(!G.capHit||G.capHit.length<NP){G.capHit=[];for(let p=0;p<NP;p++)G.capHit.push({})}
+  if(!G.mkt||G.mkt.length<NP){G.mkt=[];for(let p=0;p<NP;p++)G.mkt.push({food:1,wood:1,gold:1})}}
 // quanto deste depósito entra (o resto passa do limite)
-function capAdd(o,k,a){if(o>1||!TRADE_K.includes(k))return a;capInit();const C=G.cap[o];if(C[k]==null)C[k]=capOf(o,k)/3;
+function capAdd(o,k,a){if(o>=NP||!TRADE_K.includes(k))return a;capInit();const C=G.cap[o];if(C[k]==null)C[k]=capOf(o,k)/3;
   const ok=Math.min(a,C[k]);C[k]-=ok;if(ok<a-.01){G.capHit[o][k]=G.t;if(o===0&&G.t-(UI.capT&&UI.capT[k]||-99)>90){UI.capT=UI.capT||{};UI.capT[k]=G.t;
       toast('📈 Limite de comércio de '+RNM[k]+': '+capOf(0,k)+'/min. Pesquise ⚖️ Comércio na Biblioteca ou mande aldeões para outro recurso.')}}
   return ok}
 // o limite se recarrega a cada segundo; os preços voltam aos poucos para 1
 const ronTick3=ronTick;
 ronTick=function(dt){ronTick3(dt);capInit();
-  for(let o=0;o<2;o++){for(const k of TRADE_K){const m=capOf(o,k);G.cap[o][k]=Math.min(m/3,(G.cap[o][k]??m/3)+m/60*dt);const p=G.mkt[o][k];G.mkt[o][k]=p+(1-p)*Math.min(1,dt*.004)}}};
+  for(let o=0;o<NP;o++){for(const k of TRADE_K){const m=capOf(o,k);G.cap[o][k]=Math.min(m/3,(G.cap[o][k]??m/3)+m/60*dt);const p=G.mkt[o][k];G.mkt[o][k]=p+(1-p)*Math.min(1,dt*.004)}}};
 // ---------- comprar e vender ----------
 const buyPrice=(o,k)=>Math.round(TRADE_N*G.mkt[o][k]);
 const sellPrice=(o,k)=>Math.round(TRADE_N*G.mkt[o][k]*.75);

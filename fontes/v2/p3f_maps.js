@@ -62,7 +62,7 @@ const MAPS={
       for(const off of[-.22,.22])line(st[0][0],st[0][1],MW/2+off*MW,MH/2+off*MH,1.6,(x,y)=>{if(G.terr[idx(x,y)])G.terr[idx(x,y)]=2}),line(MW/2+off*MW,MH/2+off*MH,st[1][0],st[1][1],1.6,(x,y)=>{if(G.terr[idx(x,y)])G.terr[idx(x,y)]=2})}},
   rios:{n:'Rios',ic:'🏞',src:'Rise',dif:3,d:'Um rio largo corta o mapa; só se atravessa pelos vaus.',water(S){river(0,0,MW-1,MH-1,Math.round(2*S),3,4*S);for(let k=0;k<2;k++){const c=k?[MW*.2,MH*.2]:[MW*.8,MH*.8];lake(c[0],c[1],3.5*S)}}},
   arena:{n:'Arena',ic:'🏟',src:'Age',dif:2,go:1.4,d:'Cada base começa cercada de muralhas com portões. Centro rico.',water(){},
-    extra(ctx){const{st,cluster}=ctx;for(let p=0;p<2;p++){const s=st[p],R=11*MW/72;for(let a=0;a<Math.PI*2;a+=.045){const x=Math.round(s[0]+Math.cos(a)*R),y=Math.round(s[1]+Math.sin(a)*R);
+    extra(ctx){const{st,cluster}=ctx;for(let p=0;p<st.length;p++){const s=st[p],R=11*MW/72;for(let a=0;a<Math.PI*2;a+=.045){const x=Math.round(s[0]+Math.cos(a)*R),y=Math.round(s[1]+Math.sin(a)*R);
         const gate=[.8,2.35,3.95,5.5].some(g=>Math.abs(a-g)<.13);if(gate||!inMap(x,y)||G.terr[idx(x,y)])continue;const o0=occ[idx(x,y)],r0=o0&&E.get(o0);if(r0&&r0.k==='r'){r0.dead=true;E.delete(r0.id);occ[idx(x,y)]=0;pass[idx(x,y)]=1}else if(o0)continue;placeBld('muralha',p,x,y,true)}}
       G.R=G.R.filter(r=>!r.dead);
       for(let k=0;k<3;k++)cluster('gold',MW/2+(RNG()-.5)*8,MH/2+(RNG()-.5)*8,5)}},

@@ -69,7 +69,7 @@ if(BDESC.forte)BDESC.forte+=' Soldados guarnecidos dão mais flechas (+1 a cada 
 // (Centro Urbano, Forte, Torre). A Universidade é uma exceção nossa, de propósito,
 // para os eruditos (pedido explícito do Denner) — não existe no Rise original.
 const GAR_CAP={tc:12,forte:10,torre:8,universidade:UNI_MAX};
-function garCap(b){if(!b||b.dead||b.done<1||b.o>1)return 0;
+function garCap(b){if(!b||b.dead||b.done<1||b.o>=NP)return 0;
   return GAR_CAP[b.type]||0}
 function garFull(b){return (b.cargo||[]).length>=garCap(b)}
 function garOK(b,u){if(!b||!u||u.dead||u.k!=='u'||u.o!==b.o||isNav(u)||u.type==='pesc'||u.type==='trans'||garCap(b)<=0)return false;
@@ -149,6 +149,6 @@ ronTick=function(dt){ronTickN(dt);
   if(!G)return;
   for(const b of G.B){if(b.dead||!b.cargo||!b.cargo.length)continue;
     b.cargo=b.cargo.filter(id=>{const u=E.get(id);return u&&!u.dead&&u.inT===b.id});
-    if(b.type==='universidade'&&b.done>=1&&b.o<2)for(const id of b.cargo){const u=E.get(id);if(!u||u.type!=='erudito')continue;
-      const k=KNOW_RATE*dt*(u.o<2?MODS[u.o].gath.know:1)*(1+.1*lvl(u.o,'sci'))*gmult(u.o);
+    if(b.type==='universidade'&&b.done>=1&&b.o<NP)for(const id of b.cargo){const u=E.get(id);if(!u||u.type!=='erudito')continue;
+      const k=KNOW_RATE*dt*(u.o<NP?MODS[u.o].gath.know:1)*(1+.1*lvl(u.o,'sci'))*gmult(u.o);
       G.P[u.o].res.know+=k;G.st.gath[u.o]+=k;if(u.o===0)incAdd('know',k)}}};

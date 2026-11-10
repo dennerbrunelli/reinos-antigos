@@ -56,7 +56,7 @@ function launch(silo,kind,tx,ty){const k=kind==='nuke'?'nk':'ep';if(!(silo[k]>0)
   G.fx.push({k:'missile',x:c.x,y:c.y,sx:c.x,sy:c.y,tx,ty,t:0,T:kind==='nuke'?4.5:3,kind,o:silo.o});snd('catapult',c);
   if(kind==='nuke'){G.arma=(G.arma||0)+1;toast('☢️ Bomba nuclear lançada! Relógio do Armagedom: '+G.arma+'/'+ARMA_MAX);snd('alert')}
   else if(silo.o===0)toast('⚡ Pulso EMP lançado!');else toast('⚠️ O inimigo lançou um Pulso EMP!');
-  if(silo.o===1&&kind==='nuke'){UI.lastAlert={x:tx,y:ty,t:G.t}}
+  if(silo.o!==0&&kind==='nuke'){UI.lastAlert={x:tx,y:ty,t:G.t}}
   return true}
 function detonate(f){const R=(f.kind==='nuke'?6:8)*TS;
   if(f.kind==='nuke'){
@@ -65,7 +65,7 @@ function detonate(f){const R=(f.kind==='nuke'?6:8)*TS;
     for(const r of G.R){if(r.dead||r.walk||r.sub==='fish')continue;const c=ctr(r);if(hyp(c.x-f.tx,c.y-f.ty)<R*.8&&r.sub==='tree')kill(r)}
     G.fx.push({k:'nukefx',x:f.tx,y:f.ty,t:0});snd('boom',{x:f.tx,y:f.ty});setTimeout(()=>snd('collapse'),180);setTimeout(()=>snd('boom'),420);
     if(G.arma>=ARMA_MAX)setTimeout(()=>{if(G&&!G.over)endGame(false,'☢️ O Relógio do Armagedom chegou ao fim: o mundo foi destruído pelas bombas. Ninguém venceu.')},1500)}
-  else{for(const u of G.U){if(u.dead||u.inT||u.o===2)continue;if(hyp(u.x-f.tx,u.y-f.ty)<R){u.stun=G.t+20;u.mv=false;u.path=null}}
+  else{for(const u of G.U){if(u.dead||u.inT||u.o===GAIA)continue;if(hyp(u.x-f.tx,u.y-f.ty)<R){u.stun=G.t+20;u.mv=false;u.path=null}}
     for(const b of G.B){if(b.dead)continue;const c=ctr(b);if(hyp(c.x-f.tx,c.y-f.ty)<R)b.emp=G.t+20}
     G.fx.push({k:'nukefx',x:f.tx,y:f.ty,t:0,emp:1});snd('convert',{x:f.tx,y:f.ty})}}
 // EMP: unidades e prédios ficam parados por 20 s

@@ -30,14 +30,14 @@ function scholarThink(u,dt){
   const tx=c.x+Math.cos(a)*TS*2.1,ty=c.y+Math.sin(a)*TS*2.1;
   if(hyp(tx-u.x,ty-u.y)>TS*.8){if(u.st!=='study'||!u.goal){u.st='study';setGoal(u,{x:tx,y:ty})}if(moveAlong(u,dt)){u.goal=null;u.mv=false}return}
   u.st='study';u.mv=false;u.work=true;u.an+=dt*3;faceTo(u,c.x,c.y);
-  const k=KNOW_RATE*dt*(u.o<2?MODS[u.o].gath.know:1)*(1+.1*lvl(u.o,'sci'))*gmult(u.o);
+  const k=KNOW_RATE*dt*(u.o<NP?MODS[u.o].gath.know:1)*(1+.1*lvl(u.o,'sci'))*gmult(u.o);
   G.P[u.o].res.know+=k;G.st.gath[u.o]+=k;if(u.o===0)incAdd('know',k)}
 const updUnit2=updUnit;
 updUnit=function(u,dt){if(u.type==='erudito'&&(u.st==='idle'||u.st==='study')){if(u.cd>0)u.cd-=dt;u.work=false;scholarThink(u,dt);return}updUnit2(u,dt)};
 // ---------- Mercados rendem riqueza ----------
 const ronTick2=ronTick;
 ronTick=function(dt){ronTick2(dt);
-  for(let o=0;o<2;o++){const n=G.B.filter(b=>!b.dead&&b.o===o&&b.type==='mercado'&&b.done>=1).length;if(!n)continue;
+  for(let o=0;o<NP;o++){const n=G.B.filter(b=>!b.dead&&b.o===o&&b.type==='mercado'&&b.done>=1).length;if(!n)continue;
     const g=n*MARKET_WEALTH*(RAREON[o]&&RAREON[o].marmore?1.5:1)*(1+.2*lvl(o,'com'))*dt/60;G.P[o].res.wealth+=g;if(o===0)incAdd('wealth',g)}};
 // ---------- IA: Universidade e eruditos ----------
 const ronAI1=ronAI;
