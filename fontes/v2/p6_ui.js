@@ -32,7 +32,12 @@ function brass(f,d,v,delay,out){const t=AC.currentTime+(delay||0);const o=AC.cre
 function voice(pan,vol,wet){const g=AC.createGain();g.gain.value=vol;let n=g;if(AC.createStereoPanner){const p=AC.createStereoPanner();p.pan.value=pan;g.connect(p);n=p}n.connect(SG);if(RV&&wet){const s=AC.createGain();s.gain.value=wet;n.connect(s);s.connect(RV)}return g}
 const lastSnd={};
 const SGAP={leaves:170,hoe:230,flesh:200,splash:300,chop:220,mine:220,hammer:260,clash:110,thud:120,stomp:220,hitb:160,arrow:90,bow:90,knife:110,hit:80,throw:150,catapult:280,boom:200,shot:200,chant:600,die:140,bleat:300,roar:900,trumpet:900,sink:400,collapse:350,place:150};
+// "calor" de combate: sobe quando há briga perto do jogador, esfria sozinho — usado pra deixar
+// a música mais tensa na guerra e mais calma na paz (a mesma psicologia de música ambiente de
+// loja/elevador: andamento e volume puxam o clima de quem está jogando, pedido pelo Denner)
+const COMBAT_SND={clash:1,hitb:.8,hit:.5,thud:.6,stomp:.7,arrow:.4,bow:.4,knife:.5,shot:1,catapult:.8,boom:1,die:.3};
 function snd(k,e){
+  if(k&&COMBAT_SND[k]&&(!e||e.o!==2))MUSH=Math.min(1,MUSH+COMBAT_SND[k]*.1);
   if(!OPT.snd||!k)return;
   let pan=0,vol=1;
   if(e&&running){const p=w2s(e.x,e.y);if(p.x<-60||p.x>VW+60||p.y<TOPH-30||p.y>VH+30)return;
@@ -92,6 +97,7 @@ function killSnd(e){if(!running||!G)return;const ui=e.k==='u';if(!ui&&e.k!=='b')
   snd(e.o===2?({gaz:'bleat',leao:'roar',elfs:'trumpet'}[e.type]):isNav(e)?'sink':'die',e)}
 // música ambiente: escala antiga (frígia dominante), lira dedilhada, bordão e tambor
 const MUS={on:false,t:0,beat:0,timer:0,motif:[],scale:[0,1,4,5,7,8,10],root:146.83,bar:0};
+let MUSH=0;
 function newMotif(){MUS.motif=[];for(let i=0;i<8;i++)MUS.motif.push(Math.random()<.25?null:((Math.random()*9)|0))}
 function musicStart(){if(!OPT.mus||MUS.on||!audio())return;MUS.on=true;MUS.t=AC.currentTime+.2;MUS.beat=0;newMotif();
   MUS.dr=[];for(const f of[73.42,110]){const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=f;g.gain.value=.0001;g.gain.linearRampToValueAtTime(.05,AC.currentTime+3);o.connect(g);g.connect(MG);o.start();MUS.dr.push([o,g])}
@@ -101,13 +107,16 @@ function pluck(f,t,v){const o=AC.createOscillator(),o2=AC.createOscillator(),g=A
   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+1.6);o.connect(g);o2.connect(g);g.connect(MG);o.start(t);o2.start(t);o.stop(t+1.7);o2.stop(t+1.7)}
 function musicTick(){
   if(!AC||!MUS.on)return;
-  const bt=.42;
+  MUSH=Math.max(0,MUSH-.006); // esfria sozinho quando a briga passa
+  const h=MUSH,bt=.46-.15*h; // na paz, andamento mais lento (relaxa e prende o jogador); na guerra, acelera (tensão)
+  if(MG)MG.gain.setTargetAtTime(.2*(1+.35*h),AC.currentTime,.6); // um pouco mais alto quando está quente
   while(MUS.t<AC.currentTime+.4){
-    const t=MUS.t,b=MUS.beat%16;
-    if(b%8===0)tone(92,.28,'sine',.16,48,t-AC.currentTime,MG);
-    if(b%8===4)tone(92,.22,'sine',.09,52,t-AC.currentTime,MG);
-    if(b%4===2&&Math.random()<.7)noise(.05,.08,1300,1.5,t-AC.currentTime,MG);
-    if(b%2===0){const n=MUS.motif[(b/2+(MUS.bar%2?3:0))%8];if(n!=null){const sc=MUS.scale,deg=sc[n%7],oct=n>=7?2:1;const f=MUS.root*Math.pow(2,deg/12)*oct;pluck(f,t,.07+Math.random()*.03);if(Math.random()<.25)pluck(f*1.5,t+bt,.04)}}
+    const t=MUS.t,b=MUS.beat%16,dt=t-AC.currentTime;
+    if(b%8===0)tone(92,.28,'sine',.16+.08*h,48,dt,MG);
+    if(b%8===4)tone(92,.22,'sine',.09+.05*h,52,dt,MG);
+    if(b%4===2&&Math.random()<.7+.25*h)noise(.05,.08+.05*h,1300,1.5,dt,MG);
+    if(h>.4&&b%4===0)noise(.04,.06*h,2600,1.2,dt,MG,'highpass'); // percussão extra de guerra
+    if(b%2===0){const n=MUS.motif[(b/2+(MUS.bar%2?3:0))%8];if(n!=null){const sc=MUS.scale,deg=sc[n%7],oct=n>=7?2:1;const f=MUS.root*Math.pow(2,deg/12)*oct;pluck(f,t,.07+Math.random()*.03+h*.03);if(Math.random()<.25+.2*h)pluck(f*1.5,t+bt,.04)}}
     MUS.t+=bt;MUS.beat++;
     if(MUS.beat%16===0){MUS.bar++;if(MUS.bar%4===0){newMotif();if(Math.random()<.4)MUS.scale=MUS.scale[2]===4?[0,2,3,5,7,8,10]:[0,1,4,5,7,8,10]}}
   }
@@ -560,7 +569,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 42';$('ver').textContent=VERSAO;
+const VERSAO='Versão 43';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
