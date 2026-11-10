@@ -14,10 +14,15 @@ const PRESET={
   modern:{nm:'Moderno',p:{obj:[1,1],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0]},dock:0,big:0,one:0,clean:1},
   equil:{nm:'Equilibrado',p:{obj:[1,0],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0]},dock:0,big:0,one:0},
   classic:{nm:'Clássico',p:{obj:[1,0],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0]},dock:1,big:1,one:0},
+  // Tela Livre: quase tudo é campo. Barra de recursos em cima, minimapa no canto, e a seleção e os
+  // comandos só aparecem quando há algo selecionado, sem barras de título.
+  livre:{nm:'Tela Livre',p:{obj:[1,1],al:[1,1],sel:[1,0],cmd:[1,0],map:[1,0]},dock:0,big:0,one:1,free:1},
   battle:{nm:'Campo de Batalha',p:{obj:[1,1],al:[1,0],sel:[0,0],cmd:[1,0],map:[1,1]},dock:0,big:0,one:1}};
-function hudDefault(pre){pre=pre||'rise';const P=PRESET[pre],o={v:1,pre,size:1,p:{}};for(const k of PNL)o.p[k]={v:P.p[k][0],m:P.p[k][1],pos:null};return o}
+function hudDefault(pre){pre=pre||'livre';const P=PRESET[pre],o={v:1,pre,size:1,p:{}};for(const k of PNL)o.p[k]={v:P.p[k][0],m:P.p[k][1],pos:null};return o}
 let HS=hudDefault();
-try{const s=JSON.parse(localStorage.getItem(HUDK)||'null');if(s&&s.v===1&&PRESET[s.pre]){HS=s;for(const k of PNL)if(!HS.p[k])HS.p[k]={v:1,m:0,pos:null}}}catch(e){}
+try{const s=JSON.parse(localStorage.getItem(HUDK)||'null');if(s&&s.v===1&&PRESET[s.pre]){HS=s;for(const k of PNL)if(!HS.p[k])HS.p[k]={v:1,m:0,pos:null}}
+  // uma vez só: quem já tinha o jogo passa para a Tela Livre (dá para voltar ao modo antigo no 🧩)
+  if(!localStorage.getItem('imperio_ui_livre1')){localStorage.setItem('imperio_ui_livre1','1');HS=hudDefault('livre');localStorage.setItem(HUDK,JSON.stringify(HS))}}catch(e){}
 function hudSave(){try{localStorage.setItem(HUDK,JSON.stringify(HS))}catch(e){}}
 const hudScale=()=>HS.size*clamp(Math.min(innerWidth/914,innerHeight/411),.8,1.3);
 
@@ -41,7 +46,7 @@ function defPos(k){
   if(k==='obj')return{ax:'l',ay:'t',dx:52,dy:TOPH+6};
   if(k==='al'){const o=$('pObj');const below=HS.p.obj.v&&!HS.p.obj.pos&&o.offsetParent;return{ax:'l',ay:'t',dx:52,dy:below?o.getBoundingClientRect().bottom+6:TOPH+6}}
   if(k==='map')return{ax:'r',ay:'b',dx:4,dy:4};
-  if(k==='cmd'){if(pre==='battle')return{ax:'c',ay:'b',dx:0,dy:4};
+  if(k==='cmd'){if(pre==='battle'||pre==='livre')return{ax:'c',ay:'b',dx:0,dy:4};
     const m=$('pMap'),mw=HS.p.map.v&&!HS.p.map.pos?m.offsetWidth*s+8:0;return{ax:'r',ay:'b',dx:4+mw,dy:4}}
   return{ax:'l',ay:'b',dx:4,dy:4};// sel
 }
@@ -55,16 +60,16 @@ function placeEl(el,p){const s=hudScale(),w=el.offsetWidth*s,h=el.offsetHeight*s
 function layoutHUD(){
   if(!G||$('hud').style.display==='none')return;
   const P=PRESET[HS.pre],s=hudScale();
-  document.body.classList.toggle('big-cls',!!P.big);document.body.classList.toggle('clean',!!P.clean);
+  document.body.classList.toggle('big-cls',!!P.big);document.body.classList.toggle('clean',!!P.clean);document.body.classList.toggle('free',!!P.free);
   $('pCmd').classList.toggle('one',!!P.one);
   for(const k of PNL){const el=$(PEL[k]),st=HS.p[k];
     el.classList.toggle('hide',!st.v);el.classList.toggle('min',!!st.m);
-    const pos=st.pos||defPos(k);el.classList.toggle('tab',!P.clean&&pos.ay==='b'&&k!=='obj'&&k!=='al');
+    const pos=st.pos||defPos(k);el.classList.toggle('tab',!P.clean&&!P.free&&pos.ay==='b'&&k!=='obj'&&k!=='al');
     el.querySelector('[data-a="min"]').textContent=st.m?'□':'—'}
   // seleção: ocupa o espaço que sobra até os comandos (no Clássico enche tudo)
   const si=$('info');si.style.width='';
   if(HS.p.sel.v&&!HS.p.sel.pos){const c=$('pCmd'),cw=HS.p.cmd.v?c.offsetWidth*s:0,mw=HS.p.map.v?$('pMap').offsetWidth*s:0;
-    const free=(innerWidth-(HS.pre==='battle'?0:cw+mw)-30)/s-16;si.style.width=Math.round(clamp(P.big?free:Math.min(free,P.clean?360:300),170,560))+'px'}
+    const free=(innerWidth-(HS.pre==='battle'?0:cw+mw)-30)/s-16;si.style.width=Math.round(P.free?clamp(((innerWidth-cw)/2-14)/s-14,130,230):clamp(P.big?free:Math.min(free,P.clean?360:300),170,560))+'px'}
   $('objl').style.maxHeight=$('all').style.maxHeight='';
   for(const k of['obj','al','map','cmd','sel']){const el=$(PEL[k]);if(!HS.p[k].v)continue;placeEl(el,HS.p[k].pos||defPos(k))}
   // altura livre embaixo: o centro da câmera fica no meio da parte que sobra do mapa
@@ -124,7 +129,7 @@ function uiSetUpd(){
   document.querySelectorAll('#uiset [data-sz]').forEach(b=>b.classList.toggle('on',+b.dataset.sz===HS.size));
   // miniatura de cada modo: onde ficam os painéis na tela
   const PV={rise:[[0,0,100,12],[1,15,26,22],[1,70,20,28],[23,70,55,28],[79,70,20,28]],modern:[[1,3,48,13],[66,3,33,13],[1,21,22,11],[1,70,24,28],[33,76,34,22],[71,70,28,28]],
-    classic:[[0,0,100,12],[1,15,26,22],[0,68,100,32]],
+    classic:[[0,0,100,12],[1,15,26,22],[0,68,100,32]],livre:[[0,0,100,10],[30,84,40,14],[82,74,17,24]],
     equil:[[0,0,100,12],[8,16,26,26],[1,70,34,28],[40,70,28,28],[71,66,28,32]],
     battle:[[0,0,100,12],[1,15,20,9],[30,78,40,20],[80,86,19,12]]};
   document.querySelectorAll('#uiset [data-pre]').forEach(b=>{const pv=b.querySelector('.pv');if(pv&&!pv.childElementCount)pv.innerHTML=PV[b.dataset.pre].map(r=>'<u style="left:'+r[0]+'%;top:'+r[1]+'%;width:'+r[2]+'%;height:'+r[3]+'%"></u>').join('')});
@@ -135,7 +140,7 @@ function uiSetUpd(){
 }
 document.querySelectorAll('#uiset [data-pre]').forEach(b=>b.onclick=()=>{snd('click');const sz=HS.size;HS=hudDefault(b.dataset.pre);HS.size=sz;hudSave();uiSetUpd()});
 document.querySelectorAll('#uiset [data-sz]').forEach(b=>b.onclick=()=>{snd('click');HS.size=+b.dataset.sz;hudSave();uiSetUpd()});
-$('uirst').onclick=()=>{snd('click');HS=hudDefault('equil');hudSave();uiSetUpd();toast('↺ Interface padrão restaurada')};
+$('uirst').onclick=()=>{snd('click');HS=hudDefault('livre');hudSave();uiSetUpd();toast('↺ Interface padrão restaurada')};
 $('uiok').onclick=uiSetClose;$('uiok2').onclick=uiSetClose;
 $('bui').onclick=()=>{snd('click');uiSetOpen()};
 

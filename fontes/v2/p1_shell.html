@@ -235,6 +235,14 @@ button{font-family:inherit;color:inherit}
 #objl .ob{color:#f2f6ff}#objl .ob i{border-color:#f0c55a}
 #all .al{background:linear-gradient(90deg,#c62a18,#6a0e06);border-color:#ff8a6a}
 #dock{background:linear-gradient(#173a7c,#0a1a3c);border-top:3px solid #f0c55a}
+/* Tela Livre: sem barras de título embaixo; seleção e comandos somem quando não há nada selecionado */
+.free #pCmd>.ph,.free #pSel>.ph,.free #pMap>.ph{display:none}
+.free #pSel.empty,.free #pCmd.empty,.free #pAl.calm{display:none!important}
+.free #pObj .pbn,.free #pAl .pbn{display:none}
+.free #pObj,.free #pAl{width:auto;max-width:230px;background:rgba(8,16,36,.6);border-color:#f0c55a66}.free #pObj:not(.min),.free #pAl:not(.min){width:228px}
+.free #pObj>.ph,.free #pAl>.ph{height:24px;font-size:11.5px;background:none;border:none}
+.free #pSel,.free #pCmd,.free #pMap{background:rgba(8,16,36,.72);border-color:#f0c55a88}
+.free #pObj.min,.free #pAl.min{opacity:.85}
 #toast{background:linear-gradient(#fff4d0,#f0d48a);border-color:#c8961e}
 #era b{background:none;border:none;box-shadow:none;width:26px;height:26px}#era b img{width:26px;height:26px;display:block}
 #quick .cb img{width:36px;height:36px}
@@ -437,7 +445,8 @@ button{font-family:inherit;color:inherit}
     <div class="shh"><div><b>🧩 Interface</b><small>Como os painéis aparecem durante a partida · tudo fica salvo</small></div><button class="mb shx" id="uiok" data-back="1">✕</button></div>
     <div class="sht">Modo</div>
     <div class="pres">
-      <button class="mb pre" data-pre="rise"><i class="pv"></i><b>🏛 Rise</b><small>Mapa, seleção e comandos numa barra embaixo · padrão</small></button>
+      <button class="mb pre" data-pre="livre"><i class="pv"></i><b>🌄 Tela Livre</b><small>Quase tudo é campo; painéis só quando precisa · padrão</small></button>
+      <button class="mb pre" data-pre="rise"><i class="pv"></i><b>🏛 Rise</b><small>Mapa, seleção e comandos numa barra embaixo</small></button>
       <button class="mb pre" data-pre="modern"><i class="pv"></i><b>📱 Moderno</b><small>Limpo, como os RTS atuais</small></button>
       <button class="mb pre" data-pre="classic"><i class="pv"></i><b>🏰 Clássico</b><small>Tudo à mostra numa barra embaixo</small></button>
       <button class="mb pre" data-pre="equil"><i class="pv"></i><b>⚖️ Equilibrado</b><small>Painéis soltos que você arrasta</small></button>
