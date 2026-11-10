@@ -500,6 +500,7 @@ function render(){
     ctx.fillStyle='rgba(0,0,0,.8)';ctx.fillRect(I0-w/2-1,y-1,w+2,7);ctx.fillStyle=b.cp>0?COL[b.cpo].m:'#777';ctx.fillRect(I0-w/2,y,w*clamp((b.cp||0)/CAPT_T,0,1),5);
     ctx.font='bold 13px serif';ctx.textAlign='center';ctx.fillStyle=b.cp>0?COL[b.cpo].l:'#ddd';ctx.fillText('⚑',I0,y-4)}
   if(SEL.length===1){const b=E.get(SEL[0]);if(b&&b.k==='b'&&b.rally&&b.o===0)flagAt(b.rally.x,b.rally.y)}
+  drawParts();
   if(placing)drawPlacingSprite();
   // tela
   ctx.setTransform(DPR,0,0,DPR,0,0);
