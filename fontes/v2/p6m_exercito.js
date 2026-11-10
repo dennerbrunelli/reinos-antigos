@@ -9,10 +9,39 @@
 // ---------- espião ----------
 UT.espia={n:'Espião',hp:45,atk:3,arm:0,rng:0,spd:2.1,cd:1.2,los:9,cost:{food:50,wealth:50},t:25,age:1,at:'quartel',cls:'inf',spr:[46,64,23,58]};
 if(BT.quartel&&BT.quartel.train&&!BT.quartel.train.includes('espia'))BT.quartel.train.push('espia');
-Object.assign(ROLE,{espia:'Espião: rápido e frágil, enxerga longe. Perto de uma base inimiga, mostra o que ela tem de comida, madeira e ouro.'});
+// sabotagem (como no Rise): mandado atacar um prédio inimigo, o Espião não bate nele — trava
+// a produção e o ataque do prédio por um tempo, em vez do dano ridículo que teria de verdade
+const SABO_T=25,SABO_CD=40;
+Object.assign(ROLE,{espia:'Espião: rápido e frágil, enxerga longe. Perto de uma base inimiga, mostra o que ela tem de comida, madeira e ouro. Mandado atacar um prédio inimigo, sabota: trava a produção e o ataque dele por '+SABO_T+'s (recarrega em '+SABO_CD+'s).'});
 const extraSheets0=extraSheets;
 extraSheets=function(o,C,skin){extraSheets0(o,C,skin);const H=[46,64,23,58];
   mkSheet('espia'+o,H[0],H[1],H[2],H[3],(g,ax,ay,fr,dir,meta)=>drawHuman(g,ax,ay,{hat:'hood',robe:'#3a3f4a'},C,skin,fr,dir===1,meta))};
+const doAttackSab=doAttack;
+doAttack=function(u,T,dt){
+  if(u.type!=='espia'){doAttackSab(u,T,dt);return}
+  const t=E.get(u.tg);
+  if(t&&t.k==='b'&&!t.dead&&t.o!==u.o&&!t.inT){
+    if(!approach(u,t,dt,24))return;
+    u.work=true;const c=ctr(t);faceTo(u,c.x,c.y);
+    if(u.cd<=0){u.cd=SABO_CD;t.sabo=G.t+SABO_T;G.fx.push({k:'glow',x:t.x,y:t.y,t:0});
+      if(t.o===0){toast('🕵️ Um espião inimigo sabotou '+BT[t.type].n+'! Parado por '+SABO_T+'s');snd('alert')}
+      else if(u.o===0){toast('🕵️ Sabotagem! '+BT[t.type].n+' inimigo parado por '+SABO_T+'s');snd('done')}}
+    return}
+  doAttackSab(u,T,dt)};
+const updBldSab=updBld;
+updBld=function(b,dt){if(b.sabo>G.t)return;updBldSab(b,dt)};
+// IA: treina um Espião de vez em quando e manda sabotar um prédio seu
+const ronAIesp=ronAI;
+ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){
+  ronAIesp(p,blds,has,any,build,htx,hty,toward,vills,army,res);
+  if(p!==1)return;
+  const qt=blds.find(b=>b.type==='quartel'&&b.done>=1);
+  const mine=G.U.filter(u=>!u.dead&&u.o===p);
+  const cnt=t=>mine.filter(u=>u.type===t).length+blds.reduce((s,b)=>s+b.q.filter(q=>q===t).length,0);
+  if(qt&&qt.q.length<2&&army.length>=6&&cnt('espia')<1&&afford(p,costOf(p,'espia'))){pay(p,costOf(p,'espia'));qt.q.push('espia')}
+  for(const u of mine){if(u.type!=='espia'||u.st!=='idle')continue;
+    const tgt=G.B.find(b=>!b.dead&&b.o===0&&!(b.sabo>G.t)&&(b.type==='tc'||b.type==='quartel'||b.type==='fundicao'||b.type==='biblioteca'));
+    if(tgt)orderAttack(u,tgt)}};
 
 // ---------- melhoria por era: +6% de ataque e de vida por era do dono ----------
 const EM=o=>1+.06*(G&&G.P&&G.P[o]?G.P[o].age:0);
