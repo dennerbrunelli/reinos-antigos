@@ -1,7 +1,7 @@
 
 // =========================================================
 //   MENU E BATALHA RÁPIDA (organização como no Rise of Nations, visual próprio)
-//   Menu: Batalha Rápida · Conquistar o Mundo (em breve) · Multijogador · Aprender a jogar · Opções
+//   Menu: Batalha Rápida · Conquistar o Mundo · Multijogador · Aprender a jogar · Opções
 //   Batalha Rápida: jogadores à esquerda, regras à direita (com Era inicial e Era final)
 // =========================================================
 function ENDAGE(){return G&&G.cfg&&G.cfg.endAge!=null?G.cfg.endAge:MAXAGE}
@@ -35,20 +35,33 @@ const ERAS_OPT=AGES.map((n,i)=>[String(i),ROMAN[i+1]+' · '+n.replace(/^Era (da 
   for(const t of['povo','mapa','partida','amb']){const c=spl.querySelector('[data-tc="'+t+'"]');const b=document.createElement('button');b.className='mb qback';b.textContent='↩ Batalha Rápida';b.onclick=()=>{setTab('qb');snd('click')};c.prepend(b)}}
 const cyc=(k,vals)=>{const i=vals.indexOf(String(SETUP[k]));SETUP[k]=vals[(i+1)%vals.length];
   if(k==='era'&&+SETUP.fim<+SETUP.era)SETUP.fim=SETUP.era;if(k==='fim'&&+SETUP.fim<+SETUP.era)SETUP.era=SETUP.fim;updSetup();snd('click')};
+// vagas 3 a 8: '' fechada, 'rand' ou o id do povo. Só valem as que cabem no tamanho do mapa.
+function qbSlots(){if(!Array.isArray(SETUP.slots)||SETUP.slots.length!==6)SETUP.slots=['','','','','',''];return SETUP.slots}
+function qbMaxPl(){return Math.min(MAX_PLAYERS,(MAPSZ[SETUP.size]||MAPSZ.med).pl||2)}
+// monta np e a lista de povos das IAs a partir das vagas abertas
+function setupPlayers(){const sl=qbSlots(),mx=qbMaxPl(),ais=[SETUP.ai||'rand'];for(let i=0;i<6;i++)if(sl[i]&&ais.length+1<mx)ais.push(sl[i]);SETUP.ais=ais;SETUP.np=ais.length+1}
 function qbRender(){const q=$('qb');if(!q)return;const civN=id=>id==='rand'?'🎲 Aleatório':(CIVS.find(c=>c.id===id)||{n:id}).n;
   const P=(col,nm,sub,btns,off)=>'<div class="qp'+(off?' off':'')+'"><i style="background:'+col+'"></i><div class="qn">'+nm+'<small>'+sub+'</small></div>'+btns+'</div>';
   const sz=Object.keys(MAPSZ),ops=k=>(SOPT.partida.find(g=>g.k===k)||{v:[]}).v.map(v=>v[0]);
   const R=(lab,k,val,act)=>'<div class="qr"><span>'+lab+'</span><button class="mb qv" data-q="'+act+'" data-k="'+k+'">'+val+'</button></div>';
   let h='<div><div class="qh">JOGADORES</div>'+P('#3a6fd8','Você','Time 1','<button class="mb qv" data-q="tab" data-k="povo">'+civN(SETUP.civ)+'</button>')+
     P('#d23a2a','Computador','Time 2 · '+optLbl('diff',SETUP.diff),'<button class="mb qv" data-q="ai">'+civN(SETUP.ai)+'</button><button class="mb qv" data-q="cyc" data-k="diff">'+optLbl('diff',SETUP.diff).replace(/^\S+ /,'')+'</button>');
-  for(const[c,n]of[['#3aa04a',3],['#d8c03a',4],['#8a4ad0',5],['#3ab8c8',6],['#e07a2a',7],['#9a9a9a',8]])h+=P(c,'Vaga '+n,'Fechada · até 8 jogadores na versão completa','',1);
+  {const sl=qbSlots(),mx=qbMaxPl(),tm=SETUP.times||'ffa';let pi=1;const team=p=>tm==='vs'?(p?2:1):tm==='t2'?(p%2?2:1):p+1;
+    h=h.replace('Time 2 · ','Time '+team(1)+' · ');
+    for(let i=0;i<6;i++){const n=i+3,c=COL[n-1].m;
+      if(n>mx){h+=P(c,'Vaga '+n,'Mapa '+(MAPSZ[SETUP.size]||MAPSZ.med).n+' não comporta · aumente o tamanho','',1);continue}
+      if(!sl[i]){h+=P(c,'Vaga '+n,'Fechada','<button class="mb qv" data-q="slot" data-k="'+i+'">＋ Abrir</button>',1);continue}
+      pi++;h+=P(c,'Computador '+pi,'Time '+team(pi),'<button class="mb qv" data-q="slotc" data-k="'+i+'">'+civN(sl[i])+'</button><button class="mb qv" data-q="slotx" data-k="'+i+'">✕</button>')}}
   h+='</div><div><div class="qh">REGRAS DA PARTIDA</div>'+
     R('🗺 Mapa','mapa',optLbl('map',SETUP.map),'tab')+R('📐 Tamanho','size',optLbl('size',SETUP.size),'cyc')+R('💰 Recursos','res',optLbl('res',SETUP.res),'cyc')+
     R('📜 Era inicial','era',(ERAS_OPT.find(e=>e[0]===String(SETUP.era))||ERAS_OPT[0])[1],'cyc')+R('🏁 Era final','fim',(ERAS_OPT.find(e=>e[0]===String(SETUP.fim))||ERAS_OPT[7])[1],'cyc')+
-    R('🏆 Vitória','vic',optLbl('vic',SETUP.vic),'cyc')+R('⏩ Velocidade','vel',optLbl('vel',SETUP.vel),'cyc')+R('🌤 Ambiente','amb',optLbl('est',String(SETUP.est))+' · '+optLbl('hora',SETUP.hora).replace(/^\S+ /,''),'tab')+'</div>';
+    R('🤝 Alianças','times',optLbl('times',SETUP.times||'ffa'),'cyc')+R('🏆 Vitória','vic',optLbl('vic',SETUP.vic),'cyc')+R('⏩ Velocidade','vel',optLbl('vel',SETUP.vel),'cyc')+R('🌤 Ambiente','amb',optLbl('est',String(SETUP.est))+' · '+optLbl('hora',SETUP.hora).replace(/^\S+ /,''),'tab')+'</div>';
   q.innerHTML=h;
   q.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const a=b.dataset.q,k=b.dataset.k;
     if(a==='tab'){setTab(k);snd('click');return}
+    if(a==='slot'){qbSlots()[+k]='rand';updSetup();snd('click');return}
+    if(a==='slotx'){qbSlots()[+k]='';updSetup();snd('click');return}
+    if(a==='slotc'){const ids=['rand',...CIVS.map(c=>c.id)],sl=qbSlots();sl[+k]=ids[(ids.indexOf(sl[+k])+1)%ids.length];updSetup();snd('click');return}
     if(a==='ai'){const ids=['rand',...CIVS.map(c=>c.id)];SETUP.ai=ids[(ids.indexOf(SETUP.ai)+1)%ids.length];updSetup();snd('click');return}
     if(k==='size')return cyc('size',sz);if(k==='era')return cyc('era',['0','1','2','3']);if(k==='fim')return cyc('fim',ERAS_OPT.map(e=>e[0]));
     return cyc(k,ops(k))})}

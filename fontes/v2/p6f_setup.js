@@ -6,7 +6,6 @@
 // =========================================================
 const SOPT={
   partida:[
-    {k:'opon',n:'Oponentes',v:[['1','1'],['2','2'],['3','3'],['4','4'],['5','5'],['6','6'],['7','7']]},
     {k:'times',n:'Alianças',v:[['ffa','⚔ Todos contra todos'],['t2','🤝 Dois times'],['vs','😈 Todos contra você']]},
     {k:'diff',n:'Inimigo',v:[['facil','🙂 Fácil'],['normal','😐 Normal'],['dificil','😠 Difícil']]},
     {k:'res',n:'Recursos iniciais',v:[['pouco','Pouco'],['normal','Normal'],['muito','Muito']]},
@@ -17,7 +16,7 @@ const SOPT={
     {k:'hora',n:'Hora do dia',v:[['aman','🌅 Amanhecer'],['dia','☀️ Dia'],['tarde','🌇 Entardecer'],['noite','🌙 Noite'],['rand','🎲']]},
     {k:'est',n:'Estação',v:[['0','🌸 Primavera'],['1','☀️ Verão'],['2','🍂 Outono'],['3','❄️ Inverno'],['rand','🎲']]},
     {k:'clima',n:'Clima',v:[['clear','🌤 Limpo'],['rain','🌧 Chuva'],['storm','⛈ Tempestade'],['snow','🌨 Neve'],['rand','🎲']]}]};
-const SDEF={size:'med',map:'mar',diff:'normal',res:'normal',era:'0',vic:'padrao',vel:'1',hora:'dia',est:'0',clima:'clear',opon:'1',times:'ffa'};
+const SDEF={size:'med',map:'mar',diff:'normal',res:'normal',era:'0',vic:'padrao',vel:'1',hora:'dia',est:'0',clima:'clear',times:'ffa'};
 SETUP=Object.assign({civ:'gregos'},SDEF,OPT.setup||{},{civ:OPT.civ||'gregos',map:OPT.map||'mar',diff:OPT.diff||'normal'});
 const SRES={pouco:{food:100,wood:100,gold:50,wealth:20,know:0},normal:null,muito:{food:600,wood:600,gold:300,wealth:200,know:100}};
 const optLbl=(k,v)=>{if(k==='map')return v==='rand'?'🎲 Aleatório':(MAPS[v]?MAPS[v].ic+' '+MAPS[v].n:v);if(k==='size')return MAPSZ[v]?MAPSZ[v].n+' ('+MAPSZ[v].s+'×'+MAPSZ[v].s+')':v;for(const g of[...SOPT.partida,...SOPT.amb])if(g.k===k){const c=g.v.find(x=>x[0]===v);return c?c[1]+(v==='rand'?' Aleatório':''):v}return v};
@@ -40,10 +39,8 @@ const updSetup0=updSetup;
 updSetup=function(){updSetup0();
   document.querySelectorAll('#setup [data-ok]').forEach(b=>b.classList.toggle('on',String(SETUP[b.dataset.ok])===b.dataset.ov));
   const m=MAPS[SETUP.map];$('mapd').innerHTML=SETUP.map==='rand'?'🎲 Um dos 15 mapas, sorteado na hora.':m?'<b>'+m.ic+' '+m.n+'</b> ('+m.src+', dificuldade '+'★'.repeat(m.dif)+'): '+m.d:'';
-  const sum=[['📐','size'],['🗺','map'],['👥','opon'],['🤝','times'],['😐','diff'],['💰','res'],['📜','era'],['🏆','vic'],['⏩','vel'],['🕐','hora'],['🍃','est'],['🌤','clima']];
-  const maxPl=(MAPSZ[SETUP.size]||MAPSZ.med).pl||2,wantPl=(+SETUP.opon)+1;
-  $('sumr').innerHTML=sum.map(([ic,k])=>'<div><b>'+{size:'Tamanho',map:'Mapa',opon:'Oponentes',times:'Alianças',diff:'Inimigo',res:'Recursos',era:'Era',vic:'Vitória',vel:'Velocidade',hora:'Hora',est:'Estação',clima:'Clima'}[k]+':</b> '+optLbl(k,String(SETUP[k]))+'</div>').join('')
-    +(wantPl>maxPl?'<div>⚠️ Este tamanho de mapa aguenta bem até '+(maxPl-1)+' oponente(s); vamos limitar pra isso.</div>':'');
+  const sum=[['📐','size'],['🗺','map'],['🤝','times'],['😐','diff'],['💰','res'],['📜','era'],['🏆','vic'],['⏩','vel'],['🕐','hora'],['🍃','est'],['🌤','clima']];
+  $('sumr').innerHTML=sum.map(([ic,k])=>'<div><b>'+{size:'Tamanho',map:'Mapa',times:'Alianças',diff:'Inimigo',res:'Recursos',era:'Era',vic:'Vitória',vel:'Velocidade',hora:'Hora',est:'Estação',clima:'Clima'}[k]+':</b> '+optLbl(k,String(SETUP[k]))+'</div>').join('');
   const S=SEASONS[SETUP.est==='rand'?0:+SETUP.est],tip=[];
   if(SETUP.est!=='rand')tip.push(S.ic+' '+S.n+': '+SEFX[+SETUP.est]);
   if(SETUP.clima!=='clear'&&SETUP.clima!=='rand')tip.push(WXFX[SETUP.clima]);
@@ -61,7 +58,7 @@ window.__RA.newGame=newGame;
 const loadGame2=loadGame;
 loadGame=function(){const ok=loadGame2();if(ok&&!G.cfg)G.cfg={hora:'dia',est:0,clima:'clear',vic:'padrao',era:0,res:'normal'};return ok};
 $('bstart').onclick=()=>{OPT.civ=SETUP.civ;OPT.map=SETUP.map;OPT.diff=SETUP.diff;OPT.setup=Object.assign({},SETUP);OPT.spd=+SETUP.vel||1;saveOpt();updOptBtns();
-  SETUP.np=(+SETUP.opon||1)+1;
+  setupPlayers();
   loading(()=>{newGame(SETUP);startGame();const c=G.cfg,S=SEASONS[c.est];
     toast(S.ic+' '+S.n+' · '+{aman:'🌅 amanhecer',dia:'☀️ dia',tarde:'🌇 entardecer',noite:'🌙 noite'}[c.hora]+(c.clima!=='clear'?' · '+{rain:'🌧 chuva',storm:'⛈ tempestade',snow:'🌨 neve'}[c.clima]:'')+'<br>Dica: selecione os aldeões e mande coletar!')})};
 // o ícone do tempo no topo: estação + hora + clima (fixos)

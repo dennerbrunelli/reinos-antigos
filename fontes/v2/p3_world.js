@@ -20,7 +20,7 @@ function newGame(o){
   NP=clamp(Math.round(o.np||2),2,Math.min(MAX_PLAYERS,(MAPSZ[o.size]||MAPSZ.med).pl||2));
   const civs=[o.civ];
   for(let p=1;p<NP;p++){
-    const want=o.ais&&o.ais[p-1];
+    const want=o.ais?o.ais[p-1]:(p===1?o.ai:null);
     const free=CIVS.filter(c=>!civs.includes(c.id)),pool=free.length?free:CIVS;// sorteia sem repetir povo
     civs.push(want&&want!=='rand'&&CIVS.some(c=>c.id===want)?want:pool[(RNG()*pool.length)|0].id);
   }
