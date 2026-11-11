@@ -46,6 +46,7 @@ function snd(k,e){
   if(lastSnd[k]&&now-lastSnd[k]<gap)return;lastSnd[k]=now;
   if(!audio())return;
   const r=1+(Math.random()-.5)*.14,o=voice(pan,vol,{boom:.5,collapse:.5,age:.4,alert:.3,win:.4,lose:.4,shot:.6,roar:.3,trumpet:.3,convert:.5,chant:.5,done:.3}[k]||.12);
+  if(sfxPlay(k,o,r))return; // efeito gravado (Versão 63); sem ele, o som desenhado abaixo
   switch(k){
   case'click':tone(1500*r,.03,'triangle',.03,900,0,o);noise(.02,.06,3500,2,0,o);break;
   case'sel':tone(620*r,.07,'triangle',.05,700,0,o);tone(930*r,.09,'sine',.03,0,.045,o);break;
