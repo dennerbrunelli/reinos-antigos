@@ -56,3 +56,24 @@ function drawParts(){const now=performance.now();let dt=Math.min(.05,(now-partLa
       else{al=.9*(1-f*f);r=p.r*(1.25-f*.85)}
       ctx.globalAlpha=al;ctx.drawImage(S,p.x-r,p.y-r,r*2,r*2)}}
   ctx.globalAlpha=1}
+// =========================================================
+//   OBRA: como um prédio aparece enquanto é construído
+//   1) alicerce pintado, com andaimes e monte de areia · 2) as paredes sobem em fiadas irregulares, de baixo
+//   para cima, por dentro do andaime · 3) no fim o andaime some e sobe uma nuvem de poeira.
+//   (Testei um andaime desenhado por código em volta do prédio: ficava parecendo uma gaiola. Saiu.)
+// =========================================================
+function drawObra(e,sp,img,I0,J0){const d=e.done,a=SPR.alic,k=e.sz*64/a.dw;
+  // alicerce pintado: aparece primeiro e vai sumindo quando as paredes passam da metade
+  const aa=clamp(1-(d-.72)/.26,0,1);if(aa>0){ctx.globalAlpha=aa;ctx.drawImage(a.c,I0-a.W*k/2,J0-a.top*k,a.W*k,a.H*k);ctx.globalAlpha=1}
+  const f=clamp((d-.12)/.88,0,1);if(f<=0)return;
+  const h=(sp.top+6)*f;                              // quanto a parede já subiu acima do chão
+  // paredes: 14 colunas, cada uma com a sua altura (fiada irregular, como tijolo ainda sendo assentado)
+  const n=14,cw=sp.W/n,base=sp.H*(1-f);
+  for(let c=0;c<n;c++){const jit=((e.id*31+c*17)%11-5)*1.6*(1-f*.6)+(c%2?3:-3)*(1-f);const cut=clamp(base+jit,0,sp.H-2);
+    ctx.drawImage(img,c*cw*SS,cut*SS,cw*SS+1,(sp.H-cut)*SS,I0-sp.W/2+c*cw,J0-sp.top+cut,cw+.5,sp.H-cut)}
+  // poeira da obra enquanto o trabalho anda
+  if(e._pd!==undefined&&d>e._pd&&Math.random()<.18&&vis[idx(e.tx+(e.sz>>1),e.ty+(e.sz>>1))]){const c=ctr(e);pEmit('d',c.x+(Math.random()-.5)*e.sz*TS*.7,c.y+(Math.random()-.5)*e.sz*TS*.7,h*.6,1,.8)}
+  e._pd=d}
+// prédio pronto: o andaime cai numa nuvem de poeira
+const onBuiltFx=onBuilt;
+onBuilt=function(b){onBuiltFx(b);if(running&&b.type!=='muralha'&&b.type!=='fazenda'){const c=ctr(b);if(partSeen(c.x,c.y)){pEmit('d',c.x,c.y,8,6+b.sz*2,b.sz*1.6);pEmit('c',c.x,c.y,b.sz*8,4,1.2)}}};

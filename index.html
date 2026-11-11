@@ -2390,12 +2390,12 @@ function render(){
       const sp=e.sub==='tree'?SPR['tree'+(e.tv!=null?e.tv:(e.tv=treeVar(e)))]:e.sub==='fish'?SPR['fish'+(e.deep?1:0)]:SPR[e.sub];
       ctx.drawImage(lit?sp.c:sp.dk,I-sp.ax,J+(e.sub==='fish'?-4:5)-sp.ay,sp.w,sp.h)}
     else if(e.k==='b'){const sp=SPR['b'+e.type+e.o],I0=(e.tx-e.ty)*TS,J0=(e.tx+e.ty)*TS/2;const lit=vis[idx(e.tx+(e.sz>>1),e.ty+(e.sz>>1))];const img=lit?sp.c:sp.dk;
-      if(e.done<1){if(SPR.alic&&e.type!=='muralha'){const a=SPR.alic,k=e.sz*64/a.dw;ctx.drawImage(a.c,I0-a.W*k/2,J0-a.top*k,a.W*k,a.H*k)}
+      if(e.done<1){if(e.type==='muralha'||!SPR.alic){if(SPR.alic&&e.type!=='muralha'){const a=SPR.alic,k=e.sz*64/a.dw;ctx.drawImage(a.c,I0-a.W*k/2,J0-a.top*k,a.W*k,a.H*k)}
         const cut=sp.H*(1-e.done)*.85+sp.H*.15*(e.done<.05?1:0);const top=Math.max(0,sp.top-8);const cc=Math.max(cut,0);
         if(e.done>0)ctx.drawImage(img,0,cc*SS,img.width,img.height-cc*SS,I0-sp.W/2,J0-sp.top+cc,sp.W,sp.H-cc);
-        if(!SPR.alic||e.type==='muralha'){ctx.strokeStyle='#8a6a3a';ctx.lineWidth=1.4;}const h=(BT[e.type].h*e.done)+6;if(!SPR.alic||e.type==='muralha')for(const[a,b]of[[0,0],[e.sz,0],[0,e.sz],[e.sz,e.sz]]){const I=I0+(a-b)*TS,J=J0+(a+b)*TS/2;ctx.beginPath();ctx.moveTo(I,J);ctx.lineTo(I,J-h);ctx.stroke()}}
+        if(!SPR.alic||e.type==='muralha'){ctx.strokeStyle='#8a6a3a';ctx.lineWidth=1.4;}const h=(BT[e.type].h*e.done)+6;if(!SPR.alic||e.type==='muralha')for(const[a,b]of[[0,0],[e.sz,0],[0,e.sz],[e.sz,e.sz]]){const I=I0+(a-b)*TS,J=J0+(a+b)*TS/2;ctx.beginPath();ctx.moveTo(I,J);ctx.lineTo(I,J-h);ctx.stroke()}}else drawObra(e,sp,img,I0,J0)}
       else ctx.drawImage(img,I0-sp.W/2,J0-sp.top,sp.W,sp.H);
-      if(e.hp<e.mhp*.5&&e.done>=1&&lit){const t=performance.now()/170;for(let i=0;i<3;i++){const fx=I0+(i-1)*e.sz*12,fy=J0+e.sz*TS*.35-BT[e.type].h*.5;ctx.fillStyle='rgba(255,'+(120+i*30)+',0,.75)';ctx.beginPath();ctx.arc(fx,fy-Math.abs(Math.sin(t+i))*7,4,0,7);ctx.fill();ctx.fillStyle='rgba(60,50,40,.35)';ctx.beginPath();ctx.arc(fx+3,fy-14-Math.abs(Math.sin(t*.7+i))*10,6,0,7);ctx.fill()}}}
+    }
     else drawUnit(e,selSet);
   }
   // tiros
@@ -3213,6 +3213,27 @@ function drawParts(){const now=performance.now();let dt=Math.min(.05,(now-partLa
       else{al=.9*(1-f*f);r=p.r*(1.25-f*.85)}
       ctx.globalAlpha=al;ctx.drawImage(S,p.x-r,p.y-r,r*2,r*2)}}
   ctx.globalAlpha=1}
+// =========================================================
+//   OBRA: como um prédio aparece enquanto é construído
+//   1) alicerce pintado, com andaimes e monte de areia · 2) as paredes sobem em fiadas irregulares, de baixo
+//   para cima, por dentro do andaime · 3) no fim o andaime some e sobe uma nuvem de poeira.
+//   (Testei um andaime desenhado por código em volta do prédio: ficava parecendo uma gaiola. Saiu.)
+// =========================================================
+function drawObra(e,sp,img,I0,J0){const d=e.done,a=SPR.alic,k=e.sz*64/a.dw;
+  // alicerce pintado: aparece primeiro e vai sumindo quando as paredes passam da metade
+  const aa=clamp(1-(d-.72)/.26,0,1);if(aa>0){ctx.globalAlpha=aa;ctx.drawImage(a.c,I0-a.W*k/2,J0-a.top*k,a.W*k,a.H*k);ctx.globalAlpha=1}
+  const f=clamp((d-.12)/.88,0,1);if(f<=0)return;
+  const h=(sp.top+6)*f;                              // quanto a parede já subiu acima do chão
+  // paredes: 14 colunas, cada uma com a sua altura (fiada irregular, como tijolo ainda sendo assentado)
+  const n=14,cw=sp.W/n,base=sp.H*(1-f);
+  for(let c=0;c<n;c++){const jit=((e.id*31+c*17)%11-5)*1.6*(1-f*.6)+(c%2?3:-3)*(1-f);const cut=clamp(base+jit,0,sp.H-2);
+    ctx.drawImage(img,c*cw*SS,cut*SS,cw*SS+1,(sp.H-cut)*SS,I0-sp.W/2+c*cw,J0-sp.top+cut,cw+.5,sp.H-cut)}
+  // poeira da obra enquanto o trabalho anda
+  if(e._pd!==undefined&&d>e._pd&&Math.random()<.18&&vis[idx(e.tx+(e.sz>>1),e.ty+(e.sz>>1))]){const c=ctr(e);pEmit('d',c.x+(Math.random()-.5)*e.sz*TS*.7,c.y+(Math.random()-.5)*e.sz*TS*.7,h*.6,1,.8)}
+  e._pd=d}
+// prédio pronto: o andaime cai numa nuvem de poeira
+const onBuiltFx=onBuilt;
+onBuilt=function(b){onBuiltFx(b);if(running&&b.type!=='muralha'&&b.type!=='fazenda'){const c=ctr(b);if(partSeen(c.x,c.y)){pEmit('d',c.x,c.y,8,6+b.sz*2,b.sz*1.6);pEmit('c',c.x,c.y,b.sz*8,4,1.2)}}};
 
 // =========================================================
 //   SONS E MÚSICA (gerados na hora, sem arquivos)
@@ -3811,7 +3832,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 61';$('ver').textContent=VERSAO;
+const VERSAO='Versão 62';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -5684,6 +5705,62 @@ window.__RA.cw={open:cwOpen,get:()=>CW,after:cwAfter,attack:cwAttack};
 #cw .cwc{background:rgba(18,13,8,.75);border-color:#7d623388;border-radius:5px}
 #dipp{background:linear-gradient(rgba(34,25,15,.97),rgba(15,11,6,.98))!important;color:var(--pg)!important;border:1px solid #d8b468aa!important;border-radius:6px!important}
 #dipp small{opacity:.85}
+`;document.head.appendChild(css)}
+// =========================================================
+//   BOTÕES DE COMANDO: todos com o mesmo estilo de medalhão, com nome embaixo, sem fileira de cadeados
+//   - comandos que usavam emoji solto (🔁 🚨 🤖 ⚖️ 🏛 📤…) ganham desenho próprio em medalhão
+//   - o que só libera daqui a duas eras ou mais não aparece; o que libera na próxima era aparece
+//     apagado com o número da era no canto, em vez de cadeado
+//   - cada botão mostra embaixo, em uma palavra, o que ele faz
+// =========================================================
+Object.assign(CMD_ART,{
+  patrol:g=>{medal(g,'#5a8ac8','#162c52');for(const s of[1,-1]){g.save();g.translate(40,40);g.scale(s,s);stroke2(g,()=>{g.beginPath();g.arc(0,0,17,-2.6,-.35)},4.5,'#fff1c0');fillP(g,[[20,-10],[22,4],[9,-1]],'#fff1c0');g.restore()}},
+  bell:g=>{medal(g,'#c8503c','#52120a');fillP(g,[[40,17],[52,26],[54,46],[60,54],[20,54],[26,46],[28,26]],'#f0c860');g.beginPath();g.arc(40,58,5,0,7);g.fillStyle='#f0c860';g.fill();g.lineWidth=2;g.strokeStyle='#1a0e04';g.stroke();
+    stroke2(g,()=>{g.beginPath();g.moveTo(14,26);g.lineTo(20,32);g.moveTo(66,26);g.lineTo(60,32)},2.5,'#fff1c0')},
+  gear:g=>{medal(g,'#4aa090','#123a34');const p=[];for(let i=0;i<16;i++){const a=i*Math.PI/8,r=i%2?22:16;p.push([40+Math.cos(a-.12)*r,40+Math.sin(a-.12)*r],[40+Math.cos(a+.12)*r,40+Math.sin(a+.12)*r])}fillP(g,p,'#e8ecf0');
+    g.beginPath();g.arc(40,40,7,0,7);g.fillStyle='#123a34';g.fill();g.lineWidth=2;g.strokeStyle='#1a0e04';g.stroke()},
+  scales:g=>{medal(g,'#c8a040','#4a3008');stroke2(g,()=>{g.beginPath();g.moveTo(40,18);g.lineTo(40,60);g.moveTo(20,26);g.lineTo(60,26);g.moveTo(30,60);g.lineTo(50,60)},3.5,'#fff1c0');
+    for(const x of[20,60]){stroke2(g,()=>{g.beginPath();g.moveTo(x,26);g.lineTo(x-9,44);g.moveTo(x,26);g.lineTo(x+9,44)},1.6,'#fff1c0');fillP(g,[[x-11,44],[x+11,44],[x+6,50],[x-6,50]],'#f0c860')}},
+  queue:g=>{medal(g,'#a07a50','#3a2410');fillP(g,[[26,18],[54,18],[54,22],[43,40],[54,58],[54,62],[26,62],[26,58],[37,40],[26,22]],'#e8ecf0');fillP(g,[[32,56],[48,56],[40,46]],'#f0c860');fillP(g,[[34,26],[46,26],[40,36]],'#f0c860')},
+  city:g=>{medal(g,'#9aa0a8','#30343c');fillP(g,[[18,30],[40,16],[62,30]],'#f1e4c2');fillP(g,[[20,30],[60,30],[60,35],[20,35]],'#d8c79a');for(const x of[24,35,46,57])fillP(g,[[x-3,35],[x+3,35],[x+3,56],[x-3,56]],'#f1e4c2');fillP(g,[[17,56],[63,56],[63,62],[17,62]],'#d8c79a')},
+  power:g=>{medal(g,'#9a62c8','#2c1250');const p=[];for(let i=0;i<16;i++){const a=i*Math.PI/8-Math.PI/2,r=i%2?10:24;p.push([40+Math.cos(a)*r,40+Math.sin(a)*r])}fillP(g,p,'#ffe08a')},
+  ungar:g=>{medal(g,'#6a9a58','#1e3a14');fillP(g,[[20,60],[20,30],[40,18],[60,30],[60,60],[48,60],[48,42],[32,42],[32,60]],'#e8d8b0');stroke2(g,()=>{g.beginPath();g.moveTo(40,46);g.lineTo(40,66)},4,'#fff1c0');fillP(g,[[32,60],[48,60],[40,72]],'#fff1c0')},
+  generic:g=>{medal(g,'#a08a60','#3a2a10')}
+});
+// versão "desligado": o mesmo desenho apagado, com uma barra vermelha atravessada
+for(const k of['gear','queue'])CMD_ART[k+'Off']=g=>{g.save();g.filter='grayscale(.8) brightness(.75)';CMD_ART[k](g);g.restore();stroke2(g,()=>{g.beginPath();g.moveTo(18,62);g.lineTo(62,18)},5,'#e04030','#fff')};
+// emoji que sobrar sem desenho próprio entra dentro de um medalhão, para não destoar
+function emojiIcon(ic){const key='e'+ic;if(!ICO[key]){const[c,g]=icoC();CMD_ART.generic(g);g.font='32px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';g.textAlign='center';g.textBaseline='middle';g.shadowColor='#000a';g.shadowBlur=4;g.fillText(ic,40,42);ICO[key]=c.toDataURL()}return ICO[key]}
+const CMD_BYNAME=[['Patrulhar','patrol'],['Alarme','bell'],['Coleta automática','gear'],['Plano de coleta','scales'],['Fila automática','queue'],['Ver prédios','city'],['Desguarnecer','ungar']];
+const CMD_SHORT={'Centro Urbano':'Cidade','Acampamento de lenhadores':'Lenhador','Ver prédios da cidade':'Prédios','Atacar o inimigo mais perto':'Atacar','Recuar para a cidade':'Recuar','Desembarcar aqui':'Desembarcar',
+  'Coleta automática':'Automático','Plano de coleta':'Plano','Fila automática de aldeões':'Fila','Oficina de Cerco':'Oficina','Silo de Mísseis':'Silo','Soldado de Assalto':'Assalto','Espada Longa':'Esp. Longa','Organização Militar':'Exército'};
+function cmdShort(c){let n=String(c.nm||'').split(/[:·(]/)[0].trim();if(c.kind==='age')return'Avançar';if(c.pw)return'Poder';
+  for(const k in CMD_SHORT)if(n.startsWith(k))return CMD_SHORT[k];
+  n=n.replace(/ (I|II|III|IV|V|VI|VII|VIII)$/,'');if(n.length<=11)return n;const w=n.split(' ');return w[0].length>=4?w[0].slice(0,11):(w[0]+' '+(w[1]||'')).slice(0,11)}
+const getCmdsBt=getCmds;
+getCmds=function(){const P=G.P[0],pwN=typeof POWER!=='undefined'&&POWER[civOf(0).id]?POWER[civOf(0).id].n:null;
+  const out=getCmdsBt().filter(c=>{if(!c.lock)return true;const a=c.kind==='u'&&UT[c.key]?UT[c.key].age:c.kind==='b'&&BT[c.key]?BT[c.key].age:null;if(a==null)return true;c.eraN=a;return a<=P.age+1});
+  for(const c of out){const nm=String(c.nm),m=CMD_BYNAME.find(([k])=>nm.startsWith(k));
+    if(m){c.img=cmdIcon(m[1]+(/deslig/i.test(nm)&&CMD_ART[m[1]+'Off']?'Off':''));continue}   // estes sempre com o desenho novo
+    if(c.img||!c.ic)continue;
+    if(pwN&&nm.startsWith(pwN)){c.pw=1;c.img=cmdIcon('power');continue}
+    c.img=emojiIcon(c.ic)}
+  return out};
+const updHUDBt=updHUD;
+updHUD=function(force){updHUDBt(force);if(!G||!running)return;const box=$('cmds');if(!box)return;const cs=getCmds(),n=box.children.length;
+  [...box.children].forEach((b,i)=>{const c=cs[i];if(!c)return;const lb=cmdShort(c);if(b.dataset.lb!==lb)b.dataset.lb=lb;
+    const er=c.lock&&c.eraN!=null?ROMAN[c.eraN+1]:'';if((b.dataset.era||'')!==er){if(er)b.dataset.era=er;else delete b.dataset.era}});
+  if(document.body.classList.contains('free')){const cols='repeat('+Math.max(1,Math.min(6,n))+',46px)';if(box.style.gridTemplateColumns!==cols){box.style.gridTemplateColumns=cols;setTimeout(layoutHUD,0)}}
+  else if(box.style.gridTemplateColumns)box.style.gridTemplateColumns=''};
+{const css=document.createElement('style');css.textContent=`
+.free #pCmd #cmds,.free #pCmd.one #cmds{grid-auto-flow:row;grid-auto-columns:auto;grid-template-rows:none;grid-auto-rows:54px;gap:1px 2px;min-width:46px;padding:2px 3px 0}
+.free #pCmd .cb,.free #pCmd.one .cb{width:42px;height:42px;overflow:visible;justify-self:center}
+.free #pCmd .cb img,.free #pCmd.one .cb img{width:38px;height:38px;border-radius:3px}
+.free #pCmd .cb::after{content:attr(data-lb);position:absolute;top:calc(100% + 1px);left:50%;transform:translateX(-50%);width:48px;text-align:center;font:600 8.5px/1 Georgia,serif;color:#efe3c4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 1px 1px #000;pointer-events:none}
+.free #pCmd .cb.off::after{color:#b9a981}
+#cmds .cb[data-era] .lk{display:none}
+#cmds .cb[data-era]{filter:grayscale(.7) brightness(.62)}
+#cmds .cb[data-era]::before{content:attr(data-era);position:absolute;right:2px;top:1px;font:700 10px/1 Georgia,serif;color:#f0c96a;text-shadow:0 0 2px #000,0 0 3px #000;z-index:2}
 `;document.head.appendChild(css)}
 </script>
 </body>

@@ -469,12 +469,12 @@ function render(){
       const sp=e.sub==='tree'?SPR['tree'+(e.tv!=null?e.tv:(e.tv=treeVar(e)))]:e.sub==='fish'?SPR['fish'+(e.deep?1:0)]:SPR[e.sub];
       ctx.drawImage(lit?sp.c:sp.dk,I-sp.ax,J+(e.sub==='fish'?-4:5)-sp.ay,sp.w,sp.h)}
     else if(e.k==='b'){const sp=SPR['b'+e.type+e.o],I0=(e.tx-e.ty)*TS,J0=(e.tx+e.ty)*TS/2;const lit=vis[idx(e.tx+(e.sz>>1),e.ty+(e.sz>>1))];const img=lit?sp.c:sp.dk;
-      if(e.done<1){if(SPR.alic&&e.type!=='muralha'){const a=SPR.alic,k=e.sz*64/a.dw;ctx.drawImage(a.c,I0-a.W*k/2,J0-a.top*k,a.W*k,a.H*k)}
+      if(e.done<1){if(e.type==='muralha'||!SPR.alic){if(SPR.alic&&e.type!=='muralha'){const a=SPR.alic,k=e.sz*64/a.dw;ctx.drawImage(a.c,I0-a.W*k/2,J0-a.top*k,a.W*k,a.H*k)}
         const cut=sp.H*(1-e.done)*.85+sp.H*.15*(e.done<.05?1:0);const top=Math.max(0,sp.top-8);const cc=Math.max(cut,0);
         if(e.done>0)ctx.drawImage(img,0,cc*SS,img.width,img.height-cc*SS,I0-sp.W/2,J0-sp.top+cc,sp.W,sp.H-cc);
-        if(!SPR.alic||e.type==='muralha'){ctx.strokeStyle='#8a6a3a';ctx.lineWidth=1.4;}const h=(BT[e.type].h*e.done)+6;if(!SPR.alic||e.type==='muralha')for(const[a,b]of[[0,0],[e.sz,0],[0,e.sz],[e.sz,e.sz]]){const I=I0+(a-b)*TS,J=J0+(a+b)*TS/2;ctx.beginPath();ctx.moveTo(I,J);ctx.lineTo(I,J-h);ctx.stroke()}}
+        if(!SPR.alic||e.type==='muralha'){ctx.strokeStyle='#8a6a3a';ctx.lineWidth=1.4;}const h=(BT[e.type].h*e.done)+6;if(!SPR.alic||e.type==='muralha')for(const[a,b]of[[0,0],[e.sz,0],[0,e.sz],[e.sz,e.sz]]){const I=I0+(a-b)*TS,J=J0+(a+b)*TS/2;ctx.beginPath();ctx.moveTo(I,J);ctx.lineTo(I,J-h);ctx.stroke()}}else drawObra(e,sp,img,I0,J0)}
       else ctx.drawImage(img,I0-sp.W/2,J0-sp.top,sp.W,sp.H);
-      if(e.hp<e.mhp*.5&&e.done>=1&&lit){const t=performance.now()/170;for(let i=0;i<3;i++){const fx=I0+(i-1)*e.sz*12,fy=J0+e.sz*TS*.35-BT[e.type].h*.5;ctx.fillStyle='rgba(255,'+(120+i*30)+',0,.75)';ctx.beginPath();ctx.arc(fx,fy-Math.abs(Math.sin(t+i))*7,4,0,7);ctx.fill();ctx.fillStyle='rgba(60,50,40,.35)';ctx.beginPath();ctx.arc(fx+3,fy-14-Math.abs(Math.sin(t*.7+i))*10,6,0,7);ctx.fill()}}}
+    }
     else drawUnit(e,selSet);
   }
   // tiros
