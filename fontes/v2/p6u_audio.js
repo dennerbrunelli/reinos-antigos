@@ -6,11 +6,11 @@
 //   sorteadas a cada toque (como nos jogos clássicos, pra não cansar o ouvido).
 //   Se o arquivo não carregar, o jogo continua com os sons gerados pelo código.
 // =========================================================
-const SFXMAP=/*SFXMAP*/{"age":[[0.0,0.8214]],"alert":[[1.1214,1.2916]],"arrow":[[2.713,0.4586]],"chop":[[3.4716,0.8]],"clash":[[4.5716,0.5689]],"click":[[5.4405,0.0987],[5.8392,0.1074],[6.2466,0.3425]],"coin":[[6.8891,1.0]],"collapse":[[8.1891,1.6602]],"die":[[10.1493,1.2]],"done":[[11.6493,0.3773]],"hammer":[[12.3266,0.7]],"mine":[[13.3266,0.9]],"sel":[[14.5266,0.7]]}/*FIM*/;
+const SFXMAP=/*SFXMAP*/{"alert":[[1.1214,1.2916]],"arrow":[[2.713,0.4586]],"chop":[[3.4716,0.8]],"clash":[[4.5716,0.5689]],"click":[[5.4405,0.0987],[5.8392,0.1074],[6.2466,0.3425]],"coin":[[6.8891,1.0]],"collapse":[[8.1891,1.6602]],"die":[[10.1493,1.2]],"done":[[11.6493,0.3773]],"hammer":[[12.3266,0.7]],"mine":[[13.3266,0.9]],"sel":[[14.5266,0.7]],"age":[[16.0266,1.817]],"boom":[[18.1436,1.9592]],"unit":[[20.4027,0.9346]]}/*FIM*/;
 const SFXALIAS={bow:'arrow',shot:'boom',place:'hammer',hitb:'clash',hit:'clash',win:'age'};
 const SFXVOL={click:.55,sel:.6,coin:.7,chop:.75,mine:.75,hammer:.75,clash:.7,arrow:.7,die:.7};
 const SFX={buf:null,tried:false,last:{}};
-const MUS_FILES=['paz']; // a de guerra entra aqui quando o arquivo m_guerra.ogg existir
+const MUS_FILES=['paz','guerra'];
 const MUSF={paz:null,guerra:null,src:{},g:{},on:false,tried:false};
 function sfxLoad(){if(SFX.tried||!AC)return;SFX.tried=true;
   fetch('assets/som/efeitos.ogg').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(a=>new Promise((ok,no)=>AC.decodeAudioData(a,ok,no))).then(b=>{SFX.buf=b}).catch(()=>{});

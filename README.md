@@ -1,6 +1,6 @@
 # ⚔️ Império
 
-Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*), com visão em diagonal e clima de jogo clássico dos anos 90. Funciona **sem internet** depois de aberto uma vez. É a fusão de dois clássicos: a economia e o clima do Age of Empires com as fronteiras e cidades do Rise of Nations. A arte (abertura, todas as unidades, barcos, cerco, animais, prédios gregos e egípcios, árvores, recursos e chão) foi pintada com o GPT; os efeitos sonoros e a música de paz foram gravados no ElevenLabs; o que ainda não chegou é gerado pelo próprio código.
+Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*), com visão em diagonal e clima de jogo clássico dos anos 90. Funciona **sem internet** depois de aberto uma vez. É a fusão de dois clássicos: a economia e o clima do Age of Empires com as fronteiras e cidades do Rise of Nations. A arte (abertura, todas as unidades, barcos, cerco, animais, prédios gregos e egípcios, árvores, recursos e chão) foi pintada com o GPT; os efeitos sonoros e as músicas de paz e de guerra foram gravados no ElevenLabs.
 
 **Jogar:** https://dennerbrunelli.github.io/reinos-antigos/
 
@@ -36,5 +36,5 @@ Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*),
 
 ## Arquivos
 - `index.html` — o jogo inteiro (desenhos, regras, inteligência do inimigo, sons e música)
-- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `imperio-v64` → `imperio-v65`)
+- `sw.js` — guarda o jogo no celular para funcionar offline (ao atualizar o jogo, trocar a versão `imperio-v65` → `imperio-v66`)
 - `manifest.json` e ícones — instalação como app
