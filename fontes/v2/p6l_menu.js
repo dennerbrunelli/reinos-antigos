@@ -90,3 +90,11 @@ function wallClean(){const W=G.B.filter(b=>!b.dead&&b.type==='muralha');if(!W.le
 const newGameW=newGame;
 newGame=function(o){newGameW(o);try{wallClean()}catch(e){}};
 window.__RA.newGame=newGame;
+// ---------- número da versão bem à vista (o rodapé de 10 px sumia na tela do celular) ----------
+{const css=document.createElement('style');css.textContent=`
+#verb{display:inline-block;margin-left:8px;vertical-align:1px;padding:1px 9px;font-style:normal;border-radius:12px;font:700 13px Georgia,serif;letter-spacing:.5px;color:#1b1206;background:linear-gradient(#f3d37a,#c9952f);box-shadow:0 1px 3px rgba(0,0,0,.6)}`;document.head.appendChild(css);
+  const v=document.createElement('div');v.id='verb';v.textContent=VERSAO;(document.querySelector('#menu .mlogo .sub')||document.querySelector('#menu .mlogo')).appendChild(v);
+  const os=document.querySelector('#bopts small');if(os)os.textContent='Música e atualização do jogo · você está na '+VERSAO;
+  const u=$('updt');if(u)u.textContent='Você está na '+VERSAO+' · toque para baixar a mais nova (precisa de internet)';
+  // depois de atualizar, avisa qual versão entrou
+  try{const k='imperio_ver_vista';const old=localStorage.getItem(k);if(old&&old!==VERSAO)setTimeout(()=>toast('✅ Jogo atualizado: '+VERSAO),600);localStorage.setItem(k,VERSAO)}catch(e){}}

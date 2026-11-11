@@ -3833,7 +3833,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 63';$('ver').textContent=VERSAO;
+const VERSAO='Versão 64';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -5146,6 +5146,14 @@ function wallClean(){const W=G.B.filter(b=>!b.dead&&b.type==='muralha');if(!W.le
 const newGameW=newGame;
 newGame=function(o){newGameW(o);try{wallClean()}catch(e){}};
 window.__RA.newGame=newGame;
+// ---------- número da versão bem à vista (o rodapé de 10 px sumia na tela do celular) ----------
+{const css=document.createElement('style');css.textContent=`
+#verb{display:inline-block;margin-left:8px;vertical-align:1px;padding:1px 9px;font-style:normal;border-radius:12px;font:700 13px Georgia,serif;letter-spacing:.5px;color:#1b1206;background:linear-gradient(#f3d37a,#c9952f);box-shadow:0 1px 3px rgba(0,0,0,.6)}`;document.head.appendChild(css);
+  const v=document.createElement('div');v.id='verb';v.textContent=VERSAO;(document.querySelector('#menu .mlogo .sub')||document.querySelector('#menu .mlogo')).appendChild(v);
+  const os=document.querySelector('#bopts small');if(os)os.textContent='Música e atualização do jogo · você está na '+VERSAO;
+  const u=$('updt');if(u)u.textContent='Você está na '+VERSAO+' · toque para baixar a mais nova (precisa de internet)';
+  // depois de atualizar, avisa qual versão entrou
+  try{const k='imperio_ver_vista';const old=localStorage.getItem(k);if(old&&old!==VERSAO)setTimeout(()=>toast('✅ Jogo atualizado: '+VERSAO),600);localStorage.setItem(k,VERSAO)}catch(e){}}
 
 // =========================================================
 //   EXÉRCITO DO RISE (etapa 5)
