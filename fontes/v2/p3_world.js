@@ -33,6 +33,7 @@ function newGame(o){
   const far=(x,y,d)=>starts.every(s=>hyp(s[0]-x,s[1]-y)>d);
   // água: cada mapa desenha a sua
   MP.water(S,starts,far);
+  if(NP>2)fixStarts(starts);
   // tira pocinhas de 1 quadrado
   for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){const i=idx(x,y);if(!G.terr[i])continue;let n=0;for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1]])if(inMap(x+a,y+b)&&G.terr[idx(x+a,y+b)])n++;if(n<=1)G.terr[i]=0}
   for(let i=0;i<N;i++){pass[i]=G.terr[i]===1?0:1;wpass[i]=G.terr[i]?1:0}   // terr 2 = vau (raso): passa gente e barco

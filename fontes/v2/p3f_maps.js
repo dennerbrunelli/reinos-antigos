@@ -31,6 +31,22 @@ function genStarts(n,margin){
   return pts;
 }
 // menor distância entre quaisquer dois pontos iniciais (pra checar se não ficaram colados)
+// Com 3+ jogadores as posições vêm de um anel, que não conhece o desenho do mapa: num mapa de mar, ilha ou rio
+// alguém podia nascer numa tira de areia sem espaço para a cidade. Depois de a água ser desenhada, cada início
+// procura o melhor chão firme por perto e, se ainda faltar terra, ganha um terreno próprio (ilha ou península).
+function landFrac(cx,cy,r){let l=0,n=0;for(let y=-r;y<=r;y++)for(let x=-r;x<=r;x++){if(x*x+y*y>r*r)continue;n++;const X=cx+x,Y=cy+y;if(inMap(X,Y)&&X>1&&Y>1&&X<MW-2&&Y<MH-2&&!G.terr[idx(X,Y)])l++}return l/n}
+function fixStarts(starts){const R=11,minD=startsMinDist(starts)*.72;
+  for(let k=0;k<starts.length;k++){const s=starts[k];let best=[s[0],s[1]],bf=landFrac(s[0],s[1],R);
+    if(bf<.92){// procura em anéis cada vez mais largos o ponto mais próximo com chão de sobra
+      search:for(let d=2;d<=16;d+=2)for(let a=0;a<16;a++){const x=Math.round(s[0]+Math.cos(a*Math.PI/8)*d),y=Math.round(s[1]+Math.sin(a*Math.PI/8)*d);
+        if(x<R+2||y<R+2||x>MW-R-3||y>MH-R-3)continue;
+        if(starts.some((o,j)=>j!==k&&hyp(o[0]-x,o[1]-y)<minD))continue;
+        const f=landFrac(x,y,R);if(f>bf+.02){bf=f;best=[x,y];if(f>=.92)break search}}}
+    s[0]=clamp(best[0],R+2,MW-R-3);s[1]=clamp(best[1],R+2,MH-R-3);
+    if(bf<.92){// ainda falta terra: aterra um terreno de borda irregular em volta do início
+      const ph=RNG()*6.283;
+      for(let y=-R-2;y<=R+2;y++)for(let x=-R-2;x<=R+2;x++){const X=s[0]+x,Y=s[1]+y;if(!inMap(X,Y))continue;const d=hyp(x,y),a=Math.atan2(y,x);
+        if(d<=R-1.5+Math.sin(a*3+ph)*1.3+Math.sin(a*5-ph)*.8)G.terr[idx(X,Y)]=0}}}}
 function startsMinDist(pts){let m=Infinity;for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++)m=Math.min(m,hyp(pts[i][0]-pts[j][0],pts[i][1]-pts[j][1]));return m===Infinity?0:m}
 // ---------- ferramentas de desenho do mapa ----------
 const setW=(x,y,v)=>{x=Math.round(x);y=Math.round(y);if(inMap(x,y))G.terr[idx(x,y)]=v};
