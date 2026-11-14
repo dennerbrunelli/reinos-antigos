@@ -16,7 +16,8 @@ function audio(){
     try{const L=AC.sampleRate*1.3|0,ir=AC.createBuffer(2,L,AC.sampleRate);for(let c=0;c<2;c++){const x=ir.getChannelData(c);for(let i=0;i<L;i++)x[i]=(Math.random()*2-1)*Math.pow(1-i/L,3.2)}
       const cv=AC.createConvolver();cv.buffer=ir;RV=AC.createGain();RV.gain.value=.35;RV.connect(cv);cv.connect(CMP)}catch(e){RV=null}
   }catch(e){return null}}
-  if(AC.state==='suspended')AC.resume();return AC;
+  // no Android o som pode ficar 'suspenso' ou 'interrompido' (outro app pegou o áudio, notificação, ligação): sempre religa
+  if(AC.state!=='running'&&AC.state!=='closed'){try{AC.resume()}catch(e){}}return AC;
 }
 function tone(f,d,type,v,f2,delay,out,att){const t=AC.currentTime+(delay||0);const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);
   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+(att||.012));g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(out||SG);o.start(t);o.stop(t+d+.05)}
@@ -558,7 +559,7 @@ function checkEnd(){
 }
 function goFull(){try{const d=document.documentElement;if(!document.fullscreenElement&&d.requestFullscreen)d.requestFullscreen({navigationUI:'hide'}).then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}).catch(()=>{})}catch(e){}
   try{if('wakeLock'in navigator)navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}}
-document.addEventListener('visibilitychange',()=>{if(document.hidden){saveGame();if(running&&!paused)openPause();if(AC)AC.suspend()}else{if(AC&&OPT.mus)AC.resume();if(running){try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}}}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){saveGame();if(running&&!paused)openPause();if(AC)AC.suspend()}else{if(AC&&(OPT.mus||OPT.snd))AC.resume();if(running){try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}}}});
 document.addEventListener('pointerdown',()=>{if(!running&&OPT.mus)musicStart()},{once:true});
 
 // =========================================================
@@ -605,7 +606,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 66';$('ver').textContent=VERSAO;
+const VERSAO='Versão 67';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';

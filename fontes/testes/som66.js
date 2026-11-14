@@ -1,0 +1,14 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch({args:['--autoplay-policy=no-user-gesture-required']});const errs=[];const pg=await b.newPage({viewport:{width:800,height:360},hasTouch:true,isMobile:true});
+ pg.on('pageerror',e=>errs.push(e.message));pg.on('console',m=>{if(m.type()==='error'||m.type()==='warning')errs.push(m.type()+': '+m.text())});
+ await pg.goto('http://localhost:8765/index.html?v=123');await pg.waitForTimeout(1500);
+ const st0=await pg.evaluate(()=>({opt:{snd:OPT.snd,mus:OPT.mus},ac:AC&&AC.state}));console.log('inicio',JSON.stringify(st0));
+ await pg.tap('#menu .mlogo').catch(()=>{});await pg.waitForTimeout(300);
+ const ids=await pg.evaluate(()=>[...document.querySelectorAll('#menu button')].map(b=>b.id+':'+b.textContent.trim().slice(0,20)));console.log(ids.join(' | '));
+ await pg.tap('#bnew');await pg.waitForTimeout(800);
+ const go=await pg.evaluate(()=>{const b=[...document.querySelectorAll('button')].find(b=>b.offsetParent&&/Iniciar|Começar|Jogar/i.test(b.textContent));return b&&b.id});console.log('botao iniciar',go);
+ if(go)await pg.tap('#'+go);await pg.waitForTimeout(6000);
+ await pg.waitForTimeout(3000);const st=await pg.evaluate(()=>({els:Object.keys(MUSE).map(k=>k+':'+(MUSE[k].el.paused?'parado':'tocando')+':'+MUSE[k].el.currentTime.toFixed(1)),rep:sndReport(),running,opt:{snd:OPT.snd,mus:OPT.mus},ac:AC&&AC.state,acT:AC&&AC.currentTime,musOn:MUS.on,musf:MUSF.on,paz:!!MUSF.paz,gu:!!MUSF.guerra,buf:!!SFX.buf,mg:MG&&MG.gain.value,sg:SG&&SG.gain.value}));
+ console.log('jogo',JSON.stringify(st));
+ await pg.tap('canvas',{position:{x:400,y:200}}).catch(()=>{});await pg.waitForTimeout(500);
+ console.log('ERROS',errs.slice(0,10));await b.close()})();

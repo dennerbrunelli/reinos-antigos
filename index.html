@@ -3253,7 +3253,8 @@ function audio(){
     try{const L=AC.sampleRate*1.3|0,ir=AC.createBuffer(2,L,AC.sampleRate);for(let c=0;c<2;c++){const x=ir.getChannelData(c);for(let i=0;i<L;i++)x[i]=(Math.random()*2-1)*Math.pow(1-i/L,3.2)}
       const cv=AC.createConvolver();cv.buffer=ir;RV=AC.createGain();RV.gain.value=.35;RV.connect(cv);cv.connect(CMP)}catch(e){RV=null}
   }catch(e){return null}}
-  if(AC.state==='suspended')AC.resume();return AC;
+  // no Android o som pode ficar 'suspenso' ou 'interrompido' (outro app pegou o áudio, notificação, ligação): sempre religa
+  if(AC.state!=='running'&&AC.state!=='closed'){try{AC.resume()}catch(e){}}return AC;
 }
 function tone(f,d,type,v,f2,delay,out,att){const t=AC.currentTime+(delay||0);const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);
   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+(att||.012));g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(out||SG);o.start(t);o.stop(t+d+.05)}
@@ -3795,7 +3796,7 @@ function checkEnd(){
 }
 function goFull(){try{const d=document.documentElement;if(!document.fullscreenElement&&d.requestFullscreen)d.requestFullscreen({navigationUI:'hide'}).then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(e){}}).catch(()=>{})}catch(e){}
   try{if('wakeLock'in navigator)navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}}
-document.addEventListener('visibilitychange',()=>{if(document.hidden){saveGame();if(running&&!paused)openPause();if(AC)AC.suspend()}else{if(AC&&OPT.mus)AC.resume();if(running){try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}}}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){saveGame();if(running&&!paused)openPause();if(AC)AC.suspend()}else{if(AC&&(OPT.mus||OPT.snd))AC.resume();if(running){try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}}}});
 document.addEventListener('pointerdown',()=>{if(!running&&OPT.mus)musicStart()},{once:true});
 
 // =========================================================
@@ -3842,7 +3843,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 66';$('ver').textContent=VERSAO;
+const VERSAO='Versão 67';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -5801,8 +5802,9 @@ const SFX={buf:null,tried:false,last:{}};
 const MUS_FILES=['paz','guerra'];
 const MUSF={paz:null,guerra:null,src:{},g:{},on:false,tried:false};
 function sfxLoad(){if(SFX.tried||!AC)return;SFX.tried=true;
-  fetch('assets/som/efeitos.ogg').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(a=>new Promise((ok,no)=>AC.decodeAudioData(a,ok,no))).then(b=>{SFX.buf=b}).catch(()=>{});
-  for(const k of MUS_FILES)fetch('assets/som/m_'+k+'.ogg').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(a=>new Promise((ok,no)=>AC.decodeAudioData(a,ok,no))).then(b=>{MUSF[k]=b;if(MUS.on)musFileStart()}).catch(()=>{})}
+  fetch('assets/som/efeitos.ogg').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(a=>new Promise((ok,no)=>AC.decodeAudioData(a,ok,no))).then(b=>{SFX.buf=b}).catch(e=>{SFX.err=String(e&&e.message||e||'falhou')});
+  // a música não é decodificada inteira na memória (eram ~70 MB no celular): toca como arquivo, ligada ao mixador do jogo
+  for(const k of MUS_FILES)fetch('assets/som/m_'+k+'.ogg').then(r=>r.ok?r.blob():Promise.reject()).then(b=>{MUSF[k]=URL.createObjectURL(b);if(MUS.on){if(MUSF.on){const m=musEl(k);MUSF.g[k]=m.g;musPlayAll()}else musFileStart()}}).catch(()=>{})}
 // toca o efeito gravado; devolve false se não tiver (aí o código desenha o som como antes)
 function sfxPlay(k,out,r){const key=SFXMAP[k]?k:SFXALIAS[k];const vs=key&&SFXMAP[key];if(!SFX.buf||!vs||!vs.length)return false;
   let i=(Math.random()*vs.length)|0;if(vs.length>1&&i===SFX.last[key])i=(i+1)%vs.length;SFX.last[key]=i;
@@ -5810,11 +5812,25 @@ function sfxPlay(k,out,r){const key=SFXMAP[k]?k:SFXALIAS[k];const vs=key&&SFXMAP
   src.playbackRate.value=k==='bow'||k==='hit'?1.12:r; // pequena variação de tom a cada toque
   g.gain.value=(SFXVOL[key]||.85)*(k==='hit'?.6:1);src.connect(g);g.connect(out);src.start(AC.currentTime,s,d);return true}
 // música gravada: as duas faixas tocam juntas em laço e o "calor" da partida decide quanto se ouve de cada uma
+const MUSE={};// elementos de áudio da música (um por faixa)
+function musEl(k){if(MUSE[k])return MUSE[k];const el=new Audio();el.src=MUSF[k];el.loop=true;el.preload='auto';
+  const n=AC.createMediaElementSource(el),g=AC.createGain();g.gain.value=.0001;n.connect(g);g.connect(MG);return MUSE[k]={el,g}}
+function musPlayAll(){for(const k in MUSE){const m=MUSE[k];if(m.el.paused)m.el.play().catch(()=>{MUSF.need=true})}}
 function musFileStart(){if(!MUS.on||MUSF.on||!MUSF.paz||!AC)return;MUSF.on=true;
   for(const[o,g]of MUS.dr||[]){try{g.gain.setTargetAtTime(.0001,AC.currentTime,.3);o.stop(AC.currentTime+1.5)}catch(e){}}MUS.dr=[];
-  for(const k of['paz','guerra']){if(!MUSF[k])continue;const s=AC.createBufferSource(),g=AC.createGain();s.buffer=MUSF[k];s.loop=true;
-    g.gain.value=.0001;g.gain.setTargetAtTime(k==='paz'?1:.0001,AC.currentTime,1.2);s.connect(g);g.connect(MG);s.start();MUSF.src[k]=s;MUSF.g[k]=g}}
-function musFileStop(){if(!MUSF.on)return;MUSF.on=false;for(const k in MUSF.src){try{MUSF.g[k].gain.setTargetAtTime(.0001,AC.currentTime,.4);MUSF.src[k].stop(AC.currentTime+2)}catch(e){}}MUSF.src={};MUSF.g={}}
+  for(const k of['paz','guerra']){if(!MUSF[k])continue;const m=musEl(k);MUSF.g[k]=m.g;m.g.gain.cancelScheduledValues(AC.currentTime);m.g.gain.setTargetAtTime(k==='paz'?1:.0001,AC.currentTime,1.2)}
+  musPlayAll()}
+function musFileStop(){if(!MUSF.on)return;MUSF.on=false;for(const k in MUSE){const m=MUSE[k];try{m.g.gain.setTargetAtTime(.0001,AC.currentTime,.4)}catch(e){}setTimeout(()=>{if(!MUSF.on)m.el.pause()},1800)}MUSF.g={}}
+// qualquer toque na tela religa o som se o celular tiver pausado (e a música, se o navegador barrou o "play")
+for(const ev of['pointerdown','touchend','keydown'])document.addEventListener(ev,()=>{if(!AC)return;if(AC.state!=='running'&&AC.state!=='closed'&&(OPT.snd||OPT.mus)){try{AC.resume()}catch(e){}}
+  if(MUSF.on&&(MUSF.need||Object.values(MUSE).some(m=>m.el.paused))){MUSF.need=false;musPlayAll()}},{passive:true});
+// ---------- teste de som (em Opções) ----------
+function sndReport(){const st=!AC?'ainda não ligado (toque na tela)':AC.state==='running'?'✅ funcionando':AC.state==='suspended'?'⏸ pausado pelo celular':AC.state==='interrupted'?'⏸ interrompido por outro app':AC.state;
+  return'Som: '+st+' · Efeitos: '+(SFX.buf?'✅':SFX.err?'❌':'⏳')+' · Música: '+(MUSF.paz?'✅':'⏳')+(OPT.snd?'':' · efeitos DESLIGADOS na pausa')+(OPT.mus?'':' · música DESLIGADA')}
+{const b=document.createElement('button');b.className='mb mi';b.id='bsndt';b.innerHTML='<b>🔊</b><span>Testar o som<small id="sndtt">Toca um som e mostra se está tudo ligado</small></span>';
+  const u=$('bupd');u.after(b);b.style.display=u.style.display;
+  new MutationObserver(()=>{b.style.display=u.style.display}).observe(u,{attributes:true,attributeFilter:['style']});
+  b.onclick=()=>{const a=audio();if(a){try{a.resume()}catch(e){}}const was=OPT.snd;OPT.snd=1;snd('done');OPT.snd=was;setTimeout(()=>{$('sndtt').textContent=sndReport()},400)}}
 {const aOld=audio;audio=function(){const a=aOld();if(a&&!SFX.tried)sfxLoad();return a}}
 {const mOld=musicStart;musicStart=function(){mOld();if(MUS.on&&MUSF.paz)musFileStart()}}
 {const sOld=musicStop;musicStop=function(){musFileStop();sOld()}}
