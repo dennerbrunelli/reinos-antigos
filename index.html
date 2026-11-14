@@ -50,7 +50,8 @@ button{font-family:inherit;color:inherit}
 #info .st{line-height:1.35;color:#eadbb6}
 #info .st img{width:13px;height:13px;vertical-align:-2px}
 #info .x{position:absolute;right:3px;top:3px;width:24px;height:24px;font-size:12px;border-radius:3px;border:1px solid var(--ouro2);background:#3b2b17;padding:0}
-#info .qq{display:flex;gap:3px;margin-top:3px;flex-wrap:wrap}
+#info .qq{display:flex;gap:3px;margin-top:3px;flex-wrap:nowrap;align-items:center;overflow:hidden}
+#info .qq .qlb{font-size:11.5px;white-space:nowrap;margin-right:3px;font-weight:700}
 #info .qq span{background:#000a;border:1px solid var(--ouro2);border-radius:2px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:14px}
 #info .qq img{width:22px;height:22px}
 #info .grp{display:flex;flex-wrap:wrap;gap:3px;align-content:flex-start}
@@ -3266,7 +3267,8 @@ function brass(f,d,v,delay,out){const t=AC.currentTime+(delay||0);const o=AC.cre
   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.05);g.gain.setValueAtTime(v,t+d*.7);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(lp);o2.connect(lp);lp.connect(g);g.connect(out||SG);o.start(t);o2.start(t);o.stop(t+d+.05);o2.stop(t+d+.05)}
 // cada som nasce num ponto: mais à esquerda/direita conforme a tela, mais baixo se estiver longe do centro
 function voice(pan,vol,wet){const g=AC.createGain();g.gain.value=vol;let n=g;if(AC.createStereoPanner){const p=AC.createStereoPanner();p.pan.value=pan;g.connect(p);n=p}n.connect(SG);if(RV&&wet){const s=AC.createGain();s.gain.value=wet;n.connect(s);s.connect(RV)}return g}
-const lastSnd={};
+const lastSnd={};let lastWork=0;
+const WORKSND={chop:650,mine:700,hoe:950,hammer:700,leaves:750,splash:950,flesh:750};
 const SGAP={leaves:170,hoe:230,flesh:200,splash:300,chop:220,mine:220,hammer:260,clash:110,thud:120,stomp:220,hitb:160,arrow:90,bow:90,knife:110,hit:80,throw:150,catapult:280,boom:200,shot:200,chant:600,die:140,bleat:300,roar:900,trumpet:900,sink:400,collapse:350,place:150};
 // "calor" de combate: sobe quando há briga perto do jogador, esfria sozinho — usado pra deixar
 // a música mais tensa na guerra e mais calma na paz (a mesma psicologia de música ambiente de
@@ -3278,10 +3280,14 @@ function snd(k,e){
   let pan=0,vol=1;
   if(e&&running){const p=w2s(e.x,e.y);if(p.x<-60||p.x>VW+60||p.y<TOPH-30||p.y>VH+30)return;
     pan=clamp((p.x-VW/2)/(VW*.6),-1,1)*.75;const dc=hyp(p.x-VW/2,p.y-VH/2)/Math.max(VW,VH);vol=clamp(1.05-dc*.9,.45,1)*clamp(.55+Z*.45,.6,1.15)}
-  const now=performance.now(),gap=SGAP[k]||60;
-  if(lastSnd[k]&&now-lastSnd[k]<gap)return;lastSnd[k]=now;
+  const now=performance.now(),wk=WORKSND[k],gap=wk?wk:(SGAP[k]||60);
+  if(lastSnd[k]&&now-lastSnd[k]<gap)return;
+  // sons de trabalho (machado, picareta, enxada, martelo...) dividem uma "vez" só: nunca dois ao mesmo tempo,
+  // volume mais baixo e quase sem mudar de tom — senão vira barulho (vários martelos em tons diferentes)
+  if(wk){if(now-lastWork<420)return;lastWork=now;vol*=.5}
+  lastSnd[k]=now;
   if(!audio())return;
-  const r=1+(Math.random()-.5)*.14,o=voice(pan,vol,{boom:.5,collapse:.5,age:.4,alert:.3,win:.4,lose:.4,shot:.6,roar:.3,trumpet:.3,convert:.5,chant:.5,done:.3}[k]||.12);
+  const r=wk?[1,.97,1.03][(Math.random()*3)|0]:1+(Math.random()-.5)*.08,o=voice(pan,vol,{boom:.5,collapse:.5,age:.4,alert:.3,win:.4,lose:.4,shot:.6,roar:.3,trumpet:.3,convert:.5,chant:.5,done:.3}[k]||.12);
   if(sfxPlay(k,o,r))return; // efeito gravado (Versão 63); sem ele, o som desenhado abaixo
   switch(k){
   case'click':tone(1500*r,.03,'triangle',.03,900,0,o);noise(.02,.06,3500,2,0,o);break;
@@ -3291,7 +3297,7 @@ function snd(k,e){
   // picareta na pedra: "tim" metálico + cascalho caindo
   case'mine':metal([1850*r,2820*r,3900*r],.17,.04,0,o);noise(.025,.22,4200,1.4,0,o,'highpass');for(let i=0;i<4;i++)noise(.04,.16,900+Math.random()*1400,1,.06+i*.045+Math.random()*.03,o,'lowpass');break;
   // enxada na terra: batida abafada no chão + atrito arrastando a terra
-  case'hoe':tone(96*r,.13,'sine',.2,52,0,o,.002);noise(.12,.5,620*r,.7,0,o,'lowpass',220);noise(.26,.2,2100*r,1.3,.07,o,'bandpass',700);noise(.18,.1,4200,1,.1,o,'highpass');break;
+  case'hoe':tone(90*r,.12,'sine',.16,55,0,o,.003);noise(.14,.38,520*r,.7,0,o,'lowpass',200);noise(.2,.08,900,1,.05,o,'lowpass',300);break; // enxada na terra: só som grave e abafado
   // colher frutos: folhas mexendo + galhinho + a fruta soltando
   case'leaves':for(let i=0;i<5;i++)noise(.05+Math.random()*.05,.13,2600+Math.random()*3200,.7,i*.04+Math.random()*.02,o,'bandpass');noise(.012,.12,6200,2,.12,o);tone(520*r,.05,'sine',.03,340,.16,o,.003);break;
   // carne: perfura (molhado, grave) e rasga (estalos curtos)
@@ -3434,7 +3440,7 @@ function updHUD(force){
   // relógio de vitória: o do seu time primeiro; senão, o do inimigo que está mais perto de vencer
   {let mw=0,mt=0,fw=0,ft=0;const tw=G.tw||[];for(let o=0;o<NP;o++){const w=G.won[o]||0,t=tw[o]||0;if(ally(o,0)){mw=Math.max(mw,w);mt=Math.max(mt,t)}else{fw=Math.max(fw,w);ft=Math.max(ft,t)}}
     $('won').textContent=mw?'🏛 '+fmtT(WONDER_T-mw):fw?'⚠️🏛 '+fmtT(WONDER_T-fw):mt?'🗺 '+fmtT(TERR_T-mt):ft?'⚠️🗺 '+fmtT(TERR_T-ft):''}
-  const idle=G.U.filter(u=>!u.dead&&!u.inT&&u.o===0&&u.type==='vill'&&u.st==='idle').length;$('nidle').textContent=idle||'';$('qidle').classList.toggle('off',!idle);
+  const idle=G.U.filter(u=>!u.dead&&!u.inT&&u.o===0&&u.type==='vill'&&u.st==='idle').length;$('nidle').textContent=idle||'';$('qidle').classList.toggle('off',!idle);{const na=$('narmy');if(na)na.textContent=G.U.filter(u=>!u.dead&&u.o===0&&isMil(u)).length||''}
   SEL=SEL.filter(id=>{const e=E.get(id);return e&&!e.dead&&!e.inT});
   const s=selEnts(),info=$('info');
   const h=s.length?infoHTML(s):'<div class="bd" style="opacity:.75;font-style:italic;align-self:center">'+civOf(0).n+' · '+styOf(0).nm+' · 🗺 '+Math.round(domShare(0)*100)+'% da terra · 🏘 '+G.B.filter(b=>!b.dead&&b.o===0&&b.type==='tc'&&b.done>=1).length+'/'+CITY_MAX+'<br>'+civOf(0).d.map(x=>'✦ '+x).join('<br>')+'</div>';
@@ -3467,11 +3473,14 @@ function infoHTML(s){
   if(e.type==='fazenda')return h+rimg('food')+' '+Math.ceil(e.food)+' de comida</div></div>';
   h+='❤️'+Math.ceil(e.hp)+'/'+e.mhp;
   if(e.type==='tc'){h+=' · '+(e.id===G.P[e.o].capId?'👑 Capital':'🏘 Cidade');if(e.down)h+='<br><span style="color:#ff8a7a">Derrubado'+(e.cp>0?': '+(e.cpo===0?'você está tomando':'sendo tomado')+' '+Math.floor(e.cp/CAPT_T*100)+'%':'')+'</span>'}
-  if(e.o===0&&e.q.length){const it=e.q[0],tt=itemTime(e,it);h+=' · '+(e.wait?'<span style="color:#ff8a7a">População no limite!</span>':Math.floor(e.qt/tt*100)+'%')+'</div><div class="qq">'+
-    e.q.map((q,i)=>'<span data-qi="'+i+'">'+(q==='age'?'⬆️':q==='mil'?'🎖️':q==='nuke'?'☢️':q==='emp'?'⚡':q.startsWith('ln:')?LINES[q.slice(3)].ic:q.startsWith('t:')?TECH[q.slice(2)].ic:'<img src="'+THUMB['u'+q]+'">')+'</span>').join('')+'</div></div>'}
+  if(e.o===0&&e.q.length){const it=e.q[0],tt=itemTime(e,it),pc=Math.floor(e.qt/tt*100);
+    // fila como no Age: o primeiro ícone enche de verde conforme fica pronto; tocar num ícone cancela
+    h+='</div><div class="qq"><b class="qlb">'+(e.wait?'<span style="color:#ff8a7a">⚠ População no limite</span>':'⏳ '+(e.q.length>1?'':qName(it)+' ')+pc+'%')+'</b>'+
+    e.q.map((q,i)=>'<span data-qi="'+i+'"'+(i===0?' style="background:linear-gradient(to top,#3f9a3f '+pc+'%,#000a '+pc+'%)"':'')+'>'+(q==='age'?'⬆️':q==='mil'?'🎖️':q==='nuke'?'☢️':q==='emp'?'⚡':q.startsWith('ln:')?LINES[q.slice(3)].ic:q.startsWith('t:')?TECH[q.slice(2)].ic:'<img src="'+THUMB['u'+q]+'">')+'</span>').join('')+'</div></div>'}
   else h+=(T.train&&e.o===0?'<br>Toque no chão: ponto de encontro':T.drop&&e.o===0?'<br>Recebe: '+T.drop.map(k=>rimg(k)).join(' '):'')+'</div></div>';
   return h;
 }
+function qName(q){return q==='age'?'Nova era':q==='mil'?'Org. Militar':q==='nuke'?'Bomba':q==='emp'?'Pulso EMP':q.startsWith('ln:')?(LINES[q.slice(3)].n||'Pesquisa'):q.startsWith('t:')?TECH[q.slice(2)].n:(STAT[0]&&STAT[0][q]?STAT[0][q].n:UT[q]?UT[q].n:q)}
 function cancelQ(i){const b=selEnts()[0];if(!b||b.k!=='b'||b.o!==0)return;const it=b.q[i];if(it==null)return;refund(0,itemCost(0,it));b.q.splice(i,1);if(i===0)b.qt=0;updHUD(true)}
 function startPlace(t){
   const r=canBuildType(0,t);if(r){toast(r);return}
@@ -3833,7 +3842,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 65';$('ver').textContent=VERSAO;
+const VERSAO='Versão 66';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -3888,15 +3897,17 @@ function defPos(k){
     if(k==='cmd')return{ax:'r',ay:'b',dx:4,dy:4};
     {const m=$('pMap'),c=$('pCmd'),L=HS.p.map.v&&m.offsetParent&&!m.classList.contains('big')?m.getBoundingClientRect().right+6:4,R=HS.p.cmd.v&&c.offsetParent?c.getBoundingClientRect().left-6:innerWidth-4,w=$('pSel').offsetWidth*s;
      return{ax:'l',ay:'b',dx:Math.max(L,L+(R-L-w)/2),dy:4}}}
-  if(k==='obj')return{ax:'l',ay:'t',dx:52,dy:TOPH+6};
-  if(k==='al'){const o=$('pObj');const below=HS.p.obj.v&&!HS.p.obj.pos&&o.offsetParent;return{ax:'l',ay:'t',dx:52,dy:below?o.getBoundingClientRect().bottom+6:TOPH+6}}
+  // Objetivos e Alertas começam logo à direita dos botões redondos (aldeão parado, exército, cidade), sem cobrir nenhum
+  const qL=(()=>{const q=$('quick');const r=q&&q.offsetParent?q.getBoundingClientRect():null;return r&&r.width?r.right+6:52})();
+  if(k==='obj')return{ax:'l',ay:'t',dx:qL,dy:TOPH+6};
+  if(k==='al'){const o=$('pObj');const below=HS.p.obj.v&&!HS.p.obj.pos&&o.offsetParent;return{ax:'l',ay:'t',dx:qL,dy:below?o.getBoundingClientRect().bottom+6:TOPH+6}}
   if(k==='map')return{ax:'r',ay:'b',dx:4,dy:4};
   if(k==='cmd'){if(pre==='battle'||pre==='livre')return{ax:'c',ay:'b',dx:0,dy:4};
     const m=$('pMap'),mw=HS.p.map.v&&!HS.p.map.pos?m.offsetWidth*s+8:0;return{ax:'r',ay:'b',dx:4+mw,dy:4}}
   return{ax:'l',ay:'b',dx:4,dy:4};// sel
 }
 function placeEl(el,p){const s=hudScale(),w=el.offsetWidth*s,h=el.offsetHeight*s;
-  let x=p.ax==='l'?p.dx:p.ax==='r'?innerWidth-p.dx-w:(innerWidth-w)/2+p.dx;
+  const sf=safeLR();let x=p.ax==='l'?Math.max(p.dx,sf.l+p.dx*(p.dx<20?1:0)):p.ax==='r'?innerWidth-p.dx-sf.r-w:(innerWidth-w)/2+p.dx;
   let y=p.ay==='t'?p.dy:innerHeight-p.dy-h;
   const tabH=el.classList.contains('tab')?22*s:0;
   x=clamp(x,0,Math.max(0,innerWidth-w));y=clamp(y,TOPH+tabH,Math.max(TOPH,innerHeight-h));
@@ -4100,6 +4111,10 @@ const startGame0=startGame;
 startGame=function(){UI.inc=[];UI.alerts=[];startGame0();mmBig(false);setTimeout(()=>{layoutHUD();hudExtra();layoutHUD()},0)};
 window.__RA.startGame=startGame;window.__RA.layoutHUD=layoutHUD;
 
+// recorte da câmera/entalhe do celular (deitado): o painel não pode ficar embaixo dele
+function safeLR(){let d=$('safeprobe');if(!d){d=document.createElement('div');d.id='safeprobe';d.style.cssText='position:fixed;visibility:hidden;pointer-events:none;left:0;top:0;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)';document.body.appendChild(d)}
+  const cs=getComputedStyle(d);return{l:parseFloat(cs.paddingLeft)||0,r:parseFloat(cs.paddingRight)||0}}
+
 // =========================================================
 //   ÍCONES DESENHADOS PARA CADA BOTÃO + FICHA ANTES DE CONSTRUIR
 //   tocar uma vez = ver a ficha (o que é, custo, tempo, para que serve)
@@ -4241,7 +4256,7 @@ updHUD=function(force){if(G&&UI.milS!==G.P[0].mil){UI.milS=G.P[0].mil;UI.sig=''}
   if(typeof seasonIdx==='function'){const S=SEASONS[seasonIdx()],W=G.wx||{i:0};const cl=document.body.classList.contains('clean'),wi=W.i>.2?(W.k==='snow'?'❄️':W.k==='storm'?'⛈':'🌧'):'';const t=cl?S.ic+dayIcon()+wi:S.ic+' '+S.n+' · '+dayIcon()+' '+hourTxt()+(wi?' · '+wi+({snow:' neve',storm:' tempestade',rain:' chuva'}[W.k]||''):'');if($('wx').textContent!==t)$('wx').textContent=t}
   const P=G.P[0];if(UI.eraShown!==P.age){UI.eraShown=P.age;$('eran').innerHTML='<img src="'+eraIcon(P.age)+'">'}};
 // botões rápidos com ícones desenhados
-function quickIcons(){$('qidle').innerHTML='<img src="'+cmdIcon('idle')+'"><i id="nidle"></i>';$('qarmy').innerHTML='<img src="'+cmdIcon('army')+'">';if(THUMB.btc)$('qtc').innerHTML='<img src="'+THUMB.btc+'">'}
+function quickIcons(){$('qidle').innerHTML='<img src="'+cmdIcon('idle')+'"><i id="nidle"></i>';$('qarmy').innerHTML='<img src="'+cmdIcon('army')+'"><i id="narmy"></i>';if(THUMB.btc)$('qtc').innerHTML='<img src="'+THUMB.btc+'">'}
 const startGame1=startGame;
 startGame=function(){cardClose();UI.eraShown=-1;startGame1();quickIcons()};
 window.__RA.startGame=startGame;
@@ -5742,7 +5757,7 @@ for(const k of['gear','queue'])CMD_ART[k+'Off']=g=>{g.save();g.filter='grayscale
 function emojiIcon(ic){const key='e'+ic;if(!ICO[key]){const[c,g]=icoC();CMD_ART.generic(g);g.font='32px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';g.textAlign='center';g.textBaseline='middle';g.shadowColor='#000a';g.shadowBlur=4;g.fillText(ic,40,42);ICO[key]=c.toDataURL()}return ICO[key]}
 const CMD_BYNAME=[['Patrulhar','patrol'],['Alarme','bell'],['Coleta automática','gear'],['Plano de coleta','scales'],['Fila automática','queue'],['Ver prédios','city'],['Desguarnecer','ungar']];
 const CMD_SHORT={'Centro Urbano':'Cidade','Acampamento de lenhadores':'Lenhador','Ver prédios da cidade':'Prédios','Atacar o inimigo mais perto':'Atacar','Recuar para a cidade':'Recuar','Desembarcar aqui':'Desembarcar',
-  'Coleta automática':'Automático','Plano de coleta':'Plano','Fila automática de aldeões':'Fila','Oficina de Cerco':'Oficina','Silo de Mísseis':'Silo','Soldado de Assalto':'Assalto','Espada Longa':'Esp. Longa','Organização Militar':'Exército'};
+  'Coleta automática':'Auto','Plano de coleta':'Coleta','Fila automática de aldeões':'Fila','Oficina de Cerco':'Oficina','Silo de Mísseis':'Silo','Soldado de Assalto':'Assalto','Espada Longa':'Esp. Longa','Organização Militar':'Exército'};
 function cmdShort(c){let n=String(c.nm||'').split(/[:·(]/)[0].trim();if(c.kind==='age')return'Avançar';if(c.pw)return'Poder';
   for(const k in CMD_SHORT)if(n.startsWith(k))return CMD_SHORT[k];
   n=n.replace(/ (I|II|III|IV|V|VI|VII|VIII)$/,'');if(n.length<=11)return n;const w=n.split(' ');return w[0].length>=4?w[0].slice(0,11):(w[0]+' '+(w[1]||'')).slice(0,11)}
@@ -5819,6 +5834,108 @@ function musFileStop(){if(!MUSF.on)return;MUSF.on=false;for(const k in MUSF.src)
     while(MUS.t<AC.currentTime+.4){const t=MUS.t,b=MUS.beat%8,dt=t-AC.currentTime,v=clamp((h-.3)/.5,0,1);
       if(v>0){if(b===0||b===3||b===6)tone(88,.3,'sine',.3*v,44,dt,MG);if(b===4)noise(.08,.18*v,900,1.2,dt,MG);if(b%2===1)noise(.04,.08*v,2400,1.5,dt,MG,'highpass')}
       MUS.t+=60/132/2;MUS.beat++}}}}
+
+// =========================================================
+//   PLACAR FINAL COMPLETO (Versão 66), no espírito do Age II e do Rise of Nations:
+//   abas Resumo · Militar · Economia · Tecnologia · Linha do tempo (gráfico de pontos).
+//   O jogo passa a anotar, durante a partida: recursos por tipo, prédios destruídos e perdidos,
+//   maior exército, maior número de aldeões, quando cada era foi alcançada e os pontos a cada 20 s.
+// =========================================================
+function stInit(){if(!G||!G.st)return;const S=G.st,z=()=>new Array(NP).fill(0);
+  if(!S.gt){S.gt=Array.from({length:NP},()=>({food:0,wood:0,gold:0,stone:0,oil:0}))}
+  for(const k of['bk','bl','army','vmax','tmax','terr','conv'])if(!S[k])S[k]=z();
+  if(!S.ageT)S.ageT=Array.from({length:NP},(_,p)=>[0]);if(!S.tl)S.tl=[];if(S.lastAge==null)S.lastAge=G.P.map(P=>P.age)}
+// pontos: militar (abates e prédios derrubados), economia (recursos), tecnologia (eras e pesquisas), sociedade (terra e maravilha)
+function scoreOf(p){const S=G.st,P=G.P[p];if(!P)return{mil:0,eco:0,tec:0,soc:0,tot:0};
+  const mil=Math.round((S.kill[p]||0)*12+((S.bk&&S.bk[p])||0)*35);
+  const eco=Math.round((S.gath[p]||0)/10);
+  const tec=Math.round(P.age*150+(P.techs?P.techs.length:0)*20+(P.mil||0)*25);
+  const soc=Math.round(domShare(p)*600+(G.B.some(b=>!b.dead&&b.o===p&&b.type==='maravilha'&&b.done>=1)?300:0));
+  return{mil,eco,tec,soc,tot:mil+eco+tec+soc}}
+// recursos por tipo: todo recurso coletado passa pelo limite de comércio (capAdd)
+{const cOld=capAdd;capAdd=function(o,k,a){const g=cOld(o,k,a);try{if(o<NP&&G.st){stInit();const T=G.st.gt[o];if(T&&k in T)T[k]+=g}}catch(e){}return g}}
+// prédios derrubados e perdidos
+{const kOld=kill;kill=function(e,by){const was=e&&!e.dead;kOld(e,by);
+  try{if(was&&e.k==='b'&&e.done>=1&&e.type!=='muralha'&&G.st){stInit();if(e.o<NP)G.st.bl[e.o]++;if(by!=null&&by<NP&&by!==e.o)G.st.bk[by]++}}catch(x){}}}
+// a cada segundo: eras, maior exército, maior número de aldeões, território; a cada 20 s, a linha do tempo
+{const ceOld=checkEnd;checkEnd=function(){try{stTick()}catch(e){}return ceOld()}}
+function stTick(){if(!G||G.over)return;stInit();const S=G.st;
+  const arm=new Array(NP).fill(0),vil=new Array(NP).fill(0);
+  for(const u of G.U){if(u.dead||u.o>=NP)continue;if(u.type==='vill')vil[u.o]++;else if(isMil(u))arm[u.o]++}
+  for(let p=0;p<NP;p++){S.army[p]=Math.max(S.army[p],arm[p]);S.vmax[p]=Math.max(S.vmax[p],vil[p]);S.terr[p]=Math.max(S.terr[p],domShare(p));
+    const a=G.P[p].age;if(a>(S.lastAge[p]||0)){for(let k=(S.lastAge[p]||0)+1;k<=a;k++)S.ageT[p][k]=G.t;S.lastAge[p]=a}
+    S.tmax[p]=Math.max(S.tmax[p],G.P[p].techs?G.P[p].techs.length:0)}
+  const last=S.tl.length?S.tl[S.tl.length-1][0]:-99;
+  if(G.t-last>=20){S.tl.push([Math.round(G.t)].concat(G.P.map((_,p)=>scoreOf(p).tot)));if(S.tl.length>400)S.tl=S.tl.filter((_,i)=>i%2===0)}}
+
+// ---------- a tela ----------
+{const css=document.createElement('style');css.textContent=`
+#end{justify-content:flex-start;padding:max(8px,env(safe-area-inset-top)) 12px 8px;gap:6px;overflow:hidden}
+#end .ttl{font-size:clamp(28px,8vh,52px);line-height:1.25;padding-top:.12em;letter-spacing:8px;flex:none}
+#end .card{flex:1 1 auto;min-height:0;overflow:auto;width:min(760px,96vw);max-width:none;padding:0;font-size:13px;display:flex;flex-direction:column}
+#end #bend{flex:none;margin:0}
+.ptabs{display:flex;gap:2px;padding:6px 6px 0;background:linear-gradient(#3a2a14,#2a1d0c);flex:none;overflow-x:auto}
+.ptabs button{flex:1 0 auto;font:700 13px Georgia,serif;color:#e9d39a;background:#4a3518;border:1px solid #7a5a26;border-bottom:none;border-radius:6px 6px 0 0;padding:6px 10px;white-space:nowrap}
+.ptabs button.on{background:linear-gradient(#f1e2bb,#e2cd9f);color:#2a1a08}
+.pbody{padding:8px 12px 10px;overflow:auto;flex:1 1 auto;min-height:0}
+.pmsg{font-weight:700;font-size:15px;text-align:center;margin:2px 0 4px}
+.pmeta{text-align:center;opacity:.85;margin-bottom:6px}
+.ptab{width:100%;border-collapse:collapse;font-size:12.5px}
+.ptab th{font-size:11.5px;text-align:right;padding:3px 6px;border-bottom:2px solid #a77b2c;color:#5a3a10;white-space:nowrap}
+.ptab th:nth-child(2),.ptab td:nth-child(2){text-align:left}
+.ptab td{text-align:right;padding:3px 6px;border-bottom:1px solid #c9ad74;white-space:nowrap}
+.ptab tr.me td{background:#f7ecc8;font-weight:700}
+.ptab tr.out td{opacity:.55}
+.ptab .sw{display:inline-block;width:11px;height:11px;border:1px solid #000;vertical-align:-1px}
+.ptab td.best{color:#7a3d00;font-weight:700}
+.pnote{font-size:11.5px;opacity:.8;margin-top:6px;font-style:italic;text-align:center}
+#pgraf{width:100%;height:clamp(110px,calc(100vh - 240px),300px);display:block;background:#efe0b6;border:1px solid #a77b2c;border-radius:3px}
+.pleg{display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:center;margin-top:5px;font-size:12px}`;document.head.appendChild(css)}
+
+let PL_TAB='res',PL_MSG='',PL_WIN=false;
+const PL_TABS=[['res','🏆 Resumo'],['mil','⚔ Militar'],['eco','💰 Economia'],['tec','📜 Tecnologia'],['tl','📈 Linha do tempo']];
+function plRow(p,cells){const out=G.P[p]&&G.P[p]._out;return'<tr class="'+(p===0?'me':'')+(out?' out':'')+'"><td><span class="sw" style="background:'+COL[p].m+'"></span></td><td>'+civOf(p).n+(p===0?' (você)':ally(p,0)?' 🤝':'')+'</td>'+cells.map(c=>'<td'+(c[1]?' class="best"':'')+'>'+c[0]+'</td>').join('')+'</tr>'}
+function plTable(head,vals,fmt){// vals[p] = lista de números; destaca o maior de cada coluna
+  const best=head.map((_,i)=>Math.max(...vals.map(v=>typeof v[i]==='number'?v[i]:-1)));
+  return'<table class="ptab"><tr><th></th><th>Nação</th>'+head.map(h=>'<th>'+h+'</th>').join('')+'</tr>'+
+    vals.map((v,p)=>plRow(p,v.map((x,i)=>[fmt?fmt(x,i):x,typeof x==='number'&&x>0&&x===best[i]&&vals.filter(w=>w[i]===best[i]).length===1]))).join('')+'</table>'}
+const plN=x=>typeof x==='number'?Math.round(x).toLocaleString('pt-BR'):x;
+function plBody(){stInit();const S=G.st,ps=G.P.map((_,p)=>p);
+  if(PL_TAB==='res'){const sc=ps.map(scoreOf);
+    return'<div class="pmsg">'+PL_MSG+'</div><div class="pmeta">'+civOf(0).n+' · '+NP+' nações · '+DIFF[G.diff].n+' · ⏱ '+fmtT(G.t)+' · '+AGES[G.P[0].age]+'</div>'+
+      plTable(['Pontos','Militar','Economia','Tecnologia','Sociedade'],sc.map(s=>[s.tot,s.mil,s.eco,s.tec,s.soc]),plN)+
+      '<div class="pnote">Pontos: militar = abates e prédios derrubados · economia = recursos coletados · tecnologia = eras e pesquisas · sociedade = terra dominada e Maravilha</div>'}
+  if(PL_TAB==='mil')return plTable(['Abates','Perdas','Prédios derrubados','Prédios perdidos','Maior exército'],ps.map(p=>[S.kill[p],S.lost[p],S.bk[p],S.bl[p],S.army[p]]),plN)+
+      '<div class="pnote">Abates e perdas contam soldados e aldeões. "Maior exército" é o máximo de soldados que a nação teve ao mesmo tempo.</div>';
+  if(PL_TAB==='eco')return plTable(['🍖 Comida','🪵 Madeira','🪨 Pedra','🪙 Ouro','🛢 Petróleo','Total','Aldeões (máx.)'],ps.map(p=>{const T=S.gt[p]||{};return[T.food|0,T.wood|0,T.stone|0,T.gold|0,T.oil|0,S.gath[p]|0,S.vmax[p]]}),plN)+
+      '<div class="pnote">O total também soma riqueza do comércio e conhecimento dos eruditos.</div>';
+  if(PL_TAB==='tec'){const head=['Era alcançada','Pesquisas','Org. Militar','Terra (máx.)'];
+    let t=plTable(head,ps.map(p=>[AGES[G.P[p].age].replace('Era ','').replace('da ','').replace('do ',''),(G.P[p].techs||[]).length,G.P[p].mil||0,Math.round(S.terr[p]*100)+'%']));
+    const maxA=Math.max(...ps.map(p=>G.P[p].age));
+    if(maxA>0){t+='<table class="ptab" style="margin-top:8px"><tr><th></th><th>Quando chegou na era</th>'+AGES.slice(1,maxA+1).map(a=>'<th>'+a.replace('Era ','').replace('da ','').replace('do ','')+'</th>').join('')+'</tr>'+
+      ps.map(p=>{const at=S.ageT[p]||[];const v=[];for(let a=1;a<=maxA;a++)v.push(at[a]!=null?at[a]:null);
+        const best=v.map((x,i)=>Math.min(...ps.map(q=>(S.ageT[q]||[])[i+1]).filter(y=>y!=null)));
+        return plRow(p,v.map((x,i)=>[x==null?'—':fmtT(x),x!=null&&x===best[i]&&NP>1]))}).join('')+'</table>'}
+    return t}
+  if(PL_TAB==='tl')return'<canvas id="pgraf"></canvas><div class="pleg">'+ps.map(p=>'<span><span class="sw" style="display:inline-block;width:11px;height:11px;border:1px solid #000;vertical-align:-1px;background:'+COL[p].m+'"></span> '+civOf(p).n+'</span>').join('')+'</div><div class="pnote">Pontos de cada nação ao longo da partida (marcados a cada 20 segundos).</div>';
+  return''}
+function plDraw(){const c=$('pgraf');if(!c)return;const S=G.st;const tl=S.tl.slice();tl.push([Math.round(G.t)].concat(G.P.map((_,p)=>scoreOf(p).tot)));
+  const dpr=Math.min(2,window.devicePixelRatio||1),W=c.clientWidth||600,H=c.clientHeight||200;c.width=W*dpr;c.height=H*dpr;const g=c.getContext('2d');g.scale(dpr,dpr);
+  const L=46,R=22,T=10,B=24,tmax=Math.max(60,tl[tl.length-1][0]);let vmax=10;for(const r of tl)for(let i=1;i<r.length;i++)vmax=Math.max(vmax,r[i]);
+  const nice=x=>{const m=Math.pow(10,Math.floor(Math.log10(x)));return Math.ceil(x/m)*m};vmax=nice(vmax*1.05);
+  const X=t=>L+(W-L-R)*t/tmax,Y=v=>T+(H-T-B)*(1-v/vmax);
+  g.font='11px Georgia,serif';g.fillStyle='#5a3a10';g.strokeStyle='rgba(90,58,16,.18)';g.lineWidth=1;
+  for(let i=0;i<=4;i++){const v=vmax*i/4,y=Y(v);g.beginPath();g.moveTo(L,y);g.lineTo(W-R,y);g.stroke();g.textAlign='right';g.fillText(plN(v),L-5,y+4)}
+  const step=tmax>1800?600:tmax>600?300:60;g.textAlign='center';for(let t=0;t<=tmax;t+=step){g.fillText(fmtT(t),X(t),H-7)}
+  for(let p=NP-1;p>=0;p--){g.strokeStyle=COL[p].m;g.lineWidth=p===0?3:1.8;g.beginPath();tl.forEach((r,i)=>{const x=X(r[0]),y=Y(r[p+1]||0);i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke()}}
+function plRender(){$('ends').innerHTML='<div class="ptabs">'+PL_TABS.map(([k,n])=>'<button data-k="'+k+'" class="'+(k===PL_TAB?'on':'')+'">'+n+'</button>').join('')+'</div><div class="pbody">'+plBody()+'</div>';
+  $('ends').querySelectorAll('.ptabs button').forEach(b=>b.onclick=()=>{snd('click');PL_TAB=b.dataset.k;plRender()});
+  if(PL_TAB==='tl')requestAnimationFrame(plDraw)}
+{const eOld=endGame;endGame=function(win,msg){
+  try{stInit();stTick();for(let p=0;p<NP;p++)G.P[p]._out=!G.U.some(u=>!u.dead&&u.o===p)&&!G.B.some(b=>!b.dead&&b.o===p&&b.type==='tc')}catch(e){}
+  eOld(win,msg);PL_WIN=win;PL_MSG=msg+'<br><i style="font-weight:400;font-size:13px">'+(win?'Seu nome será lembrado pelas próximas gerações.':'Até os grandes impérios começaram com uma derrota. Tente outra vez!')+'</i>';PL_TAB='res';
+  try{plRender()}catch(e){console.warn('placar',e)}}}
+window.addEventListener('resize',()=>{if(PL_TAB==='tl'&&$('end')&&$('end').style.display!=='none')plDraw()});
 </script>
 </body>
 </html>

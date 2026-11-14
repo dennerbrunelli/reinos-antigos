@@ -43,15 +43,17 @@ function defPos(k){
     if(k==='cmd')return{ax:'r',ay:'b',dx:4,dy:4};
     {const m=$('pMap'),c=$('pCmd'),L=HS.p.map.v&&m.offsetParent&&!m.classList.contains('big')?m.getBoundingClientRect().right+6:4,R=HS.p.cmd.v&&c.offsetParent?c.getBoundingClientRect().left-6:innerWidth-4,w=$('pSel').offsetWidth*s;
      return{ax:'l',ay:'b',dx:Math.max(L,L+(R-L-w)/2),dy:4}}}
-  if(k==='obj')return{ax:'l',ay:'t',dx:52,dy:TOPH+6};
-  if(k==='al'){const o=$('pObj');const below=HS.p.obj.v&&!HS.p.obj.pos&&o.offsetParent;return{ax:'l',ay:'t',dx:52,dy:below?o.getBoundingClientRect().bottom+6:TOPH+6}}
+  // Objetivos e Alertas começam logo à direita dos botões redondos (aldeão parado, exército, cidade), sem cobrir nenhum
+  const qL=(()=>{const q=$('quick');const r=q&&q.offsetParent?q.getBoundingClientRect():null;return r&&r.width?r.right+6:52})();
+  if(k==='obj')return{ax:'l',ay:'t',dx:qL,dy:TOPH+6};
+  if(k==='al'){const o=$('pObj');const below=HS.p.obj.v&&!HS.p.obj.pos&&o.offsetParent;return{ax:'l',ay:'t',dx:qL,dy:below?o.getBoundingClientRect().bottom+6:TOPH+6}}
   if(k==='map')return{ax:'r',ay:'b',dx:4,dy:4};
   if(k==='cmd'){if(pre==='battle'||pre==='livre')return{ax:'c',ay:'b',dx:0,dy:4};
     const m=$('pMap'),mw=HS.p.map.v&&!HS.p.map.pos?m.offsetWidth*s+8:0;return{ax:'r',ay:'b',dx:4+mw,dy:4}}
   return{ax:'l',ay:'b',dx:4,dy:4};// sel
 }
 function placeEl(el,p){const s=hudScale(),w=el.offsetWidth*s,h=el.offsetHeight*s;
-  let x=p.ax==='l'?p.dx:p.ax==='r'?innerWidth-p.dx-w:(innerWidth-w)/2+p.dx;
+  const sf=safeLR();let x=p.ax==='l'?Math.max(p.dx,sf.l+p.dx*(p.dx<20?1:0)):p.ax==='r'?innerWidth-p.dx-sf.r-w:(innerWidth-w)/2+p.dx;
   let y=p.ay==='t'?p.dy:innerHeight-p.dy-h;
   const tabH=el.classList.contains('tab')?22*s:0;
   x=clamp(x,0,Math.max(0,innerWidth-w));y=clamp(y,TOPH+tabH,Math.max(TOPH,innerHeight-h));
@@ -254,3 +256,7 @@ updHUD=function(force){updHUD0(force);if(G&&running)hudExtra()};
 const startGame0=startGame;
 startGame=function(){UI.inc=[];UI.alerts=[];startGame0();mmBig(false);setTimeout(()=>{layoutHUD();hudExtra();layoutHUD()},0)};
 window.__RA.startGame=startGame;window.__RA.layoutHUD=layoutHUD;
+
+// recorte da câmera/entalhe do celular (deitado): o painel não pode ficar embaixo dele
+function safeLR(){let d=$('safeprobe');if(!d){d=document.createElement('div');d.id='safeprobe';d.style.cssText='position:fixed;visibility:hidden;pointer-events:none;left:0;top:0;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)';document.body.appendChild(d)}
+  const cs=getComputedStyle(d);return{l:parseFloat(cs.paddingLeft)||0,r:parseFloat(cs.paddingRight)||0}}

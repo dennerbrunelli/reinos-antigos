@@ -25,7 +25,7 @@ for(const k of['gear','queue'])CMD_ART[k+'Off']=g=>{g.save();g.filter='grayscale
 function emojiIcon(ic){const key='e'+ic;if(!ICO[key]){const[c,g]=icoC();CMD_ART.generic(g);g.font='32px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';g.textAlign='center';g.textBaseline='middle';g.shadowColor='#000a';g.shadowBlur=4;g.fillText(ic,40,42);ICO[key]=c.toDataURL()}return ICO[key]}
 const CMD_BYNAME=[['Patrulhar','patrol'],['Alarme','bell'],['Coleta automática','gear'],['Plano de coleta','scales'],['Fila automática','queue'],['Ver prédios','city'],['Desguarnecer','ungar']];
 const CMD_SHORT={'Centro Urbano':'Cidade','Acampamento de lenhadores':'Lenhador','Ver prédios da cidade':'Prédios','Atacar o inimigo mais perto':'Atacar','Recuar para a cidade':'Recuar','Desembarcar aqui':'Desembarcar',
-  'Coleta automática':'Automático','Plano de coleta':'Plano','Fila automática de aldeões':'Fila','Oficina de Cerco':'Oficina','Silo de Mísseis':'Silo','Soldado de Assalto':'Assalto','Espada Longa':'Esp. Longa','Organização Militar':'Exército'};
+  'Coleta automática':'Auto','Plano de coleta':'Coleta','Fila automática de aldeões':'Fila','Oficina de Cerco':'Oficina','Silo de Mísseis':'Silo','Soldado de Assalto':'Assalto','Espada Longa':'Esp. Longa','Organização Militar':'Exército'};
 function cmdShort(c){let n=String(c.nm||'').split(/[:·(]/)[0].trim();if(c.kind==='age')return'Avançar';if(c.pw)return'Poder';
   for(const k in CMD_SHORT)if(n.startsWith(k))return CMD_SHORT[k];
   n=n.replace(/ (I|II|III|IV|V|VI|VII|VIII)$/,'');if(n.length<=11)return n;const w=n.split(' ');return w[0].length>=4?w[0].slice(0,11):(w[0]+' '+(w[1]||'')).slice(0,11)}

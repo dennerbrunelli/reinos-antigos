@@ -140,7 +140,7 @@ updHUD=function(force){if(G&&UI.milS!==G.P[0].mil){UI.milS=G.P[0].mil;UI.sig=''}
   if(typeof seasonIdx==='function'){const S=SEASONS[seasonIdx()],W=G.wx||{i:0};const cl=document.body.classList.contains('clean'),wi=W.i>.2?(W.k==='snow'?'❄️':W.k==='storm'?'⛈':'🌧'):'';const t=cl?S.ic+dayIcon()+wi:S.ic+' '+S.n+' · '+dayIcon()+' '+hourTxt()+(wi?' · '+wi+({snow:' neve',storm:' tempestade',rain:' chuva'}[W.k]||''):'');if($('wx').textContent!==t)$('wx').textContent=t}
   const P=G.P[0];if(UI.eraShown!==P.age){UI.eraShown=P.age;$('eran').innerHTML='<img src="'+eraIcon(P.age)+'">'}};
 // botões rápidos com ícones desenhados
-function quickIcons(){$('qidle').innerHTML='<img src="'+cmdIcon('idle')+'"><i id="nidle"></i>';$('qarmy').innerHTML='<img src="'+cmdIcon('army')+'">';if(THUMB.btc)$('qtc').innerHTML='<img src="'+THUMB.btc+'">'}
+function quickIcons(){$('qidle').innerHTML='<img src="'+cmdIcon('idle')+'"><i id="nidle"></i>';$('qarmy').innerHTML='<img src="'+cmdIcon('army')+'"><i id="narmy"></i>';if(THUMB.btc)$('qtc').innerHTML='<img src="'+THUMB.btc+'">'}
 const startGame1=startGame;
 startGame=function(){cardClose();UI.eraShown=-1;startGame1();quickIcons()};
 window.__RA.startGame=startGame;

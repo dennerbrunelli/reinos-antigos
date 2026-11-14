@@ -30,7 +30,8 @@ function brass(f,d,v,delay,out){const t=AC.currentTime+(delay||0);const o=AC.cre
   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.05);g.gain.setValueAtTime(v,t+d*.7);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(lp);o2.connect(lp);lp.connect(g);g.connect(out||SG);o.start(t);o2.start(t);o.stop(t+d+.05);o2.stop(t+d+.05)}
 // cada som nasce num ponto: mais à esquerda/direita conforme a tela, mais baixo se estiver longe do centro
 function voice(pan,vol,wet){const g=AC.createGain();g.gain.value=vol;let n=g;if(AC.createStereoPanner){const p=AC.createStereoPanner();p.pan.value=pan;g.connect(p);n=p}n.connect(SG);if(RV&&wet){const s=AC.createGain();s.gain.value=wet;n.connect(s);s.connect(RV)}return g}
-const lastSnd={};
+const lastSnd={};let lastWork=0;
+const WORKSND={chop:650,mine:700,hoe:950,hammer:700,leaves:750,splash:950,flesh:750};
 const SGAP={leaves:170,hoe:230,flesh:200,splash:300,chop:220,mine:220,hammer:260,clash:110,thud:120,stomp:220,hitb:160,arrow:90,bow:90,knife:110,hit:80,throw:150,catapult:280,boom:200,shot:200,chant:600,die:140,bleat:300,roar:900,trumpet:900,sink:400,collapse:350,place:150};
 // "calor" de combate: sobe quando há briga perto do jogador, esfria sozinho — usado pra deixar
 // a música mais tensa na guerra e mais calma na paz (a mesma psicologia de música ambiente de
@@ -42,10 +43,14 @@ function snd(k,e){
   let pan=0,vol=1;
   if(e&&running){const p=w2s(e.x,e.y);if(p.x<-60||p.x>VW+60||p.y<TOPH-30||p.y>VH+30)return;
     pan=clamp((p.x-VW/2)/(VW*.6),-1,1)*.75;const dc=hyp(p.x-VW/2,p.y-VH/2)/Math.max(VW,VH);vol=clamp(1.05-dc*.9,.45,1)*clamp(.55+Z*.45,.6,1.15)}
-  const now=performance.now(),gap=SGAP[k]||60;
-  if(lastSnd[k]&&now-lastSnd[k]<gap)return;lastSnd[k]=now;
+  const now=performance.now(),wk=WORKSND[k],gap=wk?wk:(SGAP[k]||60);
+  if(lastSnd[k]&&now-lastSnd[k]<gap)return;
+  // sons de trabalho (machado, picareta, enxada, martelo...) dividem uma "vez" só: nunca dois ao mesmo tempo,
+  // volume mais baixo e quase sem mudar de tom — senão vira barulho (vários martelos em tons diferentes)
+  if(wk){if(now-lastWork<420)return;lastWork=now;vol*=.5}
+  lastSnd[k]=now;
   if(!audio())return;
-  const r=1+(Math.random()-.5)*.14,o=voice(pan,vol,{boom:.5,collapse:.5,age:.4,alert:.3,win:.4,lose:.4,shot:.6,roar:.3,trumpet:.3,convert:.5,chant:.5,done:.3}[k]||.12);
+  const r=wk?[1,.97,1.03][(Math.random()*3)|0]:1+(Math.random()-.5)*.08,o=voice(pan,vol,{boom:.5,collapse:.5,age:.4,alert:.3,win:.4,lose:.4,shot:.6,roar:.3,trumpet:.3,convert:.5,chant:.5,done:.3}[k]||.12);
   if(sfxPlay(k,o,r))return; // efeito gravado (Versão 63); sem ele, o som desenhado abaixo
   switch(k){
   case'click':tone(1500*r,.03,'triangle',.03,900,0,o);noise(.02,.06,3500,2,0,o);break;
@@ -55,7 +60,7 @@ function snd(k,e){
   // picareta na pedra: "tim" metálico + cascalho caindo
   case'mine':metal([1850*r,2820*r,3900*r],.17,.04,0,o);noise(.025,.22,4200,1.4,0,o,'highpass');for(let i=0;i<4;i++)noise(.04,.16,900+Math.random()*1400,1,.06+i*.045+Math.random()*.03,o,'lowpass');break;
   // enxada na terra: batida abafada no chão + atrito arrastando a terra
-  case'hoe':tone(96*r,.13,'sine',.2,52,0,o,.002);noise(.12,.5,620*r,.7,0,o,'lowpass',220);noise(.26,.2,2100*r,1.3,.07,o,'bandpass',700);noise(.18,.1,4200,1,.1,o,'highpass');break;
+  case'hoe':tone(90*r,.12,'sine',.16,55,0,o,.003);noise(.14,.38,520*r,.7,0,o,'lowpass',200);noise(.2,.08,900,1,.05,o,'lowpass',300);break; // enxada na terra: só som grave e abafado
   // colher frutos: folhas mexendo + galhinho + a fruta soltando
   case'leaves':for(let i=0;i<5;i++)noise(.05+Math.random()*.05,.13,2600+Math.random()*3200,.7,i*.04+Math.random()*.02,o,'bandpass');noise(.012,.12,6200,2,.12,o);tone(520*r,.05,'sine',.03,340,.16,o,.003);break;
   // carne: perfura (molhado, grave) e rasga (estalos curtos)
@@ -198,7 +203,7 @@ function updHUD(force){
   // relógio de vitória: o do seu time primeiro; senão, o do inimigo que está mais perto de vencer
   {let mw=0,mt=0,fw=0,ft=0;const tw=G.tw||[];for(let o=0;o<NP;o++){const w=G.won[o]||0,t=tw[o]||0;if(ally(o,0)){mw=Math.max(mw,w);mt=Math.max(mt,t)}else{fw=Math.max(fw,w);ft=Math.max(ft,t)}}
     $('won').textContent=mw?'🏛 '+fmtT(WONDER_T-mw):fw?'⚠️🏛 '+fmtT(WONDER_T-fw):mt?'🗺 '+fmtT(TERR_T-mt):ft?'⚠️🗺 '+fmtT(TERR_T-ft):''}
-  const idle=G.U.filter(u=>!u.dead&&!u.inT&&u.o===0&&u.type==='vill'&&u.st==='idle').length;$('nidle').textContent=idle||'';$('qidle').classList.toggle('off',!idle);
+  const idle=G.U.filter(u=>!u.dead&&!u.inT&&u.o===0&&u.type==='vill'&&u.st==='idle').length;$('nidle').textContent=idle||'';$('qidle').classList.toggle('off',!idle);{const na=$('narmy');if(na)na.textContent=G.U.filter(u=>!u.dead&&u.o===0&&isMil(u)).length||''}
   SEL=SEL.filter(id=>{const e=E.get(id);return e&&!e.dead&&!e.inT});
   const s=selEnts(),info=$('info');
   const h=s.length?infoHTML(s):'<div class="bd" style="opacity:.75;font-style:italic;align-self:center">'+civOf(0).n+' · '+styOf(0).nm+' · 🗺 '+Math.round(domShare(0)*100)+'% da terra · 🏘 '+G.B.filter(b=>!b.dead&&b.o===0&&b.type==='tc'&&b.done>=1).length+'/'+CITY_MAX+'<br>'+civOf(0).d.map(x=>'✦ '+x).join('<br>')+'</div>';
@@ -231,11 +236,14 @@ function infoHTML(s){
   if(e.type==='fazenda')return h+rimg('food')+' '+Math.ceil(e.food)+' de comida</div></div>';
   h+='❤️'+Math.ceil(e.hp)+'/'+e.mhp;
   if(e.type==='tc'){h+=' · '+(e.id===G.P[e.o].capId?'👑 Capital':'🏘 Cidade');if(e.down)h+='<br><span style="color:#ff8a7a">Derrubado'+(e.cp>0?': '+(e.cpo===0?'você está tomando':'sendo tomado')+' '+Math.floor(e.cp/CAPT_T*100)+'%':'')+'</span>'}
-  if(e.o===0&&e.q.length){const it=e.q[0],tt=itemTime(e,it);h+=' · '+(e.wait?'<span style="color:#ff8a7a">População no limite!</span>':Math.floor(e.qt/tt*100)+'%')+'</div><div class="qq">'+
-    e.q.map((q,i)=>'<span data-qi="'+i+'">'+(q==='age'?'⬆️':q==='mil'?'🎖️':q==='nuke'?'☢️':q==='emp'?'⚡':q.startsWith('ln:')?LINES[q.slice(3)].ic:q.startsWith('t:')?TECH[q.slice(2)].ic:'<img src="'+THUMB['u'+q]+'">')+'</span>').join('')+'</div></div>'}
+  if(e.o===0&&e.q.length){const it=e.q[0],tt=itemTime(e,it),pc=Math.floor(e.qt/tt*100);
+    // fila como no Age: o primeiro ícone enche de verde conforme fica pronto; tocar num ícone cancela
+    h+='</div><div class="qq"><b class="qlb">'+(e.wait?'<span style="color:#ff8a7a">⚠ População no limite</span>':'⏳ '+(e.q.length>1?'':qName(it)+' ')+pc+'%')+'</b>'+
+    e.q.map((q,i)=>'<span data-qi="'+i+'"'+(i===0?' style="background:linear-gradient(to top,#3f9a3f '+pc+'%,#000a '+pc+'%)"':'')+'>'+(q==='age'?'⬆️':q==='mil'?'🎖️':q==='nuke'?'☢️':q==='emp'?'⚡':q.startsWith('ln:')?LINES[q.slice(3)].ic:q.startsWith('t:')?TECH[q.slice(2)].ic:'<img src="'+THUMB['u'+q]+'">')+'</span>').join('')+'</div></div>'}
   else h+=(T.train&&e.o===0?'<br>Toque no chão: ponto de encontro':T.drop&&e.o===0?'<br>Recebe: '+T.drop.map(k=>rimg(k)).join(' '):'')+'</div></div>';
   return h;
 }
+function qName(q){return q==='age'?'Nova era':q==='mil'?'Org. Militar':q==='nuke'?'Bomba':q==='emp'?'Pulso EMP':q.startsWith('ln:')?(LINES[q.slice(3)].n||'Pesquisa'):q.startsWith('t:')?TECH[q.slice(2)].n:(STAT[0]&&STAT[0][q]?STAT[0][q].n:UT[q]?UT[q].n:q)}
 function cancelQ(i){const b=selEnts()[0];if(!b||b.k!=='b'||b.o!==0)return;const it=b.q[i];if(it==null)return;refund(0,itemCost(0,it));b.q.splice(i,1);if(i===0)b.qt=0;updHUD(true)}
 function startPlace(t){
   const r=canBuildType(0,t);if(r){toast(r);return}
@@ -597,7 +605,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 65';$('ver').textContent=VERSAO;
+const VERSAO='Versão 66';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
