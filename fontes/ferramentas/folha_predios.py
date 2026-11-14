@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage as ndi
 RAIZ=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-SZ={'tc':3,'casa':2,'celeiro':2,'deposito':2,'mercado':3,'doca':2,'torre':1.12,'muralha':1,'quartel':3,'arquearia':3,'estabulo':3,'academia':3,'templo':3,'oficina':3,'maravilha':4,'alicerce':2,'biblioteca':3}
+SZ={'tc':3,'casa':2,'celeiro':2,'deposito':2,'mercado':3,'doca':2,'torre':1.12,'muralha':1,'quartel':3,'arquearia':3,'estabulo':3,'academia':3,'templo':3,'oficina':3,'maravilha':4,'alicerce':2,'biblioteca':3,'universidade':3,'serraria':2,'fundicao':2,'refinaria':2,'fazenda':3}
 def tirar_fundo(a,modo):
     r,g,b=[a[...,i].astype(int) for i in range(3)]
     if modo=='magenta': cand=(r>150)&(b>150)&(g<110)&(abs(r-b)<70)

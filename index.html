@@ -3839,7 +3839,7 @@ $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   t.textContent='🔄 Procurando a versão nova...';
   try{const r=await fetch('sw.js?'+Date.now(),{cache:'no-store'});if(!r.ok)throw 0}catch(e){t.textContent='📶 Não consegui falar com o servidor. Tente de novo com internet.';return}
   try{if(running)saveGame();if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations){for(const g of await navigator.serviceWorker.getRegistrations())await g.unregister()}if(window.caches)for(const k of await caches.keys())await caches.delete(k)}catch(e){}
-  t.textContent='✅ Atualizando...';setTimeout(()=>location.reload(),300)};
+  t.textContent='✅ Atualizando...';setTimeout(()=>location.replace(location.pathname+'?v='+Date.now()),300)};
 
 // ---------- multijogador: ainda trancado (virá na versão completa) ----------
 $('bmulti').onclick=()=>{snd('click');$('multit').textContent='🔒 Será liberado numa atualização futura, na versão completa (paga). Por enquanto: jogue contra o computador!'};
