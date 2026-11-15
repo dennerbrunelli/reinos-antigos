@@ -48,6 +48,19 @@ def tirar_fundo(a,modo):
 def borda_macia(m):
     # contorno suave (sem serrilhado): desfoca só a beirada, sem crescer para fora
     f=ndi.gaussian_filter(m.astype(float),.8);return (np.clip((f-.35)/.5,0,1)*255*m).astype(np.uint8)
+def tira_magenta(rgba):
+    # fundo magenta visto por entre folhas, fumaça e grades: some; a franja rosada da borda vira a cor do vizinho
+    a=rgba.astype(int);r,g,b,al=a[...,0],a[...,1],a[...,2],a[...,3]
+    ex=np.minimum(r,b)-g
+    forte=(ex>70)&(r>140)&(b>140)
+    al=np.where(forte,0,al)
+    # pixels vizinhos do que sumiu ficam meio transparentes (borda macia)
+    viz=ndi.binary_dilation(forte,iterations=1)&~forte
+    al=np.where(viz,(al*0.55).astype(int),al)
+    k=np.clip(ex,0,None)*0.9
+    r=np.where(ex>8,r-k,r);b=np.where(ex>8,b-k,b)
+    out=np.stack([np.clip(r,0,255),g,np.clip(b,0,255),al],-1).astype(np.uint8)
+    return out
 def vermelho(rgba):
     import colorsys
     a=rgba.astype(float)/255;r,g,b=a[...,0],a[...,1],a[...,2]
@@ -129,6 +142,7 @@ def main():
         meta[r['t']]={"W":round(w*k,2),"H":round(h*k,2),"xc":round(w*k/2,2),"top":round(top,2),"cy":round(top+dw/4,2),"bt":round(max(.5,h*k-(top+dw/2)),2),"dw":dw,"r":[x,0,w,h],"at":at}
         x+=w+2
     out=os.path.join(RAIZ,'assets','gpt')
+    if modo=='magenta':atl=tira_magenta(atl)
     Image.fromarray(atl,'RGBA').save(os.path.join(out,f'b_{st}_{at}_0.webp'),lossless=False,quality=92,method=6)
     Image.fromarray(vermelho(atl),'RGBA').save(os.path.join(out,f'b_{st}_{at}_1.webp'),lossless=False,quality=92,method=6)
     f=os.path.join(RAIZ,'fontes','v2','p5c_gptdata.js');s=open(f,encoding='utf-8').read();i=s.index('{');j=s.rindex('}')+1;d=json.loads(s[i:j])
