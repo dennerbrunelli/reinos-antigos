@@ -1,0 +1,12 @@
+const {chromium,devices}=require('playwright');
+(async()=>{const b=await chromium.launch({args:['--autoplay-policy=user-gesture-required']});const ctx=await b.newContext({...devices['Galaxy S9+ landscape']});const pg=await ctx.newPage();const errs=[];
+ pg.on('pageerror',e=>errs.push(e.message));pg.on('console',m=>{if(/error|warn/.test(m.type()))errs.push(m.type()+': '+m.text().slice(0,200))});
+ await pg.goto('http://localhost:8765/index.html');await pg.waitForTimeout(2500);
+ const S=()=>pg.evaluate(()=>({ac:AC&&AC.state,snd:OPT.snd,mus:OPT.mus,musOn:MUS.on,musf:MUSF.on,els:Object.keys(MUSE).map(k=>k+':'+(MUSE[k].el.paused?'parado':'toca')),buf:!!SFX.buf,rep:typeof sndReport==='function'?sndReport():''}));
+ console.log('0',JSON.stringify(await S()));
+ await pg.tap('body',{position:{x:300,y:300}}).catch(e=>console.log('tap err',e.message));await pg.waitForTimeout(800);
+ console.log('1 após tocar fundo',JSON.stringify(await S()));
+ await pg.tap('#bnew');await pg.waitForTimeout(800);console.log('2 após Novo jogo',JSON.stringify(await S()));
+ await pg.tap('#bstart');await pg.waitForTimeout(8000);console.log('3 no jogo',JSON.stringify(await S()));
+ const vp=pg.viewportSize();await pg.tap('canvas',{position:{x:vp.width/2,y:vp.height/2}}).catch(()=>{});await pg.waitForTimeout(1500);console.log('4 após tocar mapa',JSON.stringify(await S()));
+ console.log('ERROS',errs.slice(0,12));await b.close()})();

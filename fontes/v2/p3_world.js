@@ -294,7 +294,8 @@ function smartOrder(us,tgt,x,y,o){
 // =========================================================
 function faceTo(u,x,y){const d=(x-u.x)-(y-u.y);if(Math.abs(d)>1.5)u.face=d>0?1:-1}
 function moveAlong(u,dt){
-  if(u.np){if(pathBudget<=0)return false;pathBudget--;u.np=false;computePath(u)}
+  // limite de caminhos por quadro, mas ninguém espera mais que ~1 s na fila (antes, com muita gente, alguns ficavam parados para sempre)
+  if(u.np){if(pathBudget<=0&&(u.pw=(u.pw||0)+1)<25)return false;pathBudget--;u.pw=0;u.np=false;computePath(u)}
   if(!u.path)return true;
   u.stt+=dt;if(u.stt>1){if(hyp(u.x-u.lpx,u.y-u.lpy)<5){u.stk++;if(u.stk>3)return true;u.np=true}u.stt=0;u.lpx=u.x;u.lpy=u.y}
   let step=ST(u).spd*TS*dt*(u.fleeT>0?1.8:1)*seasonSpd(u)*ronSpd(u);
@@ -362,6 +363,7 @@ function updUnit(u,dt){
   }
 }
 function idleThink(u,T,dt){
+  if(u.mv){u.mv=false;u.goal=null;u.path=null}// parado de verdade: não fica "andando no lugar"
   u.scan-=dt;if(u.scan>0)return;u.scan=.5;
   if(u.o===GAIA){// animais
     if(UT[u.type].aggro){const v=nearestEnemy(u,UT[u.type].aggro*TS,false,true);if(v)orderAttack(u,v)}

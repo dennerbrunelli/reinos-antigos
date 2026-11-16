@@ -61,3 +61,24 @@ function sndReport(){const st=!AC?'ainda não ligado (toque na tela)':AC.state==
     while(MUS.t<AC.currentTime+.4){const t=MUS.t,b=MUS.beat%8,dt=t-AC.currentTime,v=clamp((h-.3)/.5,0,1);
       if(v>0){if(b===0||b===3||b===6)tone(88,.3,'sine',.3*v,44,dt,MG);if(b===4)noise(.08,.18*v,900,1.2,dt,MG);if(b%2===1)noise(.04,.08*v,2400,1.5,dt,MG,'highpass')}
       MUS.t+=60/132/2;MUS.beat++}}}}
+// ---------- som que "morre" no celular (Versão 71) ----------
+// No Android o áudio pode ficar pausado ou travado (troca de fone/Bluetooth, outro app, economia de bateria).
+// O jogo agora percebe isso sozinho e mostra um aviso "Toque para ligar o som"; o toque refaz o áudio do zero.
+let AUD_STUCK=0,AUD_LT=-1;
+function audioReset(){try{if(AC)AC.close()}catch(e){}
+  for(const k in MUSE){try{MUSE[k].el.pause()}catch(e){}delete MUSE[k]}
+  AC=null;MG=SG=NB=WF=CMP=RV=null;MUS.on=false;MUS.dr=[];MUSF.on=false;MUSF.g={};AUD_STUCK=0;AUD_LT=-1;
+  const a=audio();if(a&&SFX.buf===null)SFX.tried=false;if(OPT.mus)musicStart();return a}
+function audioFix(){let a=audio();if(!a)a=audioReset();try{a&&a.resume()}catch(e){}
+  setTimeout(()=>{if(!AC||AC.state!=='running'||AUD_STUCK)audioReset();updSndBadge()},350)}
+function updSndBadge(){let b=$('sndfix');if(!b){b=document.createElement('button');b.id='sndfix';b.textContent='🔇 Toque aqui para ligar o som';
+    b.style.cssText='position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top) + 58px);z-index:60;display:none;font:700 14px Georgia,serif;color:#1b1206;background:linear-gradient(#f3d37a,#c9952f);border:2px solid #6b4a12;border-radius:20px;padding:7px 16px;box-shadow:0 2px 8px #000a';
+    b.onclick=e=>{e.stopPropagation();audioFix()};document.body.appendChild(b)}
+  const want=(OPT.snd||OPT.mus)&&!document.hidden;const bad=AC&&(AC.state!=='running'||AUD_STUCK);
+  b.style.display=want&&bad?'block':'none'}
+setInterval(()=>{if(!AC){updSndBadge();return}
+  if(AC.state==='running'){const t=AC.currentTime;if(AUD_LT>=0&&t===AUD_LT)AUD_STUCK++;else AUD_STUCK=0;AUD_LT=t}else AUD_LT=-1;
+  updSndBadge()},1500);
+// o teste de som agora também liga os sons e a música se estiverem desligados, e refaz o áudio se precisar
+{const b=$('bsndt');if(b)b.onclick=()=>{let mudou='';if(!OPT.snd){OPT.snd=1;mudou+=' · efeitos LIGADOS'}if(!OPT.mus){OPT.mus=1;mudou+=' · música LIGADA'}if(mudou){saveOpt();try{updOptBtns()}catch(e){}}
+  audioFix();setTimeout(()=>{snd('done');setTimeout(()=>{const a=AC;$('sndtt').textContent=sndReport()+(a?' · '+a.sampleRate+' Hz · relógio '+a.currentTime.toFixed(1)+'s':'')+mudou},500)},450)}}
