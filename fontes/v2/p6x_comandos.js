@@ -159,3 +159,21 @@ Object.assign(CMD_ART,{
     const sh=[[40,15],[60,22],[58,42],[40,63],[22,42],[20,22]];fillP(g,sh,'#e8c45a');
     fillP(g,[[40,20],[55,25],[53,41],[40,57],[27,41],[25,25]],'#2a5aa0','#1a0e04');
     g.fillStyle='#f4ead0';g.fillRect(37,24,6,30);g.fillRect(28,33,24,6)}});
+// ---------- grupos de tropas (os "Ctrl+1, 2, 3" do Age e do Rise, feitos para o dedo) ----------
+// Com tropas escolhidas aparece a bandeira "＋ Grupo": um toque guarda o grupo. Depois, tocar na bandeira
+// numerada escolhe o grupo inteiro de qualquer lugar do mapa; tocar de novo leva a câmera até ele.
+{const css=document.createElement('style');css.textContent='#grp{position:fixed;z-index:21;display:none;gap:5px;align-items:flex-end}#grp button{min-width:44px;height:38px;padding:0 8px;border-radius:7px 7px 2px 2px;border:2px solid #c9952f;background:linear-gradient(#3a2a12,#1c1206);color:#f3e2b4;font:700 15px Georgia,serif;box-shadow:0 2px 6px #000a}#grp button small{font-size:10.5px;opacity:.8;margin-left:3px}#grp button.on{background:linear-gradient(#f3d37a,#c9952f);color:#1b1206}#grp button.add{border-style:dashed;font-size:13px}';document.head.appendChild(css);
+  const bar=document.createElement('div');bar.id='grp';document.body.appendChild(bar);let sig='';
+  const vivos=g=>g.ids.map(id=>E.get(id)).filter(u=>u&&!u.dead&&u.o===0);
+  function draw(){if(!G||!running){bar.style.display='none';return}G.grp=(G.grp||[]).filter(g=>vivos(g).length);
+    const sel=selEnts().filter(e=>e.k==='u'&&e.o===0),selK=sel.map(u=>u.id).sort().join(',');
+    const s=G.grp.map(g=>g.n+':'+vivos(g).length+(vivos(g).map(u=>u.id).sort().join(',')===selK?'*':'')).join('|')+'#'+(sel.length?1:0);
+    const ps=$('pSel'),r=ps&&ps.offsetParent?ps.getBoundingClientRect():null;const y=r?r.top-44:innerHeight-52,x=r?r.left:8;
+    bar.style.left=x+'px';bar.style.top=Math.max(TOPH+4,y)+'px';bar.style.display=(G.grp.length||sel.length)?'flex':'none';
+    if(s===sig)return;sig=s;bar.innerHTML='';
+    for(const g of G.grp){const us=vivos(g),b=document.createElement('button');const on=us.map(u=>u.id).sort().join(',')===selK;b.className=on?'on':'';b.innerHTML='⚑'+g.n+'<small>'+us.length+'</small>';
+      b.onclick=()=>{snd('click');const us2=vivos(g);if(on){const c=grpCenter(us2);centerOn(c.x,c.y)}else{SEL=us2.map(u=>u.id);updHUD(true)}sig=''};bar.appendChild(b)}
+    if(sel.length&&!G.grp.some(g=>vivos(g).map(u=>u.id).sort().join(',')===selK)){const b=document.createElement('button');b.className='add';b.textContent='＋ Grupo';
+      b.onclick=()=>{let n=1;while(G.grp.some(g=>g.n===n))n++;if(n>5){G.grp.shift();n=1;while(G.grp.some(g=>g.n===n))n++}
+        G.grp.push({n,ids:sel.map(u=>u.id)});G.grp.sort((a,b)=>a.n-b.n);snd('done');toast('⚑ Grupo '+n+' guardado: toque na bandeira para chamar, toque de novo para ir até ele');sig=''};bar.appendChild(b)}}
+  setInterval(()=>{try{draw()}catch(e){}},300)}

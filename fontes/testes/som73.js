@@ -1,0 +1,12 @@
+const {chromium,devices}=require('playwright');
+(async()=>{const b=await chromium.launch({args:['--autoplay-policy=user-gesture-required']});const ctx=await b.newContext({...devices['Galaxy S9+ landscape']});const pg=await ctx.newPage();const errs=[];
+ pg.on('pageerror',e=>errs.push('PAGEERR '+e.message));pg.on('console',m=>{if(m.type()==='error')errs.push(m.text().slice(0,160))});
+ await pg.goto('http://localhost:8765/index.html');await pg.waitForTimeout(1500);
+ const S=()=>pg.evaluate(()=>({ac:AC,carregados:A2.loaded+'/'+A2.total,ok:A2.ok,fail:A2.fail,err:A2.err,mus:Object.keys(A2.mus).map(k=>k+':'+(A2.mus[k].el.paused?'parada':'toca')+'@'+A2.mus[k].el.currentTime.toFixed(1)+' v'+A2.mus[k].el.volume.toFixed(2)),pool:A2.pool.length}));
+ console.log('0',JSON.stringify(await S()));
+ await pg.tap('#bnew');await pg.waitForTimeout(1500);console.log('1 menu',JSON.stringify(await S()));
+ await pg.tap('#bstart');await pg.waitForTimeout(7000);console.log('2 jogo',JSON.stringify(await S()));
+ const r=await pg.evaluate(async()=>{const out=[];for(const k of Object.keys(A2.man).concat(Object.keys(A2ALIAS))){for(const x in lastSnd)delete lastSnd[x];lastWork=0;const a=A2.ok,f=A2.fail;snd(k);await new Promise(r=>setTimeout(r,160));out.push(k+(A2.ok>a?'✓':A2.fail>f?'✗':'?'))}return out.join(' ')});console.log(r);
+ await pg.evaluate(()=>{MUSH=1});await pg.waitForTimeout(6000);console.log('3 guerra',JSON.stringify(await S()));
+ await pg.evaluate(()=>{MUSH=0});await pg.waitForTimeout(14000);console.log('4 paz',JSON.stringify(await S()));
+ console.log('ERROS',errs.slice(0,8));await b.close()})();

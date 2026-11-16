@@ -86,11 +86,12 @@ button{font-family:inherit;color:inherit}
 .mb.f{outline:3px solid #fff1b8;outline-offset:1px}
 /* tela inicial moderna: painel lateral, como nos jogos de estratégia dos anos 2000 */
 #menu{align-items:stretch;justify-content:flex-start;padding:0}
-#menu .mpanel{height:100%;width:min(400px,46vw);display:flex;flex-direction:column;justify-content:center;gap:6px;padding:12px 18px 10px max(18px,env(safe-area-inset-left));text-align:left;background:linear-gradient(90deg,rgba(9,6,2,.92),rgba(9,6,2,.78) 70%,rgba(9,6,2,0));box-shadow:inset -1px 0 0 rgba(232,196,106,.0)}
+#menu .mpanel>:first-child{margin-top:auto}#menu .mpanel>:last-child{margin-bottom:auto}
+#menu .mpanel{overflow-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:thin;height:100%;width:min(400px,46vw);display:flex;flex-direction:column;justify-content:flex-start;gap:6px;padding:12px 18px 10px max(18px,env(safe-area-inset-left));text-align:left;background:linear-gradient(90deg,rgba(9,6,2,.92),rgba(9,6,2,.78) 70%,rgba(9,6,2,0));box-shadow:inset -1px 0 0 rgba(232,196,106,.0)}
 #menu .mlogo{border-bottom:1px solid rgba(232,196,106,.45);padding-bottom:6px;margin-bottom:2px}
 #menu .ttl{font-size:46px;letter-spacing:9px;text-indent:0;text-align:left;line-height:1}
 #menu .sub{text-align:left;font-size:12px;margin:3px 0 0;opacity:.9}
-#menu .mlist{display:flex;flex-direction:column;gap:2px}
+#menu .mlist{display:flex;flex-direction:column;gap:2px;flex:none}#menu .mlogo,#menu .mfoot{flex:none}
 #menu .mi{min-width:0;width:100%;height:auto;min-height:36px;display:flex;align-items:center;gap:10px;padding:4px 10px;background:none;border:none;border-left:3px solid transparent;border-radius:0;box-shadow:none;text-align:left;font-size:16px;color:#f3e3bd;border-bottom:1px solid rgba(232,196,106,.14);transition:background .15s,border-color .15s,padding .15s}
 #menu .mi b{width:24px;text-align:center;font-size:17px;flex:none}
 #menu .mi small{display:block;font-size:10.5px;font-weight:400;font-style:italic;color:#d9c79c;opacity:.8;margin-top:1px}
