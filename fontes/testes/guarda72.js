@@ -1,0 +1,11 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];const pg=await b.newPage({viewport:{width:800,height:360}});pg.on('pageerror',e=>errs.push(e.message));
+ await pg.goto('http://localhost:8765/index.html');await pg.evaluate(async()=>{await ARTP});
+ const r=await pg.evaluate(()=>{__RA.newGame({civ:'gregos',map:'terra',diff:'facil',size:'med'});__RA.startGame();OPT.snd=false;window.aiTick=function(){};
+  const s=G.starts[0];const X=(s[0]+6)*TS,Y=(s[1]+6)*TS;const v=spawnUnit('vill',0,X,Y);const hs=[0,1].map(i=>spawnUnit('hopl',0,X-4*TS,Y+i*TS));
+  UI.aim={kind:'guard',ids:hs.map(u=>u.id)};const p=w2s(v.x,v.y);clickAt(p.x,p.y,false);
+  orderMove(v,X+8*TS,Y+3*TS);for(let i=0;i<20*12;i++)__RA.step(.05);
+  const d1=hs.map(u=>(hyp(u.x-v.x,u.y-v.y)/TS).toFixed(1));
+  const en=spawnUnit('guer',1,v.x+3*TS,v.y);orderAttack(en,v);for(let i=0;i<20*10;i++)__RA.step(.05);
+  return {perto:d1,guard:hs.map(u=>u.guard===v.id),en:en.dead?'morto':'vivo',vil:v.dead?'morto':'vivo'}});
+ console.log(JSON.stringify(r));console.log('ERROS',errs);await b.close()})();

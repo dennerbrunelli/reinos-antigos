@@ -1,0 +1,12 @@
+const {chromium,devices}=require('playwright');
+(async()=>{const b=await chromium.launch();const ctx=await b.newContext({...devices['Galaxy S9+ landscape']});const pg=await ctx.newPage();const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+ await pg.goto('http://localhost:8765/index.html');await pg.evaluate(async()=>{await ARTP});
+ await pg.evaluate(()=>{__RA.newGame({civ:'gregos',map:'terra',diff:'facil',size:'med'});__RA.startGame();OPT.snd=false});await pg.waitForTimeout(1200);
+ await pg.evaluate(()=>{const t=G.B.find(b=>b.o===0&&b.type==='tc');SEL=[t.id];updHUD(true)});await pg.waitForTimeout(400);
+ const pos=await pg.evaluate(()=>[...$('cmds').children].map(c=>{const r=c.getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]}));
+ const q0=await pg.evaluate(()=>G.B.find(b=>b.o===0&&b.type==='tc').q.length);
+ const hold=async(i,ms)=>{const cdp=await ctx.newCDPSession(pg);const [x,y]=pos[i];await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});await pg.waitForTimeout(ms);const txt=await pg.evaluate(()=>$('tip').style.display==='block'?$('tip').innerText:'');if(i===1)await pg.screenshot({path:'/home/claude/trab/tip.png'});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await pg.waitForTimeout(300);return txt};
+ for(let i=0;i<pos.length;i++)console.log(i,JSON.stringify(await hold(i,700)));
+ const q1=await pg.evaluate(()=>G.B.find(b=>b.o===0&&b.type==='tc').q.length);console.log('fila antes/depois de segurar (não pode mudar):',q0,q1);
+ await pg.waitForTimeout(2500);console.log(await pg.evaluate(()=>[...$('cmds').children].map(c=>c.textContent.trim().slice(0,8)).join('|')));await pg.tap('#cmds .cb:nth-child(3)');await pg.waitForTimeout(300);console.log('toque curto treina:',await pg.evaluate(()=>G.B.find(b=>b.o===0&&b.type==='tc').q.length));
+ console.log('ERROS',errs);await b.close()})();

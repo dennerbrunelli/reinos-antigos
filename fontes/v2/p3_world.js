@@ -379,7 +379,7 @@ function idleThink(u,T,dt){
   }
   // postura (como no Age e no Rise): agressiva, defensiva, firme ou sem ataque
   const S=u.o===0?stanceOf(u):'agr';if(S==='sem')return;
-  const R=S==='firme'?reachOf(T):T.los*losMul()*TS+(T.rng?TS:0);
+  const R=S==='firme'?reachOf(T):Math.max(T.los||4,5)*losMul()*TS+(T.rng?TS:0);// campo de visão mínimo de 5 quadrados
   const en=nearestEnemy(u,R,u.o!==0&&u.o<NP);if(en){u.gx=u.x;u.gy=u.y;orderAttack(u,en);u.auto=1}
 }
 function doGather(u,T,dt){

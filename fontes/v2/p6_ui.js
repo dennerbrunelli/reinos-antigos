@@ -241,7 +241,7 @@ function infoHTML(s){
     // fila como no Age: o primeiro ícone enche de verde conforme fica pronto; tocar num ícone cancela
     h+='</div><div class="qq"><b class="qlb">'+(e.wait?'<span style="color:#ff8a7a">⚠ População no limite</span>':'⏳ '+(e.q.length>1?'':qName(it)+' ')+pc+'%')+'</b>'+
     e.q.map((q,i)=>'<span data-qi="'+i+'"'+(i===0?' style="background:linear-gradient(to top,#3f9a3f '+pc+'%,#000a '+pc+'%)"':'')+'>'+(q==='age'?'⬆️':q==='mil'?'🎖️':q==='nuke'?'☢️':q==='emp'?'⚡':q.startsWith('ln:')?LINES[q.slice(3)].ic:q.startsWith('t:')?TECH[q.slice(2)].ic:'<img src="'+THUMB['u'+q]+'">')+'</span>').join('')+'</div></div>'}
-  else h+=(T.train&&e.o===0?'<br>Toque no chão: ponto de encontro':T.drop&&e.o===0?'<br>Recebe: '+T.drop.map(k=>rimg(k)).join(' '):'')+'</div></div>';
+  else h+=(T.train&&e.o===0?'<br>📍 Toque no chão: encontro':T.drop&&e.o===0?'<br>Recebe: '+T.drop.map(k=>rimg(k)).join(' '):'')+'</div></div>';
   return h;
 }
 function qName(q){return q==='age'?'Nova era':q==='mil'?'Org. Militar':q==='nuke'?'Bomba':q==='emp'?'Pulso EMP':q.startsWith('ln:')?(LINES[q.slice(3)].n||'Pesquisa'):q.startsWith('t:')?TECH[q.slice(2)].n:(STAT[0]&&STAT[0][q]?STAT[0][q].n:UT[q]?UT[q].n:q)}
@@ -606,7 +606,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 71';$('ver').textContent=VERSAO;
+const VERSAO='Versão 72';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';

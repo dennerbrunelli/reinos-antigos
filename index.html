@@ -1071,7 +1071,7 @@ function idleThink(u,T,dt){
   }
   // postura (como no Age e no Rise): agressiva, defensiva, firme ou sem ataque
   const S=u.o===0?stanceOf(u):'agr';if(S==='sem')return;
-  const R=S==='firme'?reachOf(T):T.los*losMul()*TS+(T.rng?TS:0);
+  const R=S==='firme'?reachOf(T):Math.max(T.los||4,5)*losMul()*TS+(T.rng?TS:0);// campo de visão mínimo de 5 quadrados
   const en=nearestEnemy(u,R,u.o!==0&&u.o<NP);if(en){u.gx=u.x;u.gy=u.y;orderAttack(u,en);u.auto=1}
 }
 function doGather(u,T,dt){
@@ -3480,7 +3480,7 @@ function infoHTML(s){
     // fila como no Age: o primeiro ícone enche de verde conforme fica pronto; tocar num ícone cancela
     h+='</div><div class="qq"><b class="qlb">'+(e.wait?'<span style="color:#ff8a7a">⚠ População no limite</span>':'⏳ '+(e.q.length>1?'':qName(it)+' ')+pc+'%')+'</b>'+
     e.q.map((q,i)=>'<span data-qi="'+i+'"'+(i===0?' style="background:linear-gradient(to top,#3f9a3f '+pc+'%,#000a '+pc+'%)"':'')+'>'+(q==='age'?'⬆️':q==='mil'?'🎖️':q==='nuke'?'☢️':q==='emp'?'⚡':q.startsWith('ln:')?LINES[q.slice(3)].ic:q.startsWith('t:')?TECH[q.slice(2)].ic:'<img src="'+THUMB['u'+q]+'">')+'</span>').join('')+'</div></div>'}
-  else h+=(T.train&&e.o===0?'<br>Toque no chão: ponto de encontro':T.drop&&e.o===0?'<br>Recebe: '+T.drop.map(k=>rimg(k)).join(' '):'')+'</div></div>';
+  else h+=(T.train&&e.o===0?'<br>📍 Toque no chão: encontro':T.drop&&e.o===0?'<br>Recebe: '+T.drop.map(k=>rimg(k)).join(' '):'')+'</div></div>';
   return h;
 }
 function qName(q){return q==='age'?'Nova era':q==='mil'?'Org. Militar':q==='nuke'?'Bomba':q==='emp'?'Pulso EMP':q.startsWith('ln:')?(LINES[q.slice(3)].n||'Pesquisa'):q.startsWith('t:')?TECH[q.slice(2)].n:(STAT[0]&&STAT[0][q]?STAT[0][q].n:UT[q]?UT[q].n:q)}
@@ -3845,7 +3845,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 71';$('ver').textContent=VERSAO;
+const VERSAO='Versão 72';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -5733,6 +5733,167 @@ window.__RA.cw={open:cwOpen,get:()=>CW,after:cwAfter,attack:cwAttack};
 #dipp{background:linear-gradient(rgba(34,25,15,.97),rgba(15,11,6,.98))!important;color:var(--pg)!important;border:1px solid #d8b468aa!important;border-radius:6px!important}
 #dipp small{opacity:.85}
 `;document.head.appendChild(css)}
+
+// =========================================================
+//   COMANDOS NO PADRÃO DO AGE II E DO RISE (Versão 72)
+//   · Tropas reagem sozinhas: atacam quem entra no campo de visão e acodem quem da sua cidade apanha
+//   · Sino nos prédios de defesa (Centro Urbano, Torre, Forte): aldeões próximos se abrigam;
+//     tocar de novo manda todos de volta ao que estavam fazendo
+//   · Explorar de verdade: a unidade segue revelando o mapa até não sobrar terra escondida
+//   · Atacar e avançar e Patrulhar escolhendo o ponto no mapa; Excluir unidade ou prédio
+// =========================================================
+function isFighter(u){return u&&!u.dead&&u.k==='u'&&!u.inT&&u.o<NP&&ST(u).atk>0&&UT[u.type].cls!=='vill'&&UT[u.type].cls!=='sac'&&u.type!=='pesc'&&u.type!=='trans'&&u.type!=='mercador'&&u.type!=='caravana'&&u.type!=='erudito'}
+
+// ---------- 1. acudir quem apanha (raio de 9 quadrados) ----------
+const HELP_T={};
+{const dOld=dealDmg;dealDmg=function(att,t,base){const wasEx=t&&t.explore&&!t.dead;const r=dOld(att,t,base);
+  // quem está explorando não para para revidar: segue o caminho (como o batedor do Age)
+  if(wasEx&&!t.dead&&!t.explore&&t.st==='attack'){t.st='idle';t.explore=true;exploreNext(t)}
+  // quem bate vem como um registro {o,id}: acha a unidade de verdade (flechas também valem)
+  try{const A=att&&att.id?E.get(att.id):null;if(A&&A.k==='u'&&!A.dead&&t&&t.o<NP&&A.o!==t.o&&foe(A.o,t.o)){att=A;
+    const k=t.o+':'+att.id;if(!HELP_T[k]||G.t-HELP_T[k]>.8){HELP_T[k]=G.t;
+      const c=t.k==='b'?ctr(t):t,R=9*TS;
+      for(const u of G.U){if(!isFighter(u)||u.o!==t.o||u===t)continue;if(u.st!=='idle'&&!(u.st==='move'&&u.amove))continue;
+        const S=u.o===0?stanceOf(u):'agr';if(S==='sem'||S==='firme')continue;
+        if(isNav(u)!==isNav(att)&&!(ST(u).rng>0))continue;
+        if(hyp(u.x-c.x,u.y-c.y)>R)continue;if(u.st==='idle'){u.gx=u.x;u.gy=u.y}const am=u.amove;u._keep=1;orderAttack(u,att);u._keep=0;u.amove=am;u.auto=1}}}}catch(e){}
+  return r}}
+
+// ---------- ordens do jogador cancelam explorar / atacar-e-avançar ----------
+{const rOld=reset;reset=function(u){if(!u._keep){u.explore=false;u.amove=null;u.guard=0}return rOld(u)}}
+
+// ---------- 2. sino ----------
+const BELL_B={tc:1,torre:1,forte:1};
+function bellSnd(){if(!OPT.snd||!audio())return;const o=voice(0,1,.45);for(let i=0;i<3;i++)metal([1046,1568,2093,2637],1.1,.16,i*.34,o)}
+function bellActive(){return G.U.some(u=>!u.dead&&u.o===0&&u.bell)}
+function ringBell(b){const c=ctr(b),R=22*TS;const room=new Map();
+  const defs=G.B.filter(x=>!x.dead&&x.o===0&&x.done>=1&&BELL_B[x.type]&&garCap(x)>0);
+  for(const d of defs)room.set(d.id,garCap(d)-(d.cargo||[]).length-G.U.filter(u=>!u.dead&&u.st==='gar'&&u.tg===d.id&&!u.inT).length);
+  const vs=G.U.filter(u=>!u.dead&&!u.inT&&u.o===0&&u.type==='vill'&&hyp(u.x-c.x,u.y-c.y)<R).sort((a,b)=>hyp(a.x-c.x,a.y-c.y)-hyp(b.x-c.x,b.y-c.y));
+  let n=0,fora=0;
+  for(const u of vs){let best=null,bd=1e9;for(const d of defs){if(room.get(d.id)<=0)continue;const p=ctr(d),dd=hyp(p.x-u.x,p.y-u.y);if(dd<bd){bd=dd;best=d}}
+    u.bell={st:u.st,tg:u.tg,bt:u.bt,x:u.x,y:u.y};
+    if(!best){fora++;u._keep=1;orderMove(u,c.x+(Math.random()-.5)*3*TS,c.y+(b.sz+1)*TS);u._keep=0;continue}
+    room.set(best.id,room.get(best.id)-1);reset(u);u.patrol=null;u.st='gar';u.tg=best.id;u.mv=false;u.fail=0;n++}
+  bellSnd();toast('🔔 Sino tocado! '+n+' aldeões correm para se abrigar'+(fora?' · '+fora+' sem lugar ficam perto do prédio':''));UI.sig=''}
+function backToWork(){let n=0;
+  const casas=new Set();for(const u of G.U)if(!u.dead&&u.o===0&&u.bell&&u.inT)casas.add(u.inT);
+  for(const id of casas){const b=E.get(id);if(!b)continue;const outros=(b.cargo||[]).map(i=>E.get(i)).filter(u=>u&&!u.bell);garEject(b);if(outros.length)garrisonOrder(outros,b)}
+  for(const u of G.U){if(u.dead||u.o!==0||!u.bell)continue;const p=u.bell;u.bell=null;n++;
+    const t=p.tg&&E.get(p.tg);
+    if(t&&!t.dead&&(p.st==='gather'||p.st==='return')&&canGather(u,t))orderGather(u,t);
+    else if(t&&!t.dead&&p.st==='build'&&t.k==='b')orderBuild(u,t);
+    else{u.st='idle';u.mv=false}}
+  snd('done');toast('🔨 De volta ao trabalho: '+n+' aldeões');UI.sig=''}
+
+// ---------- 3. explorar sem parar ----------
+let EXQ=null;
+function exploreTarget(u){let s=tileOf(u.x,u.y);
+  if(!pass[s]){const bx=s%MW,by=(s/MW)|0;s=-1;for(const[dx,dy,d2]of SPIRAL){if(d2>9)break;const x=bx+dx,y=by+dy;if(inMap(x,y)&&pass[idx(x,y)]){s=idx(x,y);break}}if(s<0)return null}
+  const bad=u.exBad||(u.exBad=new Set());
+  if(!EXQ||EXQ.length<N)EXQ=new Int32Array(N);const seen=new Uint8Array(N);let h=0,t=0;EXQ[t++]=s;seen[s]=1;let first=-1,fd=0;const cand=[];
+  while(h<t){const i=EXQ[h++];const x=i%MW,y=(i/MW)|0;
+    if(!G.exp[i]&&!bad.has(i)){const d=hyp(x-(s%MW),y-((s/MW)|0));if(first<0){first=i;fd=d}cand.push(i);if(cand.length>40||d>fd+8)break}
+    for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+dx,ny=y+dy;if(nx<1||ny<1||nx>=MW-1||ny>=MH-1)continue;const j=ny*MW+nx;if(seen[j])continue;seen[j]=1;
+      if(pass[j])EXQ[t++]=j}}
+  if(!cand.length)return null;
+  // entre os mais perto, prefere seguir na mesma direção (anda em linha, não fica indo e voltando)
+  const hx=u.exDir?u.exDir[0]:0,hy=u.exDir?u.exDir[1]:0;let best=cand[0],bs=1e9;
+  for(const i of cand){const dx=i%MW-(s%MW),dy=((i/MW)|0)-((s/MW)|0),d=hyp(dx,dy)||1;const sc=d-(hx*dx+hy*dy)/d*3;if(sc<bs){bs=sc;best=i}}
+  return best}
+function exploreNext(u){
+  if(u.exT!=null){const tx=(u.exT%MW+.5)*TS,ty=(((u.exT/MW)|0)+.5)*TS;if(hyp(u.x-tx,u.y-ty)>2.5*TS&&!G.exp[u.exT])(u.exBad||(u.exBad=new Set())).add(u.exT)}
+  const i=exploreTarget(u);
+  if(i==null){u.exMiss=(u.exMiss||0)+1;if(u.exMiss<4)return;u.explore=false;u.exT=null;if(u.o===0&&!G._exMsg){G._exMsg=G.t;toast('🔭 Não há mais terra escondida ao alcance desta unidade')}return}
+  u.exMiss=0;const x=(i%MW+.5)*TS,y=(((i/MW)|0)+.5)*TS;const d=hyp(x-u.x,y-u.y)||1;u.exDir=[(x-u.x)/d,(y-u.y)/d];u.exT=i;
+  u._keep=1;orderMove(u,x,y);u._keep=0;u.explore=true}
+cmdScout=function(us){let n=0;G._exMsg=0;for(const u of us){if(u.dead||isNav(u))continue;u.exBad=new Set();u.exT=null;u.explore=true;exploreNext(u);if(u.explore)n++}
+  toast(n?'🔭 Explorando até revelar o mapa todo (qualquer outra ordem para)':'Não há terra escondida ao alcance')};
+
+// ---------- 4. atacar e avançar / patrulha que combate ----------
+function amoveScan(u){u.amS=(u.amS||0)-.05;if(u.amS>0)return false;u.amS=.4;
+  const T=UT[u.type],R=Math.max(T.los||4,5)*TS*losMul()+(T.rng?TS:0);const en=nearestEnemy(u,R,true);
+  if(en){const am=u.amove,pt=u.patrol;u._keep=1;u._pat=1;orderAttack(u,en);u._keep=0;u._pat=0;u.amove=am;u.patrol=pt;u.auto=1;return true}return false}
+{const uOld=updUnit;updUnit=function(u,dt){
+  if(u.k==='u'&&u.o<NP&&!u.dead&&!u.inT){
+    if(u.explore&&u.st==='idle'){u.scan=Math.max(u.scan||0,.6);// explorando: não para para brigar com bicho ou inimigo
+      exploreNext(u)}
+    else if((u.amove||u.patrol)&&u.st==='move'&&isFighter(u))amoveScan(u);
+    else if(u.guard&&(u.st==='idle'||u.st==='move')){const g=E.get(u.guard);
+      if(!g||g.dead){u.guard=0}else{const gc=g.k==='b'?ctr(g):g;u.gS=(u.gS||0)-dt;
+        if(u.gS<=0){u.gS=.4;const en=nearestEnemy({x:gc.x,y:gc.y,o:u.o,type:u.type,k:'u',id:u.id},6*TS,true);
+          if(en){const gd=u.guard;u._keep=1;orderAttack(u,en);u._keep=0;u.guard=gd;u.auto=1}
+          else if(hyp(u.x-gc.x,u.y-gc.y)>(g.k==='b'?g.sz*TS*.8+TS*1.5:2.2*TS)&&u.st==='idle'){const gd=u.guard;u._keep=1;orderMove(u,gc.x+(Math.random()-.5)*TS*1.6,gc.y+(Math.random()-.5)*TS*1.6+(g.k==='b'?g.sz*TS*.6:0));u._keep=0;u.guard=gd}}}}
+    else if(u.amove&&u.st==='idle'){const a=u.amove;if(hyp(u.x-a.x,u.y-a.y)>1.5*TS){u._keep=1;orderMove(u,a.x,a.y);u._keep=0;u.amove=a}else u.amove=null}}
+  return uOld(u,dt)}}
+// patrulha antiga escolhia um ponto aleatório: agora o jogador toca no mapa
+function aimMode(kind,us,msg){UI.aim={kind,ids:us.map(u=>u.id)};toast(msg+' · toque no mapa (ou no botão de novo para cancelar)');UI.sig=''}
+{const cOld=clickAt;clickAt=function(sx,sy,add){
+  if(UI.aim){const A=UI.aim;UI.aim=null;UI.sig='';const w=scrToW(sx,sy);const us=A.ids.map(id=>E.get(id)).filter(u=>u&&!u.dead&&!u.inT);
+    if(!us.length)return;const ti=tileOf(w.x,w.y);
+    if(A.kind==='amove'){us.forEach((u,i)=>{const a=i*2.4,r=i?TS*(.8+(i%6)*.35):0;const x=w.x+Math.cos(a)*r,y=w.y+Math.sin(a)*r;u.patrol=null;orderMove(u,x,y);u.amove={x,y}});mark(w.x,w.y,'#ff5a4a');toast('⚔️ Avançando e atacando o que aparecer no caminho')}
+    if(A.kind==='guard'){let alvo=null,bd=40;for(const v of G.U){if(v.dead||v.inT||v.o!==0||A.ids.includes(v.id))continue;const p=w2s(v.x,v.y),d=hyp(p.x-sx,p.y-sy);if(d<bd){bd=d;alvo=v}}
+      if(!alvo){for(const b of G.B){if(b.dead||b.o!==0)continue;const p=w2s(ctr(b).x,ctr(b).y);if(hyp(p.x-sx,p.y-sy)<b.sz*TS*Z*.6){alvo=b;break}}}
+      if(!alvo){toast('🛡️ Toque numa unidade ou prédio seu para proteger');return}
+      us.forEach(u=>{u.patrol=null;u._keep=1;reset(u);u._keep=0;u.amove=null;u.explore=false;u.guard=alvo.id;u.st='idle'});mark(alvo.x||ctr(alvo).x,alvo.y||ctr(alvo).y,'#7cf');
+      toast('🛡️ Protegendo '+(alvo.k==='b'?BT[alvo.type].n:UT[alvo.type].n)+': seguem e atacam quem chegar perto');return}
+    if(A.kind==='patrol'){us.forEach((u,i)=>{const a=i*2.4,r=i?TS*(.8+(i%6)*.35):0;const b={x:w.x+Math.cos(a)*r,y:w.y+Math.sin(a)*r};u.patrol={a:{x:u.x,y:u.y},b,to:'b'};u._pat=1;orderMove(u,b.x,b.y);u._pat=0});mark(w.x,w.y,'#ffd84a');toast('🔁 Patrulhando entre aqui e o ponto marcado (atacam quem aparecer)')}
+    return}
+  return cOld(sx,sy,add)}}
+
+// ---------- 5. excluir (pede confirmação com um segundo toque) ----------
+function cmdDelete(es){if(!UI.delArm||performance.now()-UI.delArm>3500){UI.delArm=performance.now();toast('💀 Toque em Excluir de novo para confirmar');return}
+  UI.delArm=0;let n=0;for(const e of es){if(e.dead||e.o!==0)continue;if(e.k==='b'&&e.cargo&&e.cargo.length)garEject(e);kill(e,null);n++}
+  SEL=[];updHUD(true);toast('💀 '+n+' excluído'+(n>1?'s':''))}
+
+// ---------- montagem dos botões ----------
+{const gOld=getCmds;getCmds=function(){let out=gOld().filter(c=>!(c.nm&&/^Alarme/.test(c.nm)));const s=selEnts();if(!s.length)return out;
+  const own=s.filter(e=>e.o===0);
+  // prédio de defesa: sino
+  if(s.length===1&&s[0].k==='b'&&s[0].o===0&&BELL_B[s[0].type]&&s[0].done>=1){const b=s[0];
+    out.unshift(bellActive()?{ic:'🔔',nm:'Voltar ao trabalho',act:()=>backToWork()}:{ic:'🔔',nm:'Tocar o sino: aldeões se abrigam',act:()=>ringBell(b)})}
+  // tropas: patrulha e atacar-e-avançar escolhendo o ponto
+  const mil=own.filter(u=>u.k==='u'&&isFighter(u)&&!isNav(u));
+  if(mil.length&&mil.length===s.length){
+    const pi=out.findIndex(c=>c.nm==='Patrulhar');const pat={ic:'🔁',nm:'Patrulhar até um ponto',act:()=>{if(UI.aim){UI.aim=null;toast('Cancelado');return}aimMode('patrol',mil,'🔁 Patrulha')}};
+    if(pi>=0)out[pi]=pat;else out.unshift(pat);
+    out.splice(2,0,{ic:'🛡️',nm:'Proteger (escoltar)',act:()=>{if(UI.aim){UI.aim=null;toast('Cancelado');return}aimMode('guard',mil,'🛡️ Proteger')}});
+    out.splice(1,0,{ic:'⚔️',nm:'Atacar e avançar',act:()=>{if(UI.aim){UI.aim=null;toast('Cancelado');return}aimMode('amove',mil,'⚔️ Atacar e avançar')}})}
+  // excluir: unidades ou prédio próprios
+  if(own.length&&own.length===s.length&&!(s.length===1&&s[0].k==='b'&&s[0].type==='tc'&&G.B.filter(b=>!b.dead&&b.o===0&&b.type==='tc').length<2))
+    out.push({ic:'💀',nm:'Excluir',act:()=>cmdDelete(own)});
+  const seen=new Set();out=out.filter(c=>{const k=c.nm||c.ic;if(seen.has(k))return false;seen.add(k);return true});
+  return out.slice(0,12)}}
+// ícone de excluir: caveira com ossos cruzados, como nos clássicos (desenhado à mão no código)
+Object.assign(CMD_ART,{skull:g=>{medal(g,'#5a1d16','#120404');
+  // ossos cruzados atrás
+  const osso=(a)=>{g.save();g.translate(40,46);g.rotate(a);const L=27;g.fillStyle='#e9dcc0';g.strokeStyle='#1a0e04';g.lineWidth=2;
+    g.beginPath();g.roundRect(-L,-3.2,L*2,6.4,3);g.fill();g.stroke();
+    for(const s of[-1,1])for(const t of[-1,1]){g.beginPath();g.arc(s*L,t*3.6,4.4,0,7);g.fill();g.stroke()}g.restore()};
+  osso(.62);osso(-.62);
+  // crânio
+  const cr=g.createRadialGradient(34,26,3,40,34,22);cr.addColorStop(0,'#fffaf0');cr.addColorStop(.7,'#e6d8b8');cr.addColorStop(1,'#b8a37c');
+  g.fillStyle=cr;g.strokeStyle='#1a0e04';g.lineWidth=2.2;g.beginPath();g.moveTo(22,38);g.bezierCurveTo(20,16,60,16,58,38);g.lineTo(55,45);g.lineTo(52,46);g.lineTo(52,53);g.lineTo(28,53);g.lineTo(28,46);g.lineTo(25,45);g.closePath();g.fill();g.stroke();
+  // olhos fundos, nariz e dentes
+  g.fillStyle='#1a0e04';for(const x of[32,48]){g.beginPath();g.ellipse(x,36,5.6,6.4,0,0,7);g.fill()}
+  g.fillStyle='#c0392b';for(const x of[32,48]){g.beginPath();g.arc(x+.6,37,1.6,0,7);g.fill()}
+  g.fillStyle='#1a0e04';g.beginPath();g.moveTo(40,41);g.lineTo(37,47);g.lineTo(43,47);g.closePath();g.fill();
+  g.strokeStyle='#1a0e04';g.lineWidth=1.4;for(const x of[33,37,41,45]){g.beginPath();g.moveTo(x+1,48.5);g.lineTo(x+1,53);g.stroke()}
+  g.beginPath();g.moveTo(29,50);g.lineTo(51,50);g.stroke();
+  // rachadura
+  g.lineWidth=1.3;g.beginPath();g.moveTo(45,21);g.lineTo(43,26);g.lineTo(46,29);g.stroke()}});
+Object.assign(CMD_ART,{
+  amove:g=>{medal(g,'#c87a2c','#4a2208');
+    // seta grossa para frente com uma espada por cima: "vai atacando pelo caminho"
+    fillP(g,[[16,46],[44,46],[44,56],[64,40],[44,24],[44,34],[16,34]],'#fff1c0');
+    g.save();g.translate(38,40);g.rotate(-.78);g.fillStyle='#d8dee6';g.strokeStyle='#1a0e04';g.lineWidth=1.8;
+    g.beginPath();g.moveTo(-3,-22);g.lineTo(0,-28);g.lineTo(3,-22);g.lineTo(3,10);g.lineTo(-3,10);g.closePath();g.fill();g.stroke();
+    g.fillStyle='#e0b040';g.beginPath();g.rect(-9,10,18,4);g.fill();g.stroke();g.fillStyle='#6a3a16';g.beginPath();g.rect(-2.2,14,4.4,9);g.fill();g.stroke();g.restore()},
+  guard:g=>{medal(g,'#4a6c9a','#101c34');
+    // escudo com a cruz: "fica junto e defende"
+    const sh=[[40,15],[60,22],[58,42],[40,63],[22,42],[20,22]];fillP(g,sh,'#e8c45a');
+    fillP(g,[[40,20],[55,25],[53,41],[40,57],[27,41],[25,25]],'#2a5aa0','#1a0e04');
+    g.fillStyle='#f4ead0';g.fillRect(37,24,6,30);g.fillRect(28,33,24,6)}});
 // =========================================================
 //   BOTÕES DE COMANDO: todos com o mesmo estilo de medalhão, com nome embaixo, sem fileira de cadeados
 //   - comandos que usavam emoji solto (🔁 🚨 🤖 ⚖️ 🏛 📤…) ganham desenho próprio em medalhão
@@ -5758,8 +5919,8 @@ Object.assign(CMD_ART,{
 for(const k of['gear','queue'])CMD_ART[k+'Off']=g=>{g.save();g.filter='grayscale(.8) brightness(.75)';CMD_ART[k](g);g.restore();stroke2(g,()=>{g.beginPath();g.moveTo(18,62);g.lineTo(62,18)},5,'#e04030','#fff')};
 // emoji que sobrar sem desenho próprio entra dentro de um medalhão, para não destoar
 function emojiIcon(ic){const key='e'+ic;if(!ICO[key]){const[c,g]=icoC();CMD_ART.generic(g);g.font='32px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';g.textAlign='center';g.textBaseline='middle';g.shadowColor='#000a';g.shadowBlur=4;g.fillText(ic,40,42);ICO[key]=c.toDataURL()}return ICO[key]}
-const CMD_BYNAME=[['Patrulhar','patrol'],['Alarme','bell'],['Coleta automática','gear'],['Plano de coleta','scales'],['Fila automática','queue'],['Ver prédios','city'],['Desguarnecer','ungar']];
-const CMD_SHORT={'Centro Urbano':'Cidade','Acampamento de lenhadores':'Lenhador','Ver prédios da cidade':'Prédios','Atacar o inimigo mais perto':'Atacar','Recuar para a cidade':'Recuar','Desembarcar aqui':'Desembarcar',
+const CMD_BYNAME=[['Patrulhar','patrol'],['Tocar o sino','bell'],['Voltar ao trabalho','bell'],['Coleta automática','gear'],['Plano de coleta','scales'],['Fila automática','queue'],['Ver prédios','city'],['Desguarnecer','ungar'],['Excluir','skull'],['Atacar e avançar','amove'],['Proteger','guard']];
+const CMD_SHORT={'Tocar o sino':'Sino','Tocar o sino: aldeões se abrigam':'Sino','Voltar ao trabalho':'Trabalhar','Patrulhar até um ponto':'Patrulhar','Atacar e avançar':'Avançar','Proteger (escoltar)':'Proteger','Centro Urbano':'Cidade','Acampamento de lenhadores':'Lenhador','Ver prédios da cidade':'Prédios','Atacar o inimigo mais perto':'Atacar','Recuar para a cidade':'Recuar','Desembarcar aqui':'Desembarcar',
   'Coleta automática':'Auto','Plano de coleta':'Coleta','Fila automática de aldeões':'Fila','Oficina de Cerco':'Oficina','Silo de Mísseis':'Silo','Soldado de Assalto':'Assalto','Espada Longa':'Esp. Longa','Organização Militar':'Exército'};
 function cmdShort(c){let n=String(c.nm||'').split(/[:·(]/)[0].trim();if(c.kind==='age')return'Avançar';if(c.pw)return'Poder';
   for(const k in CMD_SHORT)if(n.startsWith(k))return CMD_SHORT[k];
@@ -5789,6 +5950,69 @@ updHUD=function(force){updHUDBt(force);if(!G||!running)return;const box=$('cmds'
 #cmds .cb[data-era]{filter:grayscale(.7) brightness(.62)}
 #cmds .cb[data-era]::before{content:attr(data-era);position:absolute;right:2px;top:1px;font:700 10px/1 Georgia,serif;color:#f0c96a;text-shadow:0 0 2px #000,0 0 3px #000;z-index:2}
 `;document.head.appendChild(css)}
+
+// =========================================================
+//   LEGENDA DOS BOTÕES (Versão 72): tocar ativa; SEGURAR o dedo mostra uma janela explicando
+//   o que o botão faz (nome, custo, descrição e, no poder do povo, o efeito e o tempo de espera).
+// =========================================================
+const HELP_CMD=[
+ ['Patrulhar','As tropas vão e voltam entre onde estão e o ponto que você tocar. Atacam quem aparecer no caminho.'],
+ ['Atacar e avançar','Toque num ponto do mapa: as tropas andam até lá atacando todo inimigo que encontrarem, e depois seguem.'],
+ ['Atacar o inimigo','Manda as tropas escolhidas contra o inimigo conhecido mais perto.'],
+ ['Proteger','Toque numa unidade ou prédio seu: as tropas ficam junto e atacam quem chegar perto.'],
+ ['Explorar','A unidade sai revelando o mapa sozinha e só para quando não houver mais terra escondida. Qualquer outra ordem cancela.'],
+ ['Recuar','As tropas voltam para perto do Centro Urbano mais próximo.'],
+ ['Parar','Cancela a ordem atual. A unidade fica onde está.'],
+ ['Postura','Agressiva: persegue o inimigo. Defensiva: ataca e volta ao posto. Firme: só ataca quem chega ao alcance. Sem ataque: não reage.'],
+ ['Formação','Como o grupo anda e para: Livre, Linha, Caixa, Espaçada ou Flanco. Em formação o grupo anda junto, no passo do mais lento.'],
+ ['Excluir','Remove a unidade ou o prédio escolhido para liberar população ou espaço. Pede um segundo toque para confirmar.'],
+ ['Tocar o sino','Os aldeões próximos largam o trabalho e correm para se abrigar no Centro Urbano, Torre ou Forte mais perto. Abrigados, ajudam a atirar flechas.'],
+ ['Voltar ao trabalho','Os aldeões saem dos abrigos e voltam ao que estavam fazendo antes do sino.'],
+ ['Desguarnecer','Todos que estão dentro do prédio saem.'],
+ ['Coleta automática','Ligada: aldeão parado procura trabalho sozinho, seguindo o Plano de coleta.'],
+ ['Plano de coleta','Diz em que os aldeões automáticos devem se concentrar: equilibrado, comida, madeira ou metal.'],
+ ['Fila automática','Ligada: o Centro Urbano treina aldeões sem parar enquanto houver comida e população livre.'],
+ ['Ver prédios','Mostra a lista de prédios da cidade e quantos você pode ter.'],
+ ['Comprar e vender','Abre o mercado para trocar recursos por riqueza e riqueza por recursos.'],
+ ['Avançar','Passa para a próxima era: libera unidades, prédios e pesquisas novos e deixa as tropas mais fortes.'],
+ ['Organização Militar','Aumenta o limite de população em 25 e libera melhorias militares.'],
+ ['Cívica','Permite mais cidades e aumenta o alcance das fronteiras.'],
+ ['Comércio','Aumenta o limite de cada recurso e o ganho das caravanas e mercadores.'],
+ ['Ciência','Deixa as pesquisas mais baratas e os eruditos mais produtivos.']];
+const HELP_ID={qidle:['Aldeão parado','Seleciona o próximo aldeão sem trabalho e leva a câmera até ele. O número mostra quantos estão parados.'],
+ qarmy:['Exército','Seleciona todas as suas tropas de uma vez. O número mostra quantos soldados você tem.'],
+ qtc:['Centro Urbano','Leva a câmera até a sua capital e a seleciona.'],
+ bdip:['Diplomacia','Propor aliança, declarar guerra ou enviar presentes às outras nações.'],
+ bhud:['Interface','Mostra, esconde e muda de lugar os painéis da tela.']};
+function helpOf(c){const P=G.P[0];let h='<b style="font-size:16px;color:#f3d37a">'+String(c.nm||'').split(' · toque')[0]+'</b>';
+  if(c.cost)h+='<div style="margin-top:3px">Custo: '+costTxt(c.cost)+'</div>';
+  const pw=typeof POWER!=='undefined'&&POWER[civOf(0).id];
+  if(c.pw&&pw){h+='<div style="margin-top:4px">'+pw.d+'</div><div style="opacity:.8;margin-top:3px">⏳ Espera entre usos: '+Math.round(pw.cd/60*10)/10+' min'+(pw.dur?' · dura '+pw.dur+' s':'')+'</div>'}
+  else{if(c.d)h+='<div style="margin-top:4px">'+c.d+'</div>';
+    const m=HELP_CMD.find(([k])=>String(c.nm||'').startsWith(k));if(m)h+='<div style="margin-top:4px">'+m[1]+'</div>';
+    // unidade ou prédio: mostra os números
+    const nm=String(c.nm||'').split(/[:·(]/)[0].trim();let ut=null;for(const k in UT){const S=STAT[0]&&STAT[0][k];if((S&&S.n===nm)||UT[k].n===nm){ut=k;break}}
+    if(ut){const S=ST({type:ut,o:0});h+='<div style="margin-top:4px;opacity:.9">❤️ '+Math.round(S.hp)+' · ⚔️ '+Math.round(S.atk)+(S.rng?' · 🎯 alcance '+S.rng:'')+' · 🛡 '+(S.arm||0)+' · 👁 visão '+(UT[ut].los||4)+'</div>'}
+    else{for(const k in BT)if(BT[k].n===nm){h+='<div style="margin-top:4px;opacity:.9">❤️ '+BT[k].hp+(BT[k].d?' · '+BT[k].d:'')+'</div>';break}}}
+  if(c.lock)h+='<div style="margin-top:4px;color:#ff9a8a">🔒 '+(typeof c.lock==='string'?c.lock:'Ainda não liberado')+'</div>';
+  else if(c.dis)h+='<div style="margin-top:4px;color:#ff9a8a">Indisponível agora'+(c.cost&&!afford(0,c.cost)?' · faltam recursos':'')+'</div>';
+  return h}
+{const css=document.createElement('style');css.textContent='#tip{position:fixed;z-index:80;display:none;max-width:min(340px,80vw);padding:10px 13px;border-radius:8px;background:linear-gradient(#2a1d0c,#150d04);border:2px solid #c9952f;color:#f1e6c8;font:14px/1.35 Georgia,serif;box-shadow:0 4px 18px #000c;pointer-events:none}#tip img{height:15px;vertical-align:-2px}';document.head.appendChild(css);
+  const tip=document.createElement('div');tip.id='tip';document.body.appendChild(tip);
+  let tm=null,ht=null,shown=false,eat=false,sx=0,sy=0;
+  const hide=()=>{clearTimeout(tm);clearTimeout(ht);tm=null;if(shown){shown=false;tip.style.display='none'}};
+  const show=(el,html)=>{tip.innerHTML=html;tip.style.display='block';shown=true;eat=true;const r=el.getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight;
+    let x=clamp(r.left+r.width/2-w/2,8,innerWidth-w-8),y=r.top-h-10;if(y<8)y=Math.min(innerHeight-h-8,r.bottom+10);tip.style.left=x+'px';tip.style.top=y+'px';try{navigator.vibrate&&navigator.vibrate(12)}catch(e){}};
+  document.addEventListener('pointerdown',e=>{hide();eat=false;if(!G||!running)return;const t=e.target.closest&&e.target.closest('#cmds .cb,#quick .cb,#quick button,#qidle,#qarmy,#qtc,#bdip,#bhud');if(!t)return;sx=e.clientX;sy=e.clientY;
+    tm=setTimeout(()=>{let html=null;
+      if(t.closest('#cmds')){const i=[...$('cmds').children].indexOf(t);const c=getCmds()[i];if(c)html=helpOf(c)}
+      else{const H=HELP_ID[t.id]||HELP_ID[(t.closest('[id]')||{}).id];if(H)html='<b style="font-size:16px;color:#f3d37a">'+H[0]+'</b><div style="margin-top:4px">'+H[1]+'</div>'}
+      if(html)show(t,html)},420)},true);
+  document.addEventListener('pointermove',e=>{if(tm&&!shown&&hyp(e.clientX-sx,e.clientY-sy)>14)hide()},true);
+  for(const ev of['pointerup','pointercancel'])document.addEventListener(ev,()=>{clearTimeout(tm);tm=null;if(shown){clearTimeout(ht);ht=setTimeout(hide,2200)}},true);
+  // o toque longo só mostra a legenda: não ativa o botão
+  document.addEventListener('click',e=>{if(eat){eat=false;e.stopPropagation();e.preventDefault()}},true);
+  document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('#cmds,#quick'))e.preventDefault()})}
 
 // =========================================================
 //   SONS GRAVADOS (Versão 63): efeitos e música feitos no ElevenLabs
