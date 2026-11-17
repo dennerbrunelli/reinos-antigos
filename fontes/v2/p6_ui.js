@@ -232,7 +232,7 @@ function infoHTML(s){
     if(e.type==='sac')st+=' ✨'+Math.floor(e.faith)+'%';
     if(e.cargo)st+=' · carga '+e.cargo.length+'/'+UT[e.type].cap;
     return x+por(THUMB['u'+(e.type==='guer'&&T.axe?'guerA':e.type)])+'<div class="bd"><div class="t">'+T.n+own+'</div><div class="hp"><div style="width:'+clamp(e.hp/T.hp*100,0,100)+'%"></div></div><div class="st">'+st+'<br>'+stt+(e.carry>0?' · '+rimg(e.ct)+(e.carry|0):'')+(e.att>ATTR_DELAY?' · <span style="color:#ff8a7a">⚠️ sem suprimento</span>':'')+'</div></div>'}
-  const T=BT[e.type];let h=x+por(THUMB['b'+e.type])+'<div class="bd"><div class="t">'+T.n+(e.o!==0?' <span style="color:#ff8a7a">(inimigo)</span>':'')+'</div><div class="hp"><div style="width:'+(e.hp/e.mhp*100)+'%"></div></div><div class="st">';
+  const T=BT[e.type];let h=x+por(THUMB['b'+e.type])+'<div class="bd"><div class="t">'+(e.gate?(e.lock?'Portão (trancado)':'Portão'):T.n)+(e.o!==0?' <span style="color:#ff8a7a">(inimigo)</span>':'')+'</div><div class="hp"><div style="width:'+(e.hp/e.mhp*100)+'%"></div></div><div class="st">';
   if(e.done<1)return h+'Em construção: '+Math.floor(e.done*100)+'%</div></div>';
   if(e.type==='fazenda')return h+rimg('food')+' '+Math.ceil(e.food)+' de comida</div></div>';
   h+='❤️'+Math.ceil(e.hp)+'/'+e.mhp;
@@ -606,7 +606,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 73';$('ver').textContent=VERSAO;
+const VERSAO='Versão 74';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
