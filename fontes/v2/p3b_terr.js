@@ -2,8 +2,8 @@
 // =========================================================
 //   FRONTEIRAS E CIDADES (a parte do Rise of Nations na fusão)
 // =========================================================
-const INF_CAP=13,INF_CITY=10,INF_TORRE=4;           // raio de influência em quadrados (com 8 não cabiam as fazendas)
-const CITY_MAX=4,CITY_MIN_OWN=18,CITY_MIN_EN=12;    // limite de cidades e distância entre elas
+const INF_CAP=17,INF_CITY=13,INF_TORRE=5;           // raio de influência em quadrados (com 8 não cabiam as fazendas)
+const CITY_MAX=4,CITY_MIN_OWN=22,CITY_MIN_EN=15;    // limite de cidades e distância entre elas
 const CAPT_T=30,CAPT_R=5,CAPT_IMM=60;               // tomada: segundos, raio, proteção depois de tomada
 const ATTR_DELAY=15,ATTR_RATE=.005,ATTR_FLOOR=.25;  // atrito: espera, perda por segundo, vida mínima
 const TERR_WIN=.65,TERR_T=180,GRACE_T=120,CAP_PEN=120;
@@ -13,7 +13,7 @@ let DOM=new Int8Array(N).fill(-1),DOMS=new Float32Array(N);
 let domDirty=true,domEdges=[[],[],[],[],[],[],[],[]],DOMCNT=new Array(MAX_PLAYERS).fill(0),LANDN=0;
 
 // raio de influência de um prédio pronto (capital 13, cidade 10, torre 4)
-function infR(b){const cv=(G.P[b.o]&&G.P[b.o].cvc)||0;if(b.type==='torre')return INF_TORRE;if(b.type==='forte')return 8+cv;if(b.type==='tc')return(b.id===G.P[b.o].capId?INF_CAP:INF_CITY)+cv;return 0}
+function infR(b){const cv=(G.P[b.o]&&G.P[b.o].cvc)||0;if(b.type==='torre')return INF_TORRE;if(b.type==='forte')return 10+cv;if(b.type==='tc')return(b.id===G.P[b.o].capId?INF_CAP:INF_CITY)+cv;return 0}
 
 // calcula o dono de cada quadrado: quem tem a influência mais forte ali
 function calcDom(){

@@ -4,7 +4,7 @@
 //   15 tipos + aleatório · Pequeno, Médio, Grande, Gigante
 //   terr: 0 terra, 1 água, 2 vau (água rasa: passa gente e barco)
 // =========================================================
-const MAPSZ={peq:{n:'Pequeno',s:64,pl:2},med:{n:'Médio',s:80,pl:4},gra:{n:'Grande',s:100,pl:6},gig:{n:'Gigante',s:128,pl:8}};
+const MAPSZ={peq:{n:'Pequeno',s:84,pl:2},med:{n:'Médio',s:108,pl:4},gra:{n:'Grande',s:132,pl:6},gig:{n:'Gigante',s:160,pl:8}};
 // muda o tamanho do mapa e refaz todas as tabelas que dependem dele
 function setMapSize(s){if(s===MW&&occ.length===s*s)return;MW=MH=s;N=s*s;
   occ=new Int32Array(N);pass=new Uint8Array(N);wpass=new Uint8Array(N);vis=new Uint8Array(N);

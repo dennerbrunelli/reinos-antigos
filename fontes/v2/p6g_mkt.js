@@ -22,8 +22,8 @@ const ronTick3=ronTick;
 ronTick=function(dt){ronTick3(dt);capInit();
   for(let o=0;o<NP;o++){for(const k of TRADE_K){const m=capOf(o,k);G.cap[o][k]=Math.min(m/3,(G.cap[o][k]??m/3)+m/60*dt);const p=G.mkt[o][k];G.mkt[o][k]=p+(1-p)*Math.min(1,dt*.004)}}};
 // ---------- comprar e vender ----------
-const buyPrice=(o,k)=>Math.round(TRADE_N*G.mkt[o][k]);
-const sellPrice=(o,k)=>Math.round(TRADE_N*G.mkt[o][k]*.75);
+const buyPrice=(o,k)=>Math.round(TRADE_N*G.mkt[o][k]*(G.P[o].techs.includes('guildas')?.85:1));
+const sellPrice=(o,k)=>Math.round(TRADE_N*G.mkt[o][k]*.75*(G.P[o].techs.includes('guildas')?1.15:1));
 function trade(o,k,buy){capInit();const P=G.P[o],p=G.mkt[o];
   if(buy){const c=buyPrice(o,k);if(P.res.wealth<c)return false;P.res.wealth-=c;P.res[k]+=TRADE_N;p[k]=Math.min(4,p[k]*1.07)}
   else{if(P.res[k]<TRADE_N)return false;P.res[k]-=TRADE_N;const g=sellPrice(o,k);P.res.wealth+=g;p[k]=Math.max(.25,p[k]*.94)}
@@ -63,4 +63,5 @@ LINES.com.d='coleta +5% · caravanas e mercadores +20% · limite de comércio +'
 const ronAI2=ronAI;
 ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){ronAI2(p,blds,has,any,build,htx,hty,toward,vills,army,res);
   if(!blds.some(b=>b.type==='mercado'&&b.done>=1))return;capInit();
-  const nx=G.P[p].age<MAXAGE?AGECOST[G.P[p].age+1]:{};for(const k of TRADE_K){if(res[k]>Math.max(1400,(nx[k]||0)+500)&&G.mkt[p][k]>.6)trade(p,k,0);else if(res[k]<60&&res.wealth>buyPrice(p,k)+250)trade(p,k,1)}};
+  const nx=G.P[p].age<MAXAGE?AGECOST[G.P[p].age+1]:{};if((nx.wealth||0)>res.wealth){let bk=null,bv=0;for(const k of TRADE_K){const sob=res[k]-(nx[k]||0)-250;if(sob>=TRADE_N&&G.mkt[p][k]>.45&&sob>bv){bv=sob;bk=k}}if(bk){trade(p,bk,0);return}}
+  for(const k of TRADE_K){if(res[k]>Math.max(1400,(nx[k]||0)+500)&&G.mkt[p][k]>.6)trade(p,k,0);else if(res[k]<60&&res.wealth>buyPrice(p,k)+250)trade(p,k,1)}};

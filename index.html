@@ -1339,8 +1339,8 @@ function validSite(type,tx,ty,margin,o){
 // =========================================================
 //   FRONTEIRAS E CIDADES (a parte do Rise of Nations na fusão)
 // =========================================================
-const INF_CAP=13,INF_CITY=10,INF_TORRE=4;           // raio de influência em quadrados (com 8 não cabiam as fazendas)
-const CITY_MAX=4,CITY_MIN_OWN=18,CITY_MIN_EN=12;    // limite de cidades e distância entre elas
+const INF_CAP=17,INF_CITY=13,INF_TORRE=5;           // raio de influência em quadrados (com 8 não cabiam as fazendas)
+const CITY_MAX=4,CITY_MIN_OWN=22,CITY_MIN_EN=15;    // limite de cidades e distância entre elas
 const CAPT_T=30,CAPT_R=5,CAPT_IMM=60;               // tomada: segundos, raio, proteção depois de tomada
 const ATTR_DELAY=15,ATTR_RATE=.005,ATTR_FLOOR=.25;  // atrito: espera, perda por segundo, vida mínima
 const TERR_WIN=.65,TERR_T=180,GRACE_T=120,CAP_PEN=120;
@@ -1350,7 +1350,7 @@ let DOM=new Int8Array(N).fill(-1),DOMS=new Float32Array(N);
 let domDirty=true,domEdges=[[],[],[],[],[],[],[],[]],DOMCNT=new Array(MAX_PLAYERS).fill(0),LANDN=0;
 
 // raio de influência de um prédio pronto (capital 13, cidade 10, torre 4)
-function infR(b){const cv=(G.P[b.o]&&G.P[b.o].cvc)||0;if(b.type==='torre')return INF_TORRE;if(b.type==='forte')return 8+cv;if(b.type==='tc')return(b.id===G.P[b.o].capId?INF_CAP:INF_CITY)+cv;return 0}
+function infR(b){const cv=(G.P[b.o]&&G.P[b.o].cvc)||0;if(b.type==='torre')return INF_TORRE;if(b.type==='forte')return 10+cv;if(b.type==='tc')return(b.id===G.P[b.o].capId?INF_CAP:INF_CITY)+cv;return 0}
 
 // calcula o dono de cada quadrado: quem tem a influência mais forte ali
 function calcDom(){
@@ -1668,7 +1668,7 @@ ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){
 //   15 tipos + aleatório · Pequeno, Médio, Grande, Gigante
 //   terr: 0 terra, 1 água, 2 vau (água rasa: passa gente e barco)
 // =========================================================
-const MAPSZ={peq:{n:'Pequeno',s:64,pl:2},med:{n:'Médio',s:80,pl:4},gra:{n:'Grande',s:100,pl:6},gig:{n:'Gigante',s:128,pl:8}};
+const MAPSZ={peq:{n:'Pequeno',s:84,pl:2},med:{n:'Médio',s:108,pl:4},gra:{n:'Grande',s:132,pl:6},gig:{n:'Gigante',s:160,pl:8}};
 // muda o tamanho do mapa e refaz todas as tabelas que dependem dele
 function setMapSize(s){if(s===MW&&occ.length===s*s)return;MW=MH=s;N=s*s;
   occ=new Int32Array(N);pass=new Uint8Array(N);wpass=new Uint8Array(N);vis=new Uint8Array(N);
@@ -1820,18 +1820,16 @@ function aiTick(p){
   // requisitos de era: 2 prédios diferentes da era atual
   if(P.age<ENDAGE()){const need=AGEREQ[P.age+1];const got=need.filter(t=>has(t)).length;
     if(got<2&&vills.length>=6){for(const t of need){if(any(t))continue;if(t==='doca')continue;
-      const near=t==='celeiro'?(findRes('berry',hb.x,hb.y,14,p)||{tx:htx,ty:hty}):t==='deposito'?(findRes('tree',hb.x,hb.y,20,p)||{tx:htx,ty:hty}):{tx:htx+(G.starts[0][0]-htx)*.1,ty:hty+(G.starts[0][1]-hty)*.1};
-      if(build(t,near.tx,near.ty,t==='celeiro'||t==='deposito'?1:4,t==='celeiro'||t==='deposito'?6:12))break;break}}
+      const near=t==='celeiro'?(findRes('berry',hb.x,hb.y,14,p)||{tx:htx,ty:hty}):t==='serraria'?(findRes('tree',hb.x,hb.y,20,p)||{tx:htx,ty:hty}):{tx:htx+(G.starts[0][0]-htx)*.1,ty:hty+(G.starts[0][1]-hty)*.1};
+      if(build(t,near.tx,near.ty,t==='celeiro'||t==='serraria'?1:4,t==='celeiro'||t==='serraria'?6:12))break;break}}
     {const lb=blds.find(b=>b.type==='biblioteca'&&b.done>=1);if(lb&&ageGoal&&got>=2&&!blds.some(b=>b.q.includes('age'))&&lb.q.length<2&&afford(p,nextAge)){pay(p,nextAge);lb.q.push('age')}}
   }
   const toward={x:htx+(G.starts[0][0]-htx)*.12,y:hty+(G.starts[0][1]-hty)*.12};
   if(vills.length>=7&&!any('quartel'))build('quartel',toward.x,toward.y,4,12);
-  if(P.age>=1&&vills.length>=11&&!any('mercado'))build('mercado',htx,hty,4,12);
-  if(P.age>=1&&vills.length>=12&&!any('arquearia'))build('arquearia',toward.x,toward.y,5,13);
-  if(P.age>=1&&vills.length>=15&&!any('estabulo'))build('estabulo',htx,hty,5,14);
+  if(vills.length>=10&&!any('mercado'))build('mercado',htx,hty,4,12);
+    if(P.age>=1&&vills.length>=15&&!any('estabulo'))build('estabulo',htx,hty,5,14);
   if(P.age>=2&&!any('templo')&&res.wealth>=60)build('templo',htx,hty,5,14);
-  if(P.age>=2&&!any('academia'))build('academia',toward.x,toward.y,5,14);
-  if(P.age>=2&&vills.length>=16&&!any('oficina'))build('oficina',htx,hty,5,15);
+    if(P.age>=2&&P.age<5&&vills.length>=16&&!any('oficina')&&!any('fabrica'))build('oficina',htx,hty,5,15);
   if(P.age>=1&&G.diff!=='facil'&&blds.filter(b=>b.type==='torre').length<(G.diff==='dificil'?3:1)&&afford(p,BT.torre.cost))build('torre',toward.x,toward.y,4,8);
   ronAI(p,blds,has,any,build,htx,hty,toward,vills,army,res);
   // expansão: fundar cidades novas perto de minas e florestas (aumenta a fronteira)
@@ -1851,9 +1849,9 @@ function aiTick(p){
     const a0=RNG()*6.28;for(let k=0;k<8;k++){const a=a0+k*.785;if(build('torre',htx+Math.cos(a)*(INF_CAP-1),hty+Math.sin(a)*(INF_CAP-1),0,3))break}}
   // depósitos perto dos recursos
   // acampamentos de lenhadores (como no Rise): 1 a cada 12 aldeões, perto de floresta sem acampamento
-  {const camps=blds.filter(b=>b.type==='deposito');if(camps.length<1+Math.floor(vills.length/12)&&!camps.some(b=>b.done<1)){
+  {const camps=blds.filter(b=>b.type==='deposito'||b.type==='serraria');if(camps.length<1+Math.floor(vills.length/12)&&!camps.some(b=>b.done<1)){
     let best=null,bd=30*TS;for(const r of G.R){if(r.dead||r.sub!=='tree')continue;const c=ctr(r);if(camps.some(b=>hyp(ctr(b).x-c.x,ctr(b).y-c.y)<CAMP_R*TS))continue;if(DOM[idx(r.tx,r.ty)]!==p&&hyp(c.x-hb.x,c.y-hb.y)>14*TS)continue;const d=hyp(c.x-hb.x,c.y-hb.y);if(d<bd){bd=d;best=r}}
-    if(best)build('deposito',best.tx,best.ty,1,4)}}
+    if(best)build('serraria',best.tx,best.ty,1,4)}}
   const berry=findRes('berry',hb.x,hb.y,16,p);
   const berryFar=berry&&hyp((berry.tx+.5)*TS-hb.x,(berry.ty+.5)*TS-hb.y)>5*TS;
   if(!any('celeiro')&&(berryFar||vills.length>=9)){if(berryFar)build('celeiro',berry.tx,berry.ty,1,4);else build('celeiro',htx,hty,3,8)}
@@ -1905,7 +1903,7 @@ function aiTick(p){
   const minArmy={facil:2,normal:4,dificil:6}[G.diff]+P.age*3;
   const saving=ageGoal&&nextAge&&res.food>=nextAge.food*.5&&!intrNear();
   const spend=c=>army.length+queued<minArmy&&!saving?afford(p,c):canSpend(c);
-  const prefer={fabrica:['tanque','artilharia'],quartel:['assalto','fuzil','mosq','espa','guer'],arquearia:['arqcav','arqc','arq'],estabulo:['elef','cav','carro','bat'],academia:['hopl'],oficina:['canhao','pedra','bal'],templo:['sac']};
+  const prefer={fabrica:['tanque','artilharia','bal'],quartel:['assalto','fuzil','mosq','hopl','espa','arqc','arq','guer'],estabulo:['elef','cav','arqcav','carro','bat'],oficina:['canhao','pedra','bal'],templo:['sac']};
   const maxArmy={facil:20,normal:45,dificil:75}[G.diff];
   for(const b of blds){if(b.done<1||b.q.length>=2||!prefer[b.type])continue;if(P.pop+queued>=P.cap||army.length+queued>=maxArmy)break;
     if(b.type==='templo'&&priests.length+b.q.length>=(G.diff==='facil'?1:2))continue;
@@ -3849,7 +3847,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 75';$('ver').textContent=VERSAO;
+const VERSAO='Versão 76';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -4468,7 +4466,7 @@ function autoTick(){
     // 1) acabou de construir um ponto de coleta: trabalha ali perto (como no Age IV)
     const nb=v.nearB&&E.get(v.nearB);v.nearB=0;
     if(nb&&!nb.dead){const c=ctr(nb),D=BT[nb.type].drop||[];
-      const order=nb.type==='celeiro'?['food']:nb.type==='deposito'?['wood','gold','stone'].sort((a,b)=>(want[b]*n-cnt[b])-(want[a]*n-cnt[a])):D;
+      const order=nb.type==='celeiro'?['food']:nb.type==='serraria'?['wood']:nb.type==='fundicao'?['gold','stone']:nb.type==='deposito'?['wood','gold','stone'].sort((a,b)=>(want[b]*n-cnt[b])-(want[a]*n-cnt[a])):D;
       for(const k of order){t=autoTarget(k,c.x,c.y,tg);if(t){cat=k;break}}}
     // 2) volta para o que estava fazendo, se ainda tem perto
     if(!t&&v.lsub&&v.lastRes){const k=RCAT(v.lsub);if(want[k]>0||k==='food'){t=autoTarget(k,v.x,v.y,tg);if(t)cat=k}}
@@ -4616,8 +4614,8 @@ const ronTick3=ronTick;
 ronTick=function(dt){ronTick3(dt);capInit();
   for(let o=0;o<NP;o++){for(const k of TRADE_K){const m=capOf(o,k);G.cap[o][k]=Math.min(m/3,(G.cap[o][k]??m/3)+m/60*dt);const p=G.mkt[o][k];G.mkt[o][k]=p+(1-p)*Math.min(1,dt*.004)}}};
 // ---------- comprar e vender ----------
-const buyPrice=(o,k)=>Math.round(TRADE_N*G.mkt[o][k]);
-const sellPrice=(o,k)=>Math.round(TRADE_N*G.mkt[o][k]*.75);
+const buyPrice=(o,k)=>Math.round(TRADE_N*G.mkt[o][k]*(G.P[o].techs.includes('guildas')?.85:1));
+const sellPrice=(o,k)=>Math.round(TRADE_N*G.mkt[o][k]*.75*(G.P[o].techs.includes('guildas')?1.15:1));
 function trade(o,k,buy){capInit();const P=G.P[o],p=G.mkt[o];
   if(buy){const c=buyPrice(o,k);if(P.res.wealth<c)return false;P.res.wealth-=c;P.res[k]+=TRADE_N;p[k]=Math.min(4,p[k]*1.07)}
   else{if(P.res[k]<TRADE_N)return false;P.res[k]-=TRADE_N;const g=sellPrice(o,k);P.res.wealth+=g;p[k]=Math.max(.25,p[k]*.94)}
@@ -4657,7 +4655,8 @@ LINES.com.d='coleta +5% · caravanas e mercadores +20% · limite de comércio +'
 const ronAI2=ronAI;
 ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){ronAI2(p,blds,has,any,build,htx,hty,toward,vills,army,res);
   if(!blds.some(b=>b.type==='mercado'&&b.done>=1))return;capInit();
-  const nx=G.P[p].age<MAXAGE?AGECOST[G.P[p].age+1]:{};for(const k of TRADE_K){if(res[k]>Math.max(1400,(nx[k]||0)+500)&&G.mkt[p][k]>.6)trade(p,k,0);else if(res[k]<60&&res.wealth>buyPrice(p,k)+250)trade(p,k,1)}};
+  const nx=G.P[p].age<MAXAGE?AGECOST[G.P[p].age+1]:{};if((nx.wealth||0)>res.wealth){let bk=null,bv=0;for(const k of TRADE_K){const sob=res[k]-(nx[k]||0)-250;if(sob>=TRADE_N&&G.mkt[p][k]>.45&&sob>bv){bv=sob;bk=k}}if(bk){trade(p,bk,0);return}}
+  for(const k of TRADE_K){if(res[k]>Math.max(1400,(nx[k]||0)+500)&&G.mkt[p][k]>.6)trade(p,k,0);else if(res[k]<60&&res.wealth>buyPrice(p,k)+250)trade(p,k,1)}};
 
 // =========================================================
 //   AS 7 ERAS: Pedra · Ferramentas · Bronze · Ferro · PÓLVORA · INDUSTRIAL · INTELIGÊNCIA ARTIFICIAL
@@ -4753,9 +4752,9 @@ clickAt=function(sx,sy,add){if(UI.target){const T=UI.target;UI.target=null;const
 const ronAI3=ronAI;
 ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){ronAI3(p,blds,has,any,build,htx,hty,toward,vills,army,res);const P=G.P[p];
   // falta pouco para a próxima era? compra no Mercado com a riqueza que sobra (como no Rise)
-  if(P.age>=3&&P.age<MAXAGE&&blds.some(b=>b.type==='mercado'&&b.done>=1)){const need=AGECOST[P.age+1];capInit();
+  if(P.age<ENDAGE()&&blds.some(b=>b.type==='mercado'&&b.done>=1)){const need=AGECOST[P.age+1];capInit();
     for(const k of TRADE_K){if(need[k]&&res[k]<need[k]&&res.wealth>buyPrice(p,k)+(need.wealth||0)+150){trade(p,k,1);break}}}
-  if(P.age>=5&&!any('fabrica'))build('fabrica',htx,hty,5,15);
+  if(P.age>=5&&!any('fabrica')&&!any('oficina'))build('fabrica',htx,hty,5,15);
   if(P.age>=BT.silo.age&&!any('silo')&&G.diff!=='facil')build('silo',htx,hty,5,14);
   // petróleo: até 5 aldeões no petróleo dentro da fronteira
   if(P.age>=OIL_AGE&&res.oil<(P.age>=6?2200:900)){const on=vills.filter(v=>v.lsub==='oil'&&(v.st==='gather'||v.st==='return')).length;
@@ -4969,8 +4968,8 @@ function campUsed(o,b){let n=0;const c=ctr(b);for(const u of G.U)if(!u.dead&&u.o
 // pode trabalhar aqui? (null = pode; texto = motivo)
 function nodeBlock(u,r){if(!r||r.k!=='r'||r.walk)return null;const o=u.o,max=NODE_MAX[r.sub];
   if(max&&(workers().get(r.id)||0)>=max&&!(u.st==='gather'&&u.tg===r.id))return'cheio';
-  if(r.sub==='tree'&&u.type==='vill'&&o<NP){const cp=campNear(o,r);if(!cp)return'Madeira: construa um Acampamento de lenhadores perto da floresta';
-    if(!(u.st==='gather'&&u.tg===r.id)&&campUsed(o,cp)>=campCap(cp))return'Este acampamento já está com '+campCap(cp)+' lenhadores (máximo pelas árvores em volta)'}
+  if(r.sub==='tree'&&u.type==='vill'&&o<NP){const cp=campNear(o,r);if(!cp)return'Madeira: construa uma Serraria perto da floresta';
+    if(!(u.st==='gather'&&u.tg===r.id)&&campUsed(o,cp)>=campCap(cp))return'Esta serraria já está com '+campCap(cp)+' lenhadores (máximo pelas árvores em volta)'}
   return null}
 const orderGather7=orderGather;
 orderGather=function(u,r){const why=nodeBlock(u,r);
@@ -5005,7 +5004,7 @@ doGather=function(u,T,dt){
     let nr=findRes(u.lsub,c.x,c.y,u.lsub==='farm'?10:9,u.o);if(!nr&&u.lsub==='carc'&&u.hunt)nr=findRes(u.hunt,c.x,c.y,10,u.o);
     if(nr&&(u.fail<=3||nr!==r)){if(orderGather(u,nr)===false)u.st='idle';u.fail=0}else u.st='idle';return}
   // madeira sem acampamento (o acampamento caiu): para
-  if(r.k==='r'&&r.sub==='tree'&&u.type==='vill'&&u.o<NP&&!campNear(u.o,r)){u.st='idle';if(u.o===0&&!(UI.campT>G.t)){UI.campT=G.t+20;toast('🪓 Lenhadores parados: falta um Acampamento de lenhadores perto da floresta')}return}
+  if(r.k==='r'&&r.sub==='tree'&&u.type==='vill'&&u.o<NP&&!campNear(u.o,r)){u.st='idle';if(u.o===0&&!(UI.campT>G.t)){UI.campT=G.t+20;toast('🪓 Lenhadores parados: falta uma Serraria perto da floresta')}return}
   if(!approach(u,r,dt,r.walk?18:(isNav(u)?30:24)))return;
   u.work=true;u.an+=dt*8;const c=ctr(r);faceTo(u,c.x,c.y);
   const cat=gatherCat(u,r),rt=r.k==='r'?r.rt:'food';
@@ -5040,7 +5039,7 @@ paintBld=function(g,P,type,st,C,S){const m=C.m;
   return paintBld7(g,P,type,st,C,S)};
 // ajuda
 {const p=[...document.querySelectorAll('p')].find(e=>/^OS 6 RECURSOS/.test(e.textContent));if(p){const n=document.createElement('p');
-  n.innerHTML='<b>ECONOMIA (como no Rise)</b><br>O aldeão não carrega: trabalha no lugar e o recurso entra direto. Florestas, minas, petróleo, peixes e fazendas não acabam (caça e frutas acabam).<br>🪓 Madeira só perto de um <b>Acampamento de lenhadores</b> (2 a 10 lenhadores, conforme as árvores) ou do Centro da cidade (3).<br>🌾 Até <b>5 fazendas por cidade</b>, 1 aldeão em cada: para ter mais comida, funde mais cidades.<br>⛏ Cada mina aceita 2 mineiros.<br>Reforço de +30% na cidade: Celeiro (comida), Serraria (madeira), Fundição (metal), Refinaria (petróleo).';p.after(n)}}
+  n.innerHTML='<b>ECONOMIA (como no Rise)</b><br>O aldeão não carrega: trabalha no lugar e o recurso entra direto. Florestas, minas, petróleo, peixes e fazendas não acabam (caça e frutas acabam).<br>🪓 Madeira só perto de uma <b>Serraria</b> (2 a 10 lenhadores, conforme as árvores) ou do Centro da cidade (3).<br>🌾 Até <b>5 fazendas por cidade</b>, 1 aldeão em cada: para ter mais comida, funde mais cidades.<br>⛏ Cada mina aceita 2 mineiros.<br>Cada prédio de recurso dá +30% na cidade só por existir e pesquisa as melhorias do seu recurso: <b>Celeiro</b> (fazenda e pesca), <b>Serraria</b> (madeira), <b>Fundição</b> (metal), <b>Refinaria</b> (petróleo).<br><br><b>EXÉRCITO (como no Rise)</b><br>Quartel: toda a infantaria (espadas, lanças, arcos e depois armas de fogo). Estábulo: toda a cavalaria. Oficina de Cerco, que vira Fábrica na Era Industrial.<br>⏫ <b>Evoluir</b>: no prédio, a pesquisa de evolução transforma as tropas antigas nas novas (Arqueiro → Arqueiro Composto → Mosqueteiro → Fuzileiro → Assalto). Universidade: prédios, torres e muralhas.';p.after(n)}}
 
 // =========================================================
 //   AS 8 ERAS (como no Rise of Nations)
@@ -5216,7 +5215,7 @@ ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){
   const qt=blds.find(b=>b.type==='quartel'&&b.done>=1);
   const mine=G.U.filter(u=>!u.dead&&u.o===p);
   const cnt=t=>mine.filter(u=>u.type===t).length+blds.reduce((s,b)=>s+b.q.filter(q=>q===t).length,0);
-  if(qt&&qt.q.length<2&&army.length>=6&&cnt('espia')<1&&afford(p,costOf(p,'espia'))){pay(p,costOf(p,'espia'));qt.q.push('espia')}
+  if(qt&&qt.q.length<2&&army.length>=6&&G.P[p].age>=2&&cnt('espia')<1&&G.P[p].res.wealth>=costOf(p,'espia').wealth+(G.P[p].age<MAXAGE?AGECOST[G.P[p].age+1].wealth||0:0)&&afford(p,costOf(p,'espia'))){pay(p,costOf(p,'espia'));qt.q.push('espia')}
   for(const u of mine){if(u.type!=='espia'||u.st!=='idle')continue;
     const tgt=G.B.find(b=>!b.dead&&foe(b.o,p)&&!(b.sabo>G.t)&&(b.type==='tc'||b.type==='quartel'||b.type==='fundicao'||b.type==='biblioteca'));
     if(tgt)orderAttack(u,tgt)}};
@@ -6625,6 +6624,155 @@ function pzHud(){const c=$('pzc');if(!c)return;const on=G&&G.pz&&G.pz.on;c.style
 // legendas ao segurar
 try{HELP_ID.bdip=['Diplomacia','Aliança, paz ou guerra com cada povo, e tributo de metal. Em paz ninguém ataca; aliados também dividem a visão e vencem juntos.'];
   HELP_ID.pzc=['Paz do começo','Ninguém pode atacar até o tempo acabar ou até alguém chegar na era escolhida. Tropas no território de outro povo morrem pelo atrito.']}catch(e){}
+// =========================================================
+// ÁRVORE DE EVOLUÇÃO ARRUMADA (base do Age + Rise of Nations)
+//   · cada prédio cuida de uma coisa e pesquisa só o que é dele
+//   · Celeiro/Serraria/Fundição/Refinaria: reforço de +30% na cidade só por existir (Rise)
+//     e as pesquisas de coleta daquele recurso (Age: Moinho, Acampamento, Mineração)
+//   · Serraria faz o papel do antigo Acampamento de lenhadores
+//   · Quartel treina todos a pé (Rise): espadas, lanças, arcos → armas de fogo
+//   · Estábulo: toda a cavalaria (inclui Arqueiro a Cavalo) · Oficina vira Fábrica na Era Industrial
+//   · LINHAS DE EVOLUÇÃO: ao pesquisar "Evoluir", as tropas antigas viram as novas (Age e Rise)
+// =========================================================
+// ---------- prédios que saem do menu (continuam existindo em partidas salvas) ----------
+const ARV_OUT={deposito:1,arquearia:1,academia:1};
+ECO.length=0;ECO.push('tc','fazenda','celeiro','serraria','fundicao','refinaria','doca','mercado');
+MIL.length=0;MIL.push('quartel','estabulo','oficina','forte','torre','muralha','silo');
+CIV.length=0;CIV.push('biblioteca','universidade','templo','maravilha');
+BT.serraria.age=0;BT.serraria.cost={wood:50};BT.fundicao.age=0;BT.fundicao.cost={wood:75};BT.celeiro.age=0;
+Object.assign(NEUTRAL_OK,{serraria:1,fundicao:1,refinaria:1});
+// ---------- quem treina o quê ----------
+BT.quartel.train=['guer','espa','hopl','arq','arqc','mosq','fuzil','assalto','espia'];
+BT.estabulo.train=['bat','carro','cav','arqcav','elef'];
+BT.oficina.train=['pedra','canhao','bal'];
+BT.fabrica.train=['pedra','canhao','artilharia','bal','tanque'];
+for(const t of['hopl','arq','arqc','arqcav'])UT[t].at=t==='arqcav'?'estabulo':'quartel';
+BT.arquearia.train=['arq','arqc'];BT.academia.train=['hopl'];
+// ---------- linhas de evolução ----------
+const UPL={atir:['arq','arqc','mosq','fuzil','assalto'],espada:['guer','espa'],cerco:['pedra','canhao','artilharia'],navio:['bguer','trir','galeao','encour']};
+const UPL_OF={};for(const k in UPL)for(const t of UPL[k])UPL_OF[t]=k;
+const upAt=t=>t==='artilharia'?'fabrica':UT[t].at==='fabrica'?'fabrica':UT[t].at;
+for(const k in UPL){const L=UPL[k];for(let i=1;i<L.length;i++){const to=L[i],U=UT[to],c={};for(const r in U.cost)c[r]=Math.round(U.cost[r]*3/5)*5;
+  TECH['up_'+to]={n:'Evoluir: '+U.n,ic:'⏫',at:upAt(to),age:U.age,req:i>1?'up_'+L[i-1]:null,cost:c,t:25+U.age*8,up:{line:k,to},
+    d:'Todos os '+UT[L[i-1]].n+(i>1?' (e os mais antigos)':'')+' viram '+U.n+' e o prédio passa a treinar '+U.n+'.',fx:()=>{}}}}
+function upCur(o,t){const k=UPL_OF[t];if(!k||o>=NP||!G||!G.P[o])return t;const L=UPL[k],T=G.P[o].techs;let c=0;for(let i=1;i<L.length;i++)if(T.includes('up_'+L[i]))c=i;return L[c]}
+// ---------- pesquisas novas ----------
+const melee=(T,n,f)=>{for(const k in T){const t=T[k];if(t.cls===n&&!t.rng)f(t)}};
+Object.assign(TECH,{
+  tear:{n:'Tear',ic:'🧵',at:'tc',age:0,cost:{food:75},t:30,d:'Aldeões +15 de vida e +1 de armadura',fx:T=>{T.vill.hp+=15;T.vill.arm+=1}},
+  rede:{n:'Redes de Pesca',ic:'🎣',at:'celeiro',age:1,cost:{food:100,wood:100},t:40,d:'Barcos pesqueiros e pesca +25%',fx:(T,m)=>{m.gath.fish*=1.25;m.gath.fishb*=1.25}},
+  adubo:{n:'Adubo',ic:'🧺',at:'celeiro',age:4,req:'irrigacao',cost:{food:400,wood:250,gold:100},t:60,d:'Fazendas +20%',fx:(T,m)=>{m.gath.farm*=1.2}},
+  machadoF:{n:'Machado de Ferro',ic:'🪓',at:'serraria',age:2,req:'serra',cost:{food:200,wood:100},t:50,d:'Madeira +20%',fx:(T,m)=>{m.gath.wood*=1.2}},
+  serraV:{n:'Serra a Vapor',ic:'⚙️',at:'serraria',age:5,req:'machadoF',cost:{food:400,gold:200},t:60,d:'Madeira +25%',fx:(T,m)=>{m.gath.wood*=1.25}},
+  poco:{n:'Poço de Mina',ic:'🕳️',at:'fundicao',age:2,req:'picareta',cost:{food:200,wood:150},t:50,d:'Metal +20%',fx:(T,m)=>{m.gath.gold*=1.2;m.gath.stone*=1.2}},
+  dinamite:{n:'Dinamite',ic:'🧨',at:'fundicao',age:5,req:'poco',cost:{food:400,wood:200,gold:100},t:60,d:'Metal +25%',fx:(T,m)=>{m.gath.gold*=1.25;m.gath.stone*=1.25}},
+  perfura:{n:'Perfuração Profunda',ic:'🛢️',at:'refinaria',age:5,cost:{food:300,gold:250},t:60,d:'Petróleo +25%',fx:(T,m)=>{m.gath.oil*=1.25}},
+  oleoduto:{n:'Oleoduto',ic:'🛤️',at:'refinaria',age:6,req:'perfura',cost:{food:450,gold:350},t:60,d:'Petróleo +25%',fx:(T,m)=>{m.gath.oil*=1.25}},
+  alvenaria:{n:'Alvenaria',ic:'🧱',at:'universidade',age:1,cost:{food:150,wood:150},t:45,d:'Todos os prédios +15% de vida',fx:(T,m)=>{for(const t in BT)m.bldHp[t]=(m.bldHp[t]||1)*1.15}},
+  arquitetura:{n:'Arquitetura',ic:'🏛️',at:'universidade',age:3,req:'alvenaria',cost:{food:300,wood:250},t:60,d:'Todos os prédios +20% de vida',fx:(T,m)=>{for(const t in BT)m.bldHp[t]=(m.bldHp[t]||1)*1.2}},
+  barda:{n:'Barda de Couro',ic:'🐎',at:'estabulo',age:1,cost:{food:150,gold:50},t:45,d:'Cavalaria, elefantes e arqueiros a cavalo +1 de armadura',fx:T=>forCls(T,['cav','elef','arqcav'],t=>t.arm+=1)},
+  ferradura:{n:'Ferraduras',ic:'🧲',at:'estabulo',age:1,cost:{food:150,wood:100},t:45,d:'Cavalaria e arqueiros a cavalo 15% mais rápidos',fx:T=>forCls(T,['cav','arqcav'],t=>t.spd*=1.15)},
+  lancaF:{n:'Lanças de Ferro',ic:'🔱',at:'estabulo',age:2,req:'barda',cost:{food:250,gold:120},t:55,d:'Cavalaria e elefantes +2 de ataque',fx:T=>forCls(T,['cav','elef'],t=>t.atk+=2)},
+  engenharia:{n:'Engenharia de Cerco',ic:'📐',at:'oficina',age:2,cost:{wood:200,gold:150},t:55,d:'Armas de cerco +1 de alcance e +15% de ataque',fx:T=>forCls(T,['cerco'],t=>{t.rng+=1;t.atk=Math.round(t.atk*1.15)})},
+  dizimo:{n:'Dízimo',ic:'🪙',at:'templo',age:1,cost:{food:150,gold:75},t:45,d:'Cada Templo rende +20 de riqueza por minuto',fx:()=>{}},
+  guildas:{n:'Guildas',ic:'⚖️',at:'mercado',age:1,cost:{food:150,wood:150},t:45,d:'Mercado: compra 15% mais barata e venda 15% mais cara',fx:()=>{}}});
+// pesquisas antigas: lugar certo, efeito que faz sentido na economia do Rise (fazenda não acaba)
+Object.assign(TECH.enxada,{at:'celeiro',d:'Fazendas +15%',fx:(T,m)=>{m.gath.farm*=1.15}});
+Object.assign(TECH.arado,{at:'celeiro',d:'Fazendas +15%',fx:(T,m)=>{m.gath.farm*=1.15}});
+Object.assign(TECH.irrigacao,{at:'celeiro',d:'Fazendas +20%',fx:(T,m)=>{m.gath.farm*=1.2}});
+Object.assign(TECH.serra,{at:'serraria'});
+Object.assign(TECH.picareta,{at:'fundicao',d:'Metal +20%',fx:(T,m)=>{m.gath.gold*=1.2;m.gath.stone*=1.2}});
+Object.assign(TECH.roda,{at:'tc'});
+Object.assign(TECH.sentinela,{at:'universidade'});Object.assign(TECH.muralhaF,{at:'universidade'});
+Object.assign(TECH.couro,{at:'quartel',d:'Infantaria e arqueiros a pé +1 de armadura'});
+Object.assign(TECH.ferraria,{at:'quartel',n:'Lâminas de Bronze',ic:'🗡️',d:'Infantaria de corpo a corpo +2 de ataque',fx:T=>melee(T,'inf',t=>t.atk+=2)});
+Object.assign(TECH.forja,{at:'quartel',d:'Infantaria de corpo a corpo +3 de ataque',fx:T=>melee(T,'inf',t=>t.atk+=3)});
+Object.assign(TECH.escudo,{at:'quartel',d:'Infantaria +1 de armadura',fx:T=>forCls(T,['inf'],t=>t.arm+=1)});
+Object.assign(TECH.arcos,{at:'quartel'});
+Object.assign(TECH.falange,{at:'quartel',req:null});
+Object.assign(TECH.espadaL,{req:'up_espa'});
+TECH.up_espa.req='machado';TECH.machado.d='Guerreiros viram Machadeiros: +2 de ataque e +10 de vida (primeiro passo da linha das espadas)';
+// ---------- o que cada prédio pesquisa ----------
+BT.tc.res=['tear','roda'];
+BT.celeiro.res=['enxada','arado','irrigacao','rede','adubo'];
+BT.serraria.res=['serra','machadoF','serraV'];
+BT.fundicao.res=['picareta','poco','dinamite'];
+BT.refinaria.res=['perfura','oleoduto'];
+BT.mercado.res=['guildas'];
+BT.universidade.res=['alvenaria','arquitetura','sentinela','muralhaF'];
+BT.templo.res=['fe','medicina','dizimo'];
+BT.quartel.res=['up_espa','machado','espadaL','falange','up_arqc','up_mosq','up_fuzil','up_assalto','couro','ferraria','escudo','forja','arcos'];
+BT.estabulo.res=['barda','ferradura','lancaF'];
+BT.oficina.res=['up_canhao','engenharia'];
+BT.fabrica.res=['up_canhao','up_artilharia','engenharia'];
+BT.doca.res=['up_trir','up_galeao','up_encour','velas','casco'];
+BT.deposito.res=[];BT.arquearia.res=[];BT.academia.res=[];
+// o poder dos gregos tinha o mesmo nome da pesquisa Falange
+try{if(POWER.gregos)POWER.gregos.n='Fúria Espartana'}catch(e){}
+Object.assign(BDESC,{
+  serraria:'Lenhadores só cortam árvores perto dela (até '+CAMP_R+' quadrados, de 2 a 10 lenhadores, conforme as árvores). Reforça a madeira da cidade em +30%. Pesquisa as melhorias de madeira.',
+  fundicao:'Reforça as minas de metal da cidade em +30%. Pesquisa as melhorias de mineração.',
+  celeiro:'Reforça as fazendas da cidade em +30%. Pesquisa as melhorias de fazenda e de pesca.',
+  refinaria:'Reforça o petróleo em +30%. Pesquisa as melhorias de petróleo. Era Industrial.',
+  quartel:'Treina toda a infantaria: espadas, lanças, arcos e depois armas de fogo. Pesquisa as melhorias da infantaria e as evoluções.',
+  estabulo:'Treina toda a cavalaria, inclusive o Arqueiro a Cavalo. Pesquisa as melhorias da cavalaria.',
+  oficina:'Armas de cerco. Na Era Industrial vira Fábrica (artilharia e tanques).',
+  universidade:'Eruditos estudam e geram conhecimento. Pesquisa a resistência dos prédios, das torres e das muralhas.',
+  mercado:'Compra e venda de recursos, caravanas e mercadores. Pesquisa Guildas.'});
+// ---------- serraria = acampamento de lenhadores ----------
+campsOf=function(o){return G.B.filter(b=>!b.dead&&b.o===o&&(b.type==='serraria'||b.type==='deposito'||b.type==='tc')&&b.done>=1)};
+// ---------- treinar: o prédio só oferece a tropa atual de cada linha ----------
+{const ct=canTrain;canTrain=function(b,t){const c=upCur(b.o,t);if(c!==t)return UPL[UPL_OF[t]].indexOf(t)<UPL[UPL_OF[t]].indexOf(c)?'Esta tropa já evoluiu para '+STAT[b.o][c].n:'Pesquise antes: '+TECH['up_'+t].n;return ct(b,t)}}
+// quem estiver na fila ou for treinado com o nome antigo sai já evoluído (vale para a IA também)
+{const su=spawnUnit;spawnUnit=function(t,o,x,y){return su(o<NP?upCur(o,t):t,o,x,y)}}
+// ao pesquisar a evolução: as tropas antigas viram as novas (mantém a % de vida)
+{const rc=recompute;recompute=function(p){rc(p);if(!G||!G.P[p])return;
+  for(const u of G.U){if(u.dead||u.o!==p)continue;const c=upCur(p,u.type);if(c===u.type)continue;const f=u.hp/Math.max(1,STAT[p][u.type].hp);u.type=c;u.hp=Math.max(1,Math.round(f*STAT[p][c].hp))}
+  for(const b of G.B){if(b.dead||b.o!==p||!b.q)continue;for(let i=0;i<b.q.length;i++){const q=b.q[i];if(UT[q])b.q[i]=upCur(p,q)}}}}
+// ---------- Oficina vira Fábrica na Era Industrial ----------
+function arvOficina(){for(const b of G.B){if(b.dead||b.type!=='oficina'||b.o>=NP||G.P[b.o].age<5)continue;const f=b.hp/Math.max(1,b.mhp);b.type='fabrica';b.mhp=bldMaxHp(b);b.hp=Math.round(f*b.mhp);
+  if(b.o===0&&running){toast('🏭 A Oficina de Cerco virou Fábrica: artilharia e tanques!')}G.dirty=true;mmDirty=true}}
+// ---------- Dízimo: riqueza por templo ----------
+let arvAcc=0;
+{const rt=ronTick;ronTick=function(dt){rt(dt);if(!G)return;arvAcc+=dt;if(arvAcc<1)return;const s=arvAcc;arvAcc=0;arvOficina();
+  for(let o=0;o<NP;o++){if(!G.P[o].techs.includes('dizimo'))continue;const n=G.B.filter(b=>!b.dead&&b.o===o&&b.type==='templo'&&b.done>=1).length;if(!n)continue;
+    const g=capAdd(o,'wealth',n*20/60*s);G.P[o].res.wealth+=g;G.st.gath[o]+=g;if(o===0)incAdd('wealth',g)}}}
+// ---------- menu e painéis do jogador ----------
+function arvHideRes(o,list){const P=G.P[o];return(list||[]).filter(id=>{const T=TECH[id];if(!T)return false;if(P.techs.includes(id))return false;if(T.req&&!P.techs.includes(T.req))return false;return T.age<=P.age+1})}
+{const g0=getCmds;getCmds=function(){const s=selEnts(),e=s[0];
+  if(!e||e.o!==0)return g0();
+  const P=G.P[0],sv=[],swap=(o,k,v)=>{sv.push([o,k,o[k]]);o[k]=v};
+  // menu de construção: some a Oficina e entra a Fábrica na Era Industrial
+  if(e.k==='u'&&P.age>=5){const i=MIL.indexOf('oficina');if(i>=0){swap(MIL,i,'fabrica')}}
+  if(e.k==='b'&&e.done>=1){const T=BT[e.type];
+    if(T.train)swap(T,'train',T.train.filter(t=>!UPL_OF[t]||upCur(0,t)===t));
+    if(T.res)swap(T,'res',arvHideRes(0,T.res))}
+  let out;try{out=g0()}finally{for(let i=sv.length-1;i>=0;i--){const[o,k,v]=sv[i];o[k]=v}}
+  // botão de evolução mostra a tropa nova
+  for(const c of out){if(c.tech==='⏫'){const id=Object.keys(TECH).find(k=>TECH[k].up&&TECH[k].n===c.nm);if(id){c.img=THUMB['u'+TECH[id].up.to];c.tech=null;c.ic=null;c.up=1}}}
+  return out}}
+// ícone ⏫ por cima da foto da tropa no botão de evolução
+{const bh=btnHTML;btnHTML=function(c){const h=bh(c);return c.up?h+'<span class="upb">⏫</span>':h}}
+{const css=document.createElement('style');css.textContent='#cmds .cb{position:relative}#cmds .cb .upb{position:absolute;left:1px;top:1px;font-size:13px;line-height:1;filter:drop-shadow(0 1px 1px #000)}';document.head.appendChild(css)}
+// partidas salvas antes desta versão: fazendas e madeira continuam funcionando; o Acampamento antigo segue valendo
+BT.serraria.drop=['wood'];BT.fundicao.drop=['gold','stone'];BT.refinaria.drop=['oil'];
+// ---------- IA: pesquisa as evoluções e as melhorias nos prédios certos ----------
+const ARV_AI=['machado','up_espa','up_arqc','up_mosq','up_fuzil','up_assalto','up_canhao','up_artilharia','up_trir','up_galeao','up_encour',
+  'serra','picareta','enxada','tear','rede','arado','machadoF','poco','irrigacao','alvenaria','guildas','dizimo','serraV','dinamite','adubo','perfura','oleoduto','roda',
+  'couro','ferraria','barda','arcos','escudo','machado','ferradura','forja','lancaF','engenharia','falange','espadaL','sentinela','muralhaF','arquitetura','velas','casco','fe','medicina'];
+function arvAI(p){const P=G.P[p],res=P.res,nx=P.age<ENDAGE()?AGECOST[P.age+1]:{};
+  const blds=G.B.filter(b=>!b.dead&&b.o===p&&b.done>=1&&!b.down);
+  for(const id of ARV_AI){const T=TECH[id];if(!T||P.techs.includes(id)||T.age>P.age||(T.req&&!P.techs.includes(T.req)))continue;
+    if(G.B.some(x=>!x.dead&&x.o===p&&x.q.includes('t:'+id)))continue;
+    const b=blds.find(x=>(BT[x.type].res||[]).includes(id)&&(x.q.length===0||(x.type!=='tc'&&x.q.length<2&&T.up)));if(!b)continue;
+    const keep=T.up?.4:.8;let ok=true;for(const k in T.cost)if(res[k]-(nx[k]||0)*keep<T.cost[k]){ok=false;break}
+    if(!ok)continue;pay(p,T.cost);b.q.push('t:'+id);return}}
+{let acc=0;const rt=ronTick;ronTick=function(dt){rt(dt);if(!G)return;acc+=dt;if(acc<3)return;acc=0;for(let p=1;p<NP;p++)if(G.P[p]&&!G.P[p]._out)arvAI(p)}}
+// rótulo curto do botão de evolução: "→ Composto", "→ Mosqueteiro"
+{const cs=cmdShort;cmdShort=function(c){if(c&&c.up){const w=String(c.nm).replace(/^Evoluir: /,'').split(' ');return'→ '+w[w.length-1].slice(0,10)}return cs(c)}}
+// IA: Fundição perto do metal (reforço +30% e pesquisas de mineração)
+{const ra=ronAI;ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){ra(p,blds,has,any,build,htx,hty,toward,vills,army,res);
+  if(!any('fundicao')&&vills.length>=12&&afford(p,BT.fundicao.cost)){const hb={x:(htx+.5)*TS,y:(hty+.5)*TS};const m=findRes('gold',hb.x,hb.y,18,p);if(m)build('fundicao',m.tx,m.ty,1,4);else build('fundicao',htx,hty,3,9)}}}
 </script>
 </body>
 </html>

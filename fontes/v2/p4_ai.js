@@ -55,18 +55,16 @@ function aiTick(p){
   // requisitos de era: 2 prédios diferentes da era atual
   if(P.age<ENDAGE()){const need=AGEREQ[P.age+1];const got=need.filter(t=>has(t)).length;
     if(got<2&&vills.length>=6){for(const t of need){if(any(t))continue;if(t==='doca')continue;
-      const near=t==='celeiro'?(findRes('berry',hb.x,hb.y,14,p)||{tx:htx,ty:hty}):t==='deposito'?(findRes('tree',hb.x,hb.y,20,p)||{tx:htx,ty:hty}):{tx:htx+(G.starts[0][0]-htx)*.1,ty:hty+(G.starts[0][1]-hty)*.1};
-      if(build(t,near.tx,near.ty,t==='celeiro'||t==='deposito'?1:4,t==='celeiro'||t==='deposito'?6:12))break;break}}
+      const near=t==='celeiro'?(findRes('berry',hb.x,hb.y,14,p)||{tx:htx,ty:hty}):t==='serraria'?(findRes('tree',hb.x,hb.y,20,p)||{tx:htx,ty:hty}):{tx:htx+(G.starts[0][0]-htx)*.1,ty:hty+(G.starts[0][1]-hty)*.1};
+      if(build(t,near.tx,near.ty,t==='celeiro'||t==='serraria'?1:4,t==='celeiro'||t==='serraria'?6:12))break;break}}
     {const lb=blds.find(b=>b.type==='biblioteca'&&b.done>=1);if(lb&&ageGoal&&got>=2&&!blds.some(b=>b.q.includes('age'))&&lb.q.length<2&&afford(p,nextAge)){pay(p,nextAge);lb.q.push('age')}}
   }
   const toward={x:htx+(G.starts[0][0]-htx)*.12,y:hty+(G.starts[0][1]-hty)*.12};
   if(vills.length>=7&&!any('quartel'))build('quartel',toward.x,toward.y,4,12);
-  if(P.age>=1&&vills.length>=11&&!any('mercado'))build('mercado',htx,hty,4,12);
-  if(P.age>=1&&vills.length>=12&&!any('arquearia'))build('arquearia',toward.x,toward.y,5,13);
-  if(P.age>=1&&vills.length>=15&&!any('estabulo'))build('estabulo',htx,hty,5,14);
+  if(vills.length>=10&&!any('mercado'))build('mercado',htx,hty,4,12);
+    if(P.age>=1&&vills.length>=15&&!any('estabulo'))build('estabulo',htx,hty,5,14);
   if(P.age>=2&&!any('templo')&&res.wealth>=60)build('templo',htx,hty,5,14);
-  if(P.age>=2&&!any('academia'))build('academia',toward.x,toward.y,5,14);
-  if(P.age>=2&&vills.length>=16&&!any('oficina'))build('oficina',htx,hty,5,15);
+    if(P.age>=2&&P.age<5&&vills.length>=16&&!any('oficina')&&!any('fabrica'))build('oficina',htx,hty,5,15);
   if(P.age>=1&&G.diff!=='facil'&&blds.filter(b=>b.type==='torre').length<(G.diff==='dificil'?3:1)&&afford(p,BT.torre.cost))build('torre',toward.x,toward.y,4,8);
   ronAI(p,blds,has,any,build,htx,hty,toward,vills,army,res);
   // expansão: fundar cidades novas perto de minas e florestas (aumenta a fronteira)
@@ -86,9 +84,9 @@ function aiTick(p){
     const a0=RNG()*6.28;for(let k=0;k<8;k++){const a=a0+k*.785;if(build('torre',htx+Math.cos(a)*(INF_CAP-1),hty+Math.sin(a)*(INF_CAP-1),0,3))break}}
   // depósitos perto dos recursos
   // acampamentos de lenhadores (como no Rise): 1 a cada 12 aldeões, perto de floresta sem acampamento
-  {const camps=blds.filter(b=>b.type==='deposito');if(camps.length<1+Math.floor(vills.length/12)&&!camps.some(b=>b.done<1)){
+  {const camps=blds.filter(b=>b.type==='deposito'||b.type==='serraria');if(camps.length<1+Math.floor(vills.length/12)&&!camps.some(b=>b.done<1)){
     let best=null,bd=30*TS;for(const r of G.R){if(r.dead||r.sub!=='tree')continue;const c=ctr(r);if(camps.some(b=>hyp(ctr(b).x-c.x,ctr(b).y-c.y)<CAMP_R*TS))continue;if(DOM[idx(r.tx,r.ty)]!==p&&hyp(c.x-hb.x,c.y-hb.y)>14*TS)continue;const d=hyp(c.x-hb.x,c.y-hb.y);if(d<bd){bd=d;best=r}}
-    if(best)build('deposito',best.tx,best.ty,1,4)}}
+    if(best)build('serraria',best.tx,best.ty,1,4)}}
   const berry=findRes('berry',hb.x,hb.y,16,p);
   const berryFar=berry&&hyp((berry.tx+.5)*TS-hb.x,(berry.ty+.5)*TS-hb.y)>5*TS;
   if(!any('celeiro')&&(berryFar||vills.length>=9)){if(berryFar)build('celeiro',berry.tx,berry.ty,1,4);else build('celeiro',htx,hty,3,8)}
@@ -140,7 +138,7 @@ function aiTick(p){
   const minArmy={facil:2,normal:4,dificil:6}[G.diff]+P.age*3;
   const saving=ageGoal&&nextAge&&res.food>=nextAge.food*.5&&!intrNear();
   const spend=c=>army.length+queued<minArmy&&!saving?afford(p,c):canSpend(c);
-  const prefer={fabrica:['tanque','artilharia'],quartel:['assalto','fuzil','mosq','espa','guer'],arquearia:['arqcav','arqc','arq'],estabulo:['elef','cav','carro','bat'],academia:['hopl'],oficina:['canhao','pedra','bal'],templo:['sac']};
+  const prefer={fabrica:['tanque','artilharia','bal'],quartel:['assalto','fuzil','mosq','hopl','espa','arqc','arq','guer'],estabulo:['elef','cav','arqcav','carro','bat'],oficina:['canhao','pedra','bal'],templo:['sac']};
   const maxArmy={facil:20,normal:45,dificil:75}[G.diff];
   for(const b of blds){if(b.done<1||b.q.length>=2||!prefer[b.type])continue;if(P.pop+queued>=P.cap||army.length+queued>=maxArmy)break;
     if(b.type==='templo'&&priests.length+b.q.length>=(G.diff==='facil'?1:2))continue;

@@ -45,7 +45,7 @@ function autoTick(){
     // 1) acabou de construir um ponto de coleta: trabalha ali perto (como no Age IV)
     const nb=v.nearB&&E.get(v.nearB);v.nearB=0;
     if(nb&&!nb.dead){const c=ctr(nb),D=BT[nb.type].drop||[];
-      const order=nb.type==='celeiro'?['food']:nb.type==='deposito'?['wood','gold','stone'].sort((a,b)=>(want[b]*n-cnt[b])-(want[a]*n-cnt[a])):D;
+      const order=nb.type==='celeiro'?['food']:nb.type==='serraria'?['wood']:nb.type==='fundicao'?['gold','stone']:nb.type==='deposito'?['wood','gold','stone'].sort((a,b)=>(want[b]*n-cnt[b])-(want[a]*n-cnt[a])):D;
       for(const k of order){t=autoTarget(k,c.x,c.y,tg);if(t){cat=k;break}}}
     // 2) volta para o que estava fazendo, se ainda tem perto
     if(!t&&v.lsub&&v.lastRes){const k=RCAT(v.lsub);if(want[k]>0||k==='food'){t=autoTarget(k,v.x,v.y,tg);if(t)cat=k}}

@@ -93,9 +93,9 @@ clickAt=function(sx,sy,add){if(UI.target){const T=UI.target;UI.target=null;const
 const ronAI3=ronAI;
 ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){ronAI3(p,blds,has,any,build,htx,hty,toward,vills,army,res);const P=G.P[p];
   // falta pouco para a próxima era? compra no Mercado com a riqueza que sobra (como no Rise)
-  if(P.age>=3&&P.age<MAXAGE&&blds.some(b=>b.type==='mercado'&&b.done>=1)){const need=AGECOST[P.age+1];capInit();
+  if(P.age<ENDAGE()&&blds.some(b=>b.type==='mercado'&&b.done>=1)){const need=AGECOST[P.age+1];capInit();
     for(const k of TRADE_K){if(need[k]&&res[k]<need[k]&&res.wealth>buyPrice(p,k)+(need.wealth||0)+150){trade(p,k,1);break}}}
-  if(P.age>=5&&!any('fabrica'))build('fabrica',htx,hty,5,15);
+  if(P.age>=5&&!any('fabrica')&&!any('oficina'))build('fabrica',htx,hty,5,15);
   if(P.age>=BT.silo.age&&!any('silo')&&G.diff!=='facil')build('silo',htx,hty,5,14);
   // petróleo: até 5 aldeões no petróleo dentro da fronteira
   if(P.age>=OIL_AGE&&res.oil<(P.age>=6?2200:900)){const on=vills.filter(v=>v.lsub==='oil'&&(v.st==='gather'||v.st==='return')).length;

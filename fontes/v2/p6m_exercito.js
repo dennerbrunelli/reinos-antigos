@@ -38,7 +38,7 @@ ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){
   const qt=blds.find(b=>b.type==='quartel'&&b.done>=1);
   const mine=G.U.filter(u=>!u.dead&&u.o===p);
   const cnt=t=>mine.filter(u=>u.type===t).length+blds.reduce((s,b)=>s+b.q.filter(q=>q===t).length,0);
-  if(qt&&qt.q.length<2&&army.length>=6&&cnt('espia')<1&&afford(p,costOf(p,'espia'))){pay(p,costOf(p,'espia'));qt.q.push('espia')}
+  if(qt&&qt.q.length<2&&army.length>=6&&G.P[p].age>=2&&cnt('espia')<1&&G.P[p].res.wealth>=costOf(p,'espia').wealth+(G.P[p].age<MAXAGE?AGECOST[G.P[p].age+1].wealth||0:0)&&afford(p,costOf(p,'espia'))){pay(p,costOf(p,'espia'));qt.q.push('espia')}
   for(const u of mine){if(u.type!=='espia'||u.st!=='idle')continue;
     const tgt=G.B.find(b=>!b.dead&&foe(b.o,p)&&!(b.sabo>G.t)&&(b.type==='tc'||b.type==='quartel'||b.type==='fundicao'||b.type==='biblioteca'));
     if(tgt)orderAttack(u,tgt)}};
