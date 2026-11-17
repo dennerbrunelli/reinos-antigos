@@ -1,0 +1,14 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const pg=await b.newPage({viewport:{width:800,height:360},deviceScaleFactor:1.5});const errs=[];pg.on('pageerror',e=>errs.push(e.message));
+ await pg.goto('http://localhost:8765/index.html');await pg.evaluate(async()=>{await ARTP});await pg.waitForTimeout(300);
+ await pg.evaluate(()=>{$('bnew').click()});await pg.waitForTimeout(300);await pg.evaluate(()=>$('bstart').click());await pg.waitForTimeout(3000);
+ const info=await pg.evaluate(()=>{const P=G.P[0];P.age=5;Object.assign(P.res,{food:3000,wood:3000,gold:3000});calcDom();const tc=G.B.find(b=>b.o===0&&b.type==='tc');
+  const find=(type,cx,cy,r0,r1)=>{for(let r=r0;r<=r1;r++)for(let a=0;a<48;a++){const X=Math.round(cx+Math.cos(a/48*6.283)*r),Y=Math.round(cy+Math.sin(a/48*6.283)*r);if(validSite(type,X,Y,0,0))return[X,Y]}return null};
+  const rock=G.R.filter(x=>x.mt&&DOM[idx(x.tx,x.ty)]===0).sort((a,b2)=>hyp(a.tx-tc.tx,a.ty-tc.ty)-hyp(b2.tx-tc.tx,b2.ty-tc.ty))[0];
+  const ms=find('mina',rock.tx,rock.ty,1,4);const mi=placeBld('mina',0,ms[0],ms[1],true);onBuilt(mi);
+  const vs=G.U.filter(u=>u.o===0&&u.type==='vill');for(const v of vs)orderGather(v,mi);
+  const c=ctr(mi);centerOn(c.x,c.y);Z=1;window._mi=mi;return 'mina em '+ms+' monte '+G.mtn[mi.mt].n});
+ console.log(info);await pg.evaluate(()=>{for(let i=0;i<60;i++)step(.25)});await pg.waitForTimeout(800);await pg.screenshot({path:'mina77.png'});
+ await pg.evaluate(()=>{const v=G.U.find(u=>u.o===0&&u.type==='vill');SEL=[v.id];startPlace('celeiro');const tc=G.B.find(b=>b.o===0&&b.type==='tc');const c=ctr(tc);centerOn(c.x,c.y);Z=.55;placing.tx=tc.tx+4;placing.ty=tc.ty+5});
+ await pg.waitForTimeout(800);await pg.screenshot({path:'circ77.png'});
+ console.log('ERROS',errs.slice(0,4));await b.close()})();

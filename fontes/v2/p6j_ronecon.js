@@ -31,8 +31,8 @@ function campUsed(o,b){let n=0;const c=ctr(b);for(const u of G.U)if(!u.dead&&u.o
 // pode trabalhar aqui? (null = pode; texto = motivo)
 function nodeBlock(u,r){if(!r||r.k!=='r'||r.walk)return null;const o=u.o,max=NODE_MAX[r.sub];
   if(max&&(workers().get(r.id)||0)>=max&&!(u.st==='gather'&&u.tg===r.id))return'cheio';
-  if(r.sub==='tree'&&u.type==='vill'&&o<NP){const cp=campNear(o,r);if(!cp)return'Madeira: construa uma Serraria perto da floresta';
-    if(!(u.st==='gather'&&u.tg===r.id)&&campUsed(o,cp)>=campCap(cp))return'Esta serraria já está com '+campCap(cp)+' lenhadores (máximo pelas árvores em volta)'}
+  if(r.sub==='tree'&&u.type==='vill'&&o<NP){const cp=campNear(o,r);if(!cp)return'Madeira: construa um Acampamento de lenhadores perto da floresta';
+    if(!(u.st==='gather'&&u.tg===r.id)&&campUsed(o,cp)>=campCap(cp))return'Este acampamento já está com '+campCap(cp)+' lenhadores (máximo pelas árvores em volta)'}
   return null}
 const orderGather7=orderGather;
 orderGather=function(u,r){const why=nodeBlock(u,r);
@@ -67,7 +67,7 @@ doGather=function(u,T,dt){
     let nr=findRes(u.lsub,c.x,c.y,u.lsub==='farm'?10:9,u.o);if(!nr&&u.lsub==='carc'&&u.hunt)nr=findRes(u.hunt,c.x,c.y,10,u.o);
     if(nr&&(u.fail<=3||nr!==r)){if(orderGather(u,nr)===false)u.st='idle';u.fail=0}else u.st='idle';return}
   // madeira sem acampamento (o acampamento caiu): para
-  if(r.k==='r'&&r.sub==='tree'&&u.type==='vill'&&u.o<NP&&!campNear(u.o,r)){u.st='idle';if(u.o===0&&!(UI.campT>G.t)){UI.campT=G.t+20;toast('🪓 Lenhadores parados: falta uma Serraria perto da floresta')}return}
+  if(r.k==='r'&&r.sub==='tree'&&u.type==='vill'&&u.o<NP&&!campNear(u.o,r)){u.st='idle';if(u.o===0&&!(UI.campT>G.t)){UI.campT=G.t+20;toast('🪓 Lenhadores parados: falta um Acampamento de lenhadores perto da floresta')}return}
   if(!approach(u,r,dt,r.walk?18:(isNav(u)?30:24)))return;
   u.work=true;u.an+=dt*8;const c=ctr(r);faceTo(u,c.x,c.y);
   const cat=gatherCat(u,r),rt=r.k==='r'?r.rt:'food';

@@ -300,7 +300,7 @@ function clickAt(sx,sy,add){
     if(add){if(SEL.includes(e.id))SEL=SEL.filter(i=>i!==e.id);else SEL.push(e.id)}else SEL=[e.id];snd('sel');updHUD();return}
   if(e&&e.k==='b'&&e.o===0){
     const vs=ownUnits.filter(u=>u.type==='vill'),fb=ownUnits.filter(u=>u.type==='pesc'&&u.carry>0);
-    if((vs.length&&(e.done<1||e.hp<e.mhp||e.type==='fazenda'||(BT[e.type].drop&&vs.some(v=>v.carry>0))))||(fb.length&&e.type==='doca')){smartOrder(ownUnits,e,w.x,w.y,0);mark(w.x,w.y,'#6f6');return}
+    if((vs.length&&(e.done<1||e.hp<e.mhp||e.type==='fazenda'||(typeof GSITE!=='undefined'&&GSITE[e.type])||(BT[e.type].drop&&vs.some(v=>v.carry>0))))||(fb.length&&e.type==='doca')){smartOrder(ownUnits,e,w.x,w.y,0);mark(w.x,w.y,'#6f6');return}
     SEL=[e.id];snd('sel');updHUD();return}
   if(ownUnits.length){const r=smartOrder(ownUnits,e,w.x,w.y,0);mark(w.x,w.y,r==='atk'?'#ff5a4a':r==='res'?'#ffe08a':'#7f7');return}
   if(s.length===1&&s[0].k==='b'&&s[0].o===0&&BT[s[0].type].train&&s[0].done>=1){s[0].rally={x:w.x,y:w.y,id:e&&(e.k==='r'||e.o===GAIA)?e.id:0};mark(w.x,w.y,'#6cf');return}
@@ -606,7 +606,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 76';$('ver').textContent=VERSAO;
+const VERSAO='Versão 77';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';

@@ -4,7 +4,7 @@
 // =========================================================
 let AIP=1; // jogador que o computador está controlando agora
 function findSite(type,cx,cy,minR,maxR){
-  const sz=BT[type].sz,m=type==='fazenda'||BT[type].water?0:1;
+  const sz=BT[type].sz,m=type==='fazenda'||type==='mina'||type==='petro'||BT[type].water?0:1;
   for(const[dx,dy,d2]of SPIRAL){if(d2<minR*minR)continue;if(d2>maxR*maxR)break;
     const tx=Math.round(cx+dx-sz/2),ty=Math.round(cy+dy-sz/2);if(validSite(type,tx,ty,m,AIP))return[tx,ty]}
   return null;
@@ -55,7 +55,7 @@ function aiTick(p){
   // requisitos de era: 2 prédios diferentes da era atual
   if(P.age<ENDAGE()){const need=AGEREQ[P.age+1];const got=need.filter(t=>has(t)).length;
     if(got<2&&vills.length>=6){for(const t of need){if(any(t))continue;if(t==='doca')continue;
-      const near=t==='celeiro'?(findRes('berry',hb.x,hb.y,14,p)||{tx:htx,ty:hty}):t==='serraria'?(findRes('tree',hb.x,hb.y,20,p)||{tx:htx,ty:hty}):{tx:htx+(G.starts[0][0]-htx)*.1,ty:hty+(G.starts[0][1]-hty)*.1};
+      const near=t==='celeiro'?(findRes('berry',hb.x,hb.y,14,p)||{tx:htx,ty:hty}):t==='deposito'?(findRes('tree',hb.x,hb.y,20,p)||{tx:htx,ty:hty}):{tx:htx+(G.starts[0][0]-htx)*.1,ty:hty+(G.starts[0][1]-hty)*.1};
       if(build(t,near.tx,near.ty,t==='celeiro'||t==='serraria'?1:4,t==='celeiro'||t==='serraria'?6:12))break;break}}
     {const lb=blds.find(b=>b.type==='biblioteca'&&b.done>=1);if(lb&&ageGoal&&got>=2&&!blds.some(b=>b.q.includes('age'))&&lb.q.length<2&&afford(p,nextAge)){pay(p,nextAge);lb.q.push('age')}}
   }
@@ -76,17 +76,17 @@ function aiTick(p){
     if(okC){let best=null,bd=1e9;
       for(const r of G.R){if(r.dead||r.walk||!(r.sub==='gold'||r.sub==='stone'||r.sub==='tree')||(r.badCity&&G.t-r.badCity<120))continue;const rx=r.tx+.5,ry=r.ty+.5;
         let dm=1e9;for(const c of cities){const cc=ctr(c);dm=Math.min(dm,hyp(cc.x/TS-rx,cc.y/TS-ry))}
-        if(dm<CITY_MIN_OWN+1||dm>CITY_MIN_OWN+12)continue;
+        if(dm<CITY_MIN_OWN+1||dm>CITY_MIN_OWN+12||DOM[idx(r.tx,r.ty)]!==p)continue;
         const sc=hyp(rx-htx,ry-hty)+(r.sub==='tree'?8:0);if(sc<bd){bd=sc;best=r}}
       if(best){const b=build('tc',best.tx,best.ty,2,6);if(b){for(let k=0;k<2;k++){const v=pick(ctr(b));if(v)orderBuild(v,b)}}else best.badCity=G.t}}}
   // sem lugar e sem cidade nova: uma torre na beira empurra a fronteira
   if(crowded&&P.age>=1&&afford(p,BT.torre.cost)&&blds.filter(b=>b.type==='torre').length<{facil:2,normal:4,dificil:6}[G.diff]&&!blds.some(b=>b.type==='torre'&&b.done<1)){
-    const a0=RNG()*6.28;for(let k=0;k<8;k++){const a=a0+k*.785;if(build('torre',htx+Math.cos(a)*(INF_CAP-1),hty+Math.sin(a)*(INF_CAP-1),0,3))break}}
+    const a0=RNG()*6.28;for(let k=0;k<8;k++){const a=a0+k*.785;if(build(P.age>=BT.forte.age&&afford(p,BT.forte.cost)?'forte':'torre',htx+Math.cos(a)*(INF_CAP-3),hty+Math.sin(a)*(INF_CAP-3),0,3))break}}
   // depósitos perto dos recursos
   // acampamentos de lenhadores (como no Rise): 1 a cada 12 aldeões, perto de floresta sem acampamento
-  {const camps=blds.filter(b=>b.type==='deposito'||b.type==='serraria');if(camps.length<1+Math.floor(vills.length/12)&&!camps.some(b=>b.done<1)){
-    let best=null,bd=30*TS;for(const r of G.R){if(r.dead||r.sub!=='tree')continue;const c=ctr(r);if(camps.some(b=>hyp(ctr(b).x-c.x,ctr(b).y-c.y)<CAMP_R*TS))continue;if(DOM[idx(r.tx,r.ty)]!==p&&hyp(c.x-hb.x,c.y-hb.y)>14*TS)continue;const d=hyp(c.x-hb.x,c.y-hb.y);if(d<bd){bd=d;best=r}}
-    if(best)build('serraria',best.tx,best.ty,1,4)}}
+  {const camps=blds.filter(b=>b.type==='deposito');if(camps.length<1+Math.floor(vills.length/12)&&!camps.some(b=>b.done<1)){
+    let best=null,bd=30*TS;for(const r of G.R){if(r.dead||r.sub!=='tree')continue;const c=ctr(r);if(camps.some(b=>hyp(ctr(b).x-c.x,ctr(b).y-c.y)<CAMP_R*TS))continue;if(DOM[idx(r.tx,r.ty)]!==p)continue;const d=hyp(c.x-hb.x,c.y-hb.y);if(d<bd){bd=d;best=r}}
+    if(best)build('deposito',best.tx,best.ty,1,4)}}
   const berry=findRes('berry',hb.x,hb.y,16,p);
   const berryFar=berry&&hyp((berry.tx+.5)*TS-hb.x,(berry.ty+.5)*TS-hb.y)>5*TS;
   if(!any('celeiro')&&(berryFar||vills.length>=9)){if(berryFar)build('celeiro',berry.tx,berry.ty,1,4);else build('celeiro',htx,hty,3,8)}
@@ -125,6 +125,8 @@ function aiTick(p){
       if(!target)rt='wood';
     }
     if(!target){const sub=rt==='wood'?'tree':rt;target=findResLimited(sub,hb,34,tgc,sub==='tree'?2:3)||findRes(sub,hb.x,hb.y,40,p)}
+    if(!target&&rt!=='wood'){target=findRes('tree',hb.x,hb.y,40,p);if(target)rt='wood'}
+    if(!target&&rt!=='food'){target=foodTarget();if(target)rt='food'}
     if(target){orderGather(v,target);cnt[rt]++;tgc.set(target.id,(tgc.get(target.id)||0)+1)}
   }
   // tecnologias (quando sobra)

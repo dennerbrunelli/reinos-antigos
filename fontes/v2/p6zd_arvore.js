@@ -94,7 +94,7 @@ Object.assign(BDESC,{
   universidade:'Eruditos estudam e geram conhecimento. Pesquisa a resistência dos prédios, das torres e das muralhas.',
   mercado:'Compra e venda de recursos, caravanas e mercadores. Pesquisa Guildas.'});
 // ---------- serraria = acampamento de lenhadores ----------
-campsOf=function(o){return G.B.filter(b=>!b.dead&&b.o===o&&(b.type==='serraria'||b.type==='deposito'||b.type==='tc')&&b.done>=1)};
+campsOf=function(o){return G.B.filter(b=>!b.dead&&b.o===o&&b.type==='deposito'&&b.done>=1)};
 // ---------- treinar: o prédio só oferece a tropa atual de cada linha ----------
 {const ct=canTrain;canTrain=function(b,t){const c=upCur(b.o,t);if(c!==t)return UPL[UPL_OF[t]].indexOf(t)<UPL[UPL_OF[t]].indexOf(c)?'Esta tropa já evoluiu para '+STAT[b.o][c].n:'Pesquise antes: '+TECH['up_'+t].n;return ct(b,t)}}
 // quem estiver na fila ou for treinado com o nome antigo sai já evoluído (vale para a IA também)
@@ -146,4 +146,4 @@ function arvAI(p){const P=G.P[p],res=P.res,nx=P.age<ENDAGE()?AGECOST[P.age+1]:{}
 {const cs=cmdShort;cmdShort=function(c){if(c&&c.up){const w=String(c.nm).replace(/^Evoluir: /,'').split(' ');return'→ '+w[w.length-1].slice(0,10)}return cs(c)}}
 // IA: Fundição perto do metal (reforço +30% e pesquisas de mineração)
 {const ra=ronAI;ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){ra(p,blds,has,any,build,htx,hty,toward,vills,army,res);
-  if(!any('fundicao')&&vills.length>=12&&afford(p,BT.fundicao.cost)){const hb={x:(htx+.5)*TS,y:(hty+.5)*TS};const m=findRes('gold',hb.x,hb.y,18,p);if(m)build('fundicao',m.tx,m.ty,1,4);else build('fundicao',htx,hty,3,9)}}}
+  if(G.P[p].age>=1&&!any('fundicao')&&vills.length>=12&&blds.some(b=>b.type==='mina')&&afford(p,BT.fundicao.cost))build('fundicao',htx,hty,3,9)}}

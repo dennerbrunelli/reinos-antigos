@@ -81,14 +81,14 @@ const MAPS={
     extra(ctx){const{st,cluster}=ctx;for(let p=0;p<st.length;p++){const s=st[p],R=11*MW/72;for(let a=0;a<Math.PI*2;a+=.045){const x=Math.round(s[0]+Math.cos(a)*R),y=Math.round(s[1]+Math.sin(a)*R);
         const gate=[.8,2.35,3.95,5.5].some(g=>Math.abs(a-g)<.13);if(gate||!inMap(x,y)||G.terr[idx(x,y)])continue;const o0=occ[idx(x,y)],r0=o0&&E.get(o0);if(r0&&r0.k==='r'){r0.dead=true;E.delete(r0.id);occ[idx(x,y)]=0;pass[idx(x,y)]=1}else if(o0)continue;placeBld('muralha',p,x,y,true)}}
       G.R=G.R.filter(r=>!r.dead);
-      for(let k=0;k<3;k++)cluster('gold',MW/2+(RNG()-.5)*8,MH/2+(RNG()-.5)*8,5)}},
+      for(let k=0;k<3;k++)ctx.mountain(MW/2+(RNG()-.5)*8,MH/2+(RNG()-.5)*8,9)}},
   cordilheira:{n:'Cordilheira',ic:'🏔',src:'Rise',dif:3,go:1.3,dry:.12,d:'Serras de minério cortam o mapa em vales. Metal de sobra, poucas passagens.',water(){},
     extra(ctx){const{put,st}=ctx;for(let k=0;k<3;k++){const t=.3+k*.2,cx=st[0][0]+(st[1][0]-st[0][0])*t,cy=st[0][1]+(st[1][1]-st[0][1])*t,ax=cx-MW*.24,ay=cy-MH*.24,bx=cx+MW*.24,by=cy+MH*.24;
-        line(ax,ay,bx,by,1,(x,y)=>{if(st.some(s=>hyp(s[0]-x,s[1]-y)<12))return;const g=((x+y*3)%17)<2;if(!g)put(RNG()<.35?'gold':'tree',x,y)})}}},
+        line(ax,ay,bx,by,1,(x,y)=>{if(st.some(s=>hyp(s[0]-x,s[1]-y)<12))return;const g=((x+y*3)%17)<2;if(!g)put(RNG()<.7?'gold':'tree',x,y)})}}},
   oasis:{n:'Oásis',ic:'🌴',src:'Age',dif:2,fo:.35,dry:.42,d:'Deserto com um lago cercado de palmeiras no meio. Todos disputam o centro.',water(S){lake(MW/2,MH/2,8*S)},
     extra(ctx){const{put}=ctx;const S=MW/72;for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){const d=hyp(x-MW/2,y-MH/2);if(d>9*S&&d<13.5*S&&RNG()<.6)put('tree',x,y)}}},
   ouro:{n:'Corrida do Ouro',ic:'🪙',src:'Age',dif:3,d:'Muito metal no centro, protegido por um anel de floresta com duas entradas.',water(){},
-    extra(ctx){const{put,cluster}=ctx;const S=MW/72;for(let k=0;k<4;k++)cluster('gold',MW/2+(RNG()-.5)*5*S,MH/2+(RNG()-.5)*5*S,6);
+    extra(ctx){const{put,cluster}=ctx;const S=MW/72;for(let k=0;k<4;k++)ctx.mountain(MW/2+(RNG()-.5)*5*S,MH/2+(RNG()-.5)*5*S,10);
       for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){const d=hyp(x-MW/2,y-MH/2),a=Math.atan2(y-MH/2,x-MW/2);if(d>7.5*S&&d<11*S&&Math.abs(Math.sin(a-Math.PI/4))>.25)put('tree',x,y)}}},
   amazonia:{n:'Amazônia',ic:'🐊',src:'Rise',dif:5,fo:2.1,an:1.8,d:'Selva fechada e rios. Difícil de andar, fácil de se perder.',water(S){river(0,MH*.35,MW*.65,MH-1,Math.round(1.4*S),2,3*S);river(MW*.35,0,MW-1,MH*.65,Math.round(1.4*S),2,3*S)}},
   delta:{n:'Delta do Nilo',ic:'🏺',src:'Rise',dif:3,dry:.33,go:.9,d:'Um rio desce e se divide em braços até o mar. Comida farta na beira.',

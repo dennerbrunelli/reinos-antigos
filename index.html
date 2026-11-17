@@ -741,20 +741,23 @@ function newGame(o){
   const put=(sub,x,y)=>{if(!canRes(x,y))return false;const i=idx(x,y);const r={id:G.nid++,k:'r',rt:RT[sub],sub,tx:x,ty:y,amt:AMT[sub],v:(RNG()*3)|0};
     if(sub==='tree'&&wdist[i]<=2&&RNG()<.75)r.v=3;G.R.push(r);E.set(r.id,r);occ[i]=r.id;pass[i]=0;return true};
   const cluster=(sub,cx,cy,n)=>{let c=0;for(const[dx,dy]of SPIRAL){if(c>=n)break;if(put(sub,Math.round(cx)+dx,Math.round(cy)+dy))c++}};
+  // monte de minério (Rise): um bloco de pedras de metal com forma irregular; a Mina encosta nele
+  const mountain=(cx,cy,n)=>{cx=Math.round(cx);cy=Math.round(cy);const fr=[[cx,cy]],done=new Set();let c=0;
+    while(fr.length&&c<n){const k=(RNG()*fr.length)|0,[x,y]=fr.splice(k,1)[0],key=x+','+y;if(done.has(key))continue;done.add(key);
+      if(put('gold',x,y)){c++;for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1]])fr.push([x+a,y+b])}}};
   const at=(s,ang,d)=>{for(let i=0;i<24;i++){const a=ang+i*.45;const x=s[0]+Math.cos(a)*d,y=s[1]+Math.sin(a)*d;if(x>3&&y>3&&x<MW-4&&y<MH-4&&!G.terr[idx(x|0,y|0)])return[x,y]}return[s[0]+d*.7,s[1]-d*.7]};
   for(const s of starts){
     const a0=RNG()*Math.PI*2;
     let p=at(s,a0,6.5);cluster('berry',p[0],p[1],6);
-    p=at(s,a0+1.9,9);cluster('gold',p[0],p[1],5);
-    p=at(s,a0+3.4,10);cluster('stone',p[0],p[1],4);// vira minério de metal (o Rise não tem pedra)
+    p=at(s,a0+1.9,11);mountain(p[0],p[1],10+((RNG()*5)|0));// monte de minério da cidade (Mina na Era Clássica)
     p=at(s,a0+4.8,9);blob(p[0],p[1],3,(x,y)=>{if(RNG()<.9)put('tree',x,y)});
     p=at(s,a0+2.7,14);blob(p[0],p[1],2.6,(x,y)=>{if(RNG()<.85)put('tree',x,y)});
-    p=at(s,a0+.9,17);cluster('gold',p[0],p[1],4);
+    p=at(s,a0+.9,22);mountain(p[0],p[1],8+((RNG()*6)|0));
   }
-  for(let k=0;k<Math.round(20*A*(MP.fo??1));k++)for(let tr=0;tr<40;tr++){const cx=3+RNG()*(MW-6),cy=3+RNG()*(MH-6);if(!far(cx,cy,10)||G.terr[idx(cx|0,cy|0)])continue;blob(cx,cy,2+RNG()*3.5,(x,y,d)=>{if(RNG()<1.05-d*.35)put('tree',x,y)});break}
+  for(let k=0;k<Math.round(13*A*(MP.fo??1));k++)for(let tr=0;tr<40;tr++){const cx=3+RNG()*(MW-6),cy=3+RNG()*(MH-6);if(!far(cx,cy,10)||G.terr[idx(cx|0,cy|0)])continue;blob(cx,cy,2+RNG()*3.5,(x,y,d)=>{if(RNG()<1.05-d*.35)put('tree',x,y)});break}
   for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){const e=Math.min(x,y,MW-1-x,MH-1-y);if(e===0&&RNG()<.85||e===1&&RNG()<.45||e===2&&RNG()<.12)put('tree',x,y)}
   const extra=(sub,cnt,n,d)=>{for(let k=0;k<cnt;k++)for(let tr=0;tr<50;tr++){const cx=5+RNG()*(MW-10),cy=5+RNG()*(MH-10);if(!far(cx,cy,d)||G.terr[idx(cx|0,cy|0)])continue;cluster(sub,cx,cy,n);break}};
-  extra('gold',Math.round(4*A*(MP.go??1)),4,15);extra('stone',Math.round(4*A*(MP.go??1)),3,15);extra('berry',Math.round(4*A*(MP.be??1)),5,13);
+  for(let k=0;k<Math.round(3.2*A*(MP.go??1));k++)for(let tr=0;tr<50;tr++){const cx=6+RNG()*(MW-12),cy=6+RNG()*(MH-12);if(!far(cx,cy,16)||G.terr[idx(cx|0,cy|0)])continue;mountain(cx,cy,10+((RNG()*14)|0));break}extra('berry',Math.round(4*A*(MP.be??1)),5,13);
   // peixes
   const fish=(x,y,deep)=>{const i=idx(x,y);if(!G.terr[i]||occ[i])return false;const r={id:G.nid++,k:'r',rt:'food',sub:'fish',tx:x,ty:y,amt:deep?300:200,deep:deep?1:0,v:(RNG()*2)|0};G.R.push(r);E.set(r.id,r);occ[i]=r.id;return true};
   const shore=[],deep=[];
@@ -775,7 +778,7 @@ function newGame(o){
     spawnUnit('bat',p,(s[0]+2.5)*TS,(s[1]+1.5)*TS);
   }
   // detalhes do mapa (florestas fechadas, anel de ouro, serras, muralhas da Arena) e caminho garantido entre as bases
-  if(MP.extra){MP.extra({put,cluster,blob,st:starts,far});for(let i=1;i<starts.length;i++)ensurePath(starts[0],starts[i])}
+  if(MP.extra){MP.extra({put,cluster,mountain,blob,st:starts,far});for(let i=1;i<starts.length;i++)ensurePath(starts[0],starts[i])}
   // times: 'ffa' todos contra todos · 't2' dois times (você + metade das IAs) · 'vs' todas as IAs juntas contra você
   G.rel=[];for(let p=0;p<NP;p++)G.rel.push(new Array(NP).fill(0));
   {const tm=o.times||'ffa',team=p=>tm==='vs'?(p?1:0):tm==='t2'?p%2:p;// 't2': você (0) com 2,4,6 contra 1,3,5,7
@@ -1745,14 +1748,14 @@ const MAPS={
     extra(ctx){const{st,cluster}=ctx;for(let p=0;p<st.length;p++){const s=st[p],R=11*MW/72;for(let a=0;a<Math.PI*2;a+=.045){const x=Math.round(s[0]+Math.cos(a)*R),y=Math.round(s[1]+Math.sin(a)*R);
         const gate=[.8,2.35,3.95,5.5].some(g=>Math.abs(a-g)<.13);if(gate||!inMap(x,y)||G.terr[idx(x,y)])continue;const o0=occ[idx(x,y)],r0=o0&&E.get(o0);if(r0&&r0.k==='r'){r0.dead=true;E.delete(r0.id);occ[idx(x,y)]=0;pass[idx(x,y)]=1}else if(o0)continue;placeBld('muralha',p,x,y,true)}}
       G.R=G.R.filter(r=>!r.dead);
-      for(let k=0;k<3;k++)cluster('gold',MW/2+(RNG()-.5)*8,MH/2+(RNG()-.5)*8,5)}},
+      for(let k=0;k<3;k++)ctx.mountain(MW/2+(RNG()-.5)*8,MH/2+(RNG()-.5)*8,9)}},
   cordilheira:{n:'Cordilheira',ic:'🏔',src:'Rise',dif:3,go:1.3,dry:.12,d:'Serras de minério cortam o mapa em vales. Metal de sobra, poucas passagens.',water(){},
     extra(ctx){const{put,st}=ctx;for(let k=0;k<3;k++){const t=.3+k*.2,cx=st[0][0]+(st[1][0]-st[0][0])*t,cy=st[0][1]+(st[1][1]-st[0][1])*t,ax=cx-MW*.24,ay=cy-MH*.24,bx=cx+MW*.24,by=cy+MH*.24;
-        line(ax,ay,bx,by,1,(x,y)=>{if(st.some(s=>hyp(s[0]-x,s[1]-y)<12))return;const g=((x+y*3)%17)<2;if(!g)put(RNG()<.35?'gold':'tree',x,y)})}}},
+        line(ax,ay,bx,by,1,(x,y)=>{if(st.some(s=>hyp(s[0]-x,s[1]-y)<12))return;const g=((x+y*3)%17)<2;if(!g)put(RNG()<.7?'gold':'tree',x,y)})}}},
   oasis:{n:'Oásis',ic:'🌴',src:'Age',dif:2,fo:.35,dry:.42,d:'Deserto com um lago cercado de palmeiras no meio. Todos disputam o centro.',water(S){lake(MW/2,MH/2,8*S)},
     extra(ctx){const{put}=ctx;const S=MW/72;for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){const d=hyp(x-MW/2,y-MH/2);if(d>9*S&&d<13.5*S&&RNG()<.6)put('tree',x,y)}}},
   ouro:{n:'Corrida do Ouro',ic:'🪙',src:'Age',dif:3,d:'Muito metal no centro, protegido por um anel de floresta com duas entradas.',water(){},
-    extra(ctx){const{put,cluster}=ctx;const S=MW/72;for(let k=0;k<4;k++)cluster('gold',MW/2+(RNG()-.5)*5*S,MH/2+(RNG()-.5)*5*S,6);
+    extra(ctx){const{put,cluster}=ctx;const S=MW/72;for(let k=0;k<4;k++)ctx.mountain(MW/2+(RNG()-.5)*5*S,MH/2+(RNG()-.5)*5*S,10);
       for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){const d=hyp(x-MW/2,y-MH/2),a=Math.atan2(y-MH/2,x-MW/2);if(d>7.5*S&&d<11*S&&Math.abs(Math.sin(a-Math.PI/4))>.25)put('tree',x,y)}}},
   amazonia:{n:'Amazônia',ic:'🐊',src:'Rise',dif:5,fo:2.1,an:1.8,d:'Selva fechada e rios. Difícil de andar, fácil de se perder.',water(S){river(0,MH*.35,MW*.65,MH-1,Math.round(1.4*S),2,3*S);river(MW*.35,0,MW-1,MH*.65,Math.round(1.4*S),2,3*S)}},
   delta:{n:'Delta do Nilo',ic:'🏺',src:'Rise',dif:3,dry:.33,go:.9,d:'Um rio desce e se divide em braços até o mar. Comida farta na beira.',
@@ -1769,7 +1772,7 @@ function mapSpec(id){return MAPS[id]||MAPS.terra}
 // =========================================================
 let AIP=1; // jogador que o computador está controlando agora
 function findSite(type,cx,cy,minR,maxR){
-  const sz=BT[type].sz,m=type==='fazenda'||BT[type].water?0:1;
+  const sz=BT[type].sz,m=type==='fazenda'||type==='mina'||type==='petro'||BT[type].water?0:1;
   for(const[dx,dy,d2]of SPIRAL){if(d2<minR*minR)continue;if(d2>maxR*maxR)break;
     const tx=Math.round(cx+dx-sz/2),ty=Math.round(cy+dy-sz/2);if(validSite(type,tx,ty,m,AIP))return[tx,ty]}
   return null;
@@ -1820,7 +1823,7 @@ function aiTick(p){
   // requisitos de era: 2 prédios diferentes da era atual
   if(P.age<ENDAGE()){const need=AGEREQ[P.age+1];const got=need.filter(t=>has(t)).length;
     if(got<2&&vills.length>=6){for(const t of need){if(any(t))continue;if(t==='doca')continue;
-      const near=t==='celeiro'?(findRes('berry',hb.x,hb.y,14,p)||{tx:htx,ty:hty}):t==='serraria'?(findRes('tree',hb.x,hb.y,20,p)||{tx:htx,ty:hty}):{tx:htx+(G.starts[0][0]-htx)*.1,ty:hty+(G.starts[0][1]-hty)*.1};
+      const near=t==='celeiro'?(findRes('berry',hb.x,hb.y,14,p)||{tx:htx,ty:hty}):t==='deposito'?(findRes('tree',hb.x,hb.y,20,p)||{tx:htx,ty:hty}):{tx:htx+(G.starts[0][0]-htx)*.1,ty:hty+(G.starts[0][1]-hty)*.1};
       if(build(t,near.tx,near.ty,t==='celeiro'||t==='serraria'?1:4,t==='celeiro'||t==='serraria'?6:12))break;break}}
     {const lb=blds.find(b=>b.type==='biblioteca'&&b.done>=1);if(lb&&ageGoal&&got>=2&&!blds.some(b=>b.q.includes('age'))&&lb.q.length<2&&afford(p,nextAge)){pay(p,nextAge);lb.q.push('age')}}
   }
@@ -1841,17 +1844,17 @@ function aiTick(p){
     if(okC){let best=null,bd=1e9;
       for(const r of G.R){if(r.dead||r.walk||!(r.sub==='gold'||r.sub==='stone'||r.sub==='tree')||(r.badCity&&G.t-r.badCity<120))continue;const rx=r.tx+.5,ry=r.ty+.5;
         let dm=1e9;for(const c of cities){const cc=ctr(c);dm=Math.min(dm,hyp(cc.x/TS-rx,cc.y/TS-ry))}
-        if(dm<CITY_MIN_OWN+1||dm>CITY_MIN_OWN+12)continue;
+        if(dm<CITY_MIN_OWN+1||dm>CITY_MIN_OWN+12||DOM[idx(r.tx,r.ty)]!==p)continue;
         const sc=hyp(rx-htx,ry-hty)+(r.sub==='tree'?8:0);if(sc<bd){bd=sc;best=r}}
       if(best){const b=build('tc',best.tx,best.ty,2,6);if(b){for(let k=0;k<2;k++){const v=pick(ctr(b));if(v)orderBuild(v,b)}}else best.badCity=G.t}}}
   // sem lugar e sem cidade nova: uma torre na beira empurra a fronteira
   if(crowded&&P.age>=1&&afford(p,BT.torre.cost)&&blds.filter(b=>b.type==='torre').length<{facil:2,normal:4,dificil:6}[G.diff]&&!blds.some(b=>b.type==='torre'&&b.done<1)){
-    const a0=RNG()*6.28;for(let k=0;k<8;k++){const a=a0+k*.785;if(build('torre',htx+Math.cos(a)*(INF_CAP-1),hty+Math.sin(a)*(INF_CAP-1),0,3))break}}
+    const a0=RNG()*6.28;for(let k=0;k<8;k++){const a=a0+k*.785;if(build(P.age>=BT.forte.age&&afford(p,BT.forte.cost)?'forte':'torre',htx+Math.cos(a)*(INF_CAP-3),hty+Math.sin(a)*(INF_CAP-3),0,3))break}}
   // depósitos perto dos recursos
   // acampamentos de lenhadores (como no Rise): 1 a cada 12 aldeões, perto de floresta sem acampamento
-  {const camps=blds.filter(b=>b.type==='deposito'||b.type==='serraria');if(camps.length<1+Math.floor(vills.length/12)&&!camps.some(b=>b.done<1)){
-    let best=null,bd=30*TS;for(const r of G.R){if(r.dead||r.sub!=='tree')continue;const c=ctr(r);if(camps.some(b=>hyp(ctr(b).x-c.x,ctr(b).y-c.y)<CAMP_R*TS))continue;if(DOM[idx(r.tx,r.ty)]!==p&&hyp(c.x-hb.x,c.y-hb.y)>14*TS)continue;const d=hyp(c.x-hb.x,c.y-hb.y);if(d<bd){bd=d;best=r}}
-    if(best)build('serraria',best.tx,best.ty,1,4)}}
+  {const camps=blds.filter(b=>b.type==='deposito');if(camps.length<1+Math.floor(vills.length/12)&&!camps.some(b=>b.done<1)){
+    let best=null,bd=30*TS;for(const r of G.R){if(r.dead||r.sub!=='tree')continue;const c=ctr(r);if(camps.some(b=>hyp(ctr(b).x-c.x,ctr(b).y-c.y)<CAMP_R*TS))continue;if(DOM[idx(r.tx,r.ty)]!==p)continue;const d=hyp(c.x-hb.x,c.y-hb.y);if(d<bd){bd=d;best=r}}
+    if(best)build('deposito',best.tx,best.ty,1,4)}}
   const berry=findRes('berry',hb.x,hb.y,16,p);
   const berryFar=berry&&hyp((berry.tx+.5)*TS-hb.x,(berry.ty+.5)*TS-hb.y)>5*TS;
   if(!any('celeiro')&&(berryFar||vills.length>=9)){if(berryFar)build('celeiro',berry.tx,berry.ty,1,4);else build('celeiro',htx,hty,3,8)}
@@ -1890,6 +1893,8 @@ function aiTick(p){
       if(!target)rt='wood';
     }
     if(!target){const sub=rt==='wood'?'tree':rt;target=findResLimited(sub,hb,34,tgc,sub==='tree'?2:3)||findRes(sub,hb.x,hb.y,40,p)}
+    if(!target&&rt!=='wood'){target=findRes('tree',hb.x,hb.y,40,p);if(target)rt='wood'}
+    if(!target&&rt!=='food'){target=foodTarget();if(target)rt='food'}
     if(target){orderGather(v,target);cnt[rt]++;tgc.set(target.id,(tgc.get(target.id)||0)+1)}
   }
   // tecnologias (quando sobra)
@@ -3541,7 +3546,7 @@ function clickAt(sx,sy,add){
     if(add){if(SEL.includes(e.id))SEL=SEL.filter(i=>i!==e.id);else SEL.push(e.id)}else SEL=[e.id];snd('sel');updHUD();return}
   if(e&&e.k==='b'&&e.o===0){
     const vs=ownUnits.filter(u=>u.type==='vill'),fb=ownUnits.filter(u=>u.type==='pesc'&&u.carry>0);
-    if((vs.length&&(e.done<1||e.hp<e.mhp||e.type==='fazenda'||(BT[e.type].drop&&vs.some(v=>v.carry>0))))||(fb.length&&e.type==='doca')){smartOrder(ownUnits,e,w.x,w.y,0);mark(w.x,w.y,'#6f6');return}
+    if((vs.length&&(e.done<1||e.hp<e.mhp||e.type==='fazenda'||(typeof GSITE!=='undefined'&&GSITE[e.type])||(BT[e.type].drop&&vs.some(v=>v.carry>0))))||(fb.length&&e.type==='doca')){smartOrder(ownUnits,e,w.x,w.y,0);mark(w.x,w.y,'#6f6');return}
     SEL=[e.id];snd('sel');updHUD();return}
   if(ownUnits.length){const r=smartOrder(ownUnits,e,w.x,w.y,0);mark(w.x,w.y,r==='atk'?'#ff5a4a':r==='res'?'#ffe08a':'#7f7');return}
   if(s.length===1&&s[0].k==='b'&&s[0].o===0&&BT[s[0].type].train&&s[0].done>=1){s[0].rally={x:w.x,y:w.y,id:e&&(e.k==='r'||e.o===GAIA)?e.id:0};mark(w.x,w.y,'#6cf');return}
@@ -3847,7 +3852,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 76';$('ver').textContent=VERSAO;
+const VERSAO='Versão 77';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -4968,8 +4973,8 @@ function campUsed(o,b){let n=0;const c=ctr(b);for(const u of G.U)if(!u.dead&&u.o
 // pode trabalhar aqui? (null = pode; texto = motivo)
 function nodeBlock(u,r){if(!r||r.k!=='r'||r.walk)return null;const o=u.o,max=NODE_MAX[r.sub];
   if(max&&(workers().get(r.id)||0)>=max&&!(u.st==='gather'&&u.tg===r.id))return'cheio';
-  if(r.sub==='tree'&&u.type==='vill'&&o<NP){const cp=campNear(o,r);if(!cp)return'Madeira: construa uma Serraria perto da floresta';
-    if(!(u.st==='gather'&&u.tg===r.id)&&campUsed(o,cp)>=campCap(cp))return'Esta serraria já está com '+campCap(cp)+' lenhadores (máximo pelas árvores em volta)'}
+  if(r.sub==='tree'&&u.type==='vill'&&o<NP){const cp=campNear(o,r);if(!cp)return'Madeira: construa um Acampamento de lenhadores perto da floresta';
+    if(!(u.st==='gather'&&u.tg===r.id)&&campUsed(o,cp)>=campCap(cp))return'Este acampamento já está com '+campCap(cp)+' lenhadores (máximo pelas árvores em volta)'}
   return null}
 const orderGather7=orderGather;
 orderGather=function(u,r){const why=nodeBlock(u,r);
@@ -5004,7 +5009,7 @@ doGather=function(u,T,dt){
     let nr=findRes(u.lsub,c.x,c.y,u.lsub==='farm'?10:9,u.o);if(!nr&&u.lsub==='carc'&&u.hunt)nr=findRes(u.hunt,c.x,c.y,10,u.o);
     if(nr&&(u.fail<=3||nr!==r)){if(orderGather(u,nr)===false)u.st='idle';u.fail=0}else u.st='idle';return}
   // madeira sem acampamento (o acampamento caiu): para
-  if(r.k==='r'&&r.sub==='tree'&&u.type==='vill'&&u.o<NP&&!campNear(u.o,r)){u.st='idle';if(u.o===0&&!(UI.campT>G.t)){UI.campT=G.t+20;toast('🪓 Lenhadores parados: falta uma Serraria perto da floresta')}return}
+  if(r.k==='r'&&r.sub==='tree'&&u.type==='vill'&&u.o<NP&&!campNear(u.o,r)){u.st='idle';if(u.o===0&&!(UI.campT>G.t)){UI.campT=G.t+20;toast('🪓 Lenhadores parados: falta um Acampamento de lenhadores perto da floresta')}return}
   if(!approach(u,r,dt,r.walk?18:(isNav(u)?30:24)))return;
   u.work=true;u.an+=dt*8;const c=ctr(r);faceTo(u,c.x,c.y);
   const cat=gatherCat(u,r),rt=r.k==='r'?r.rt:'food';
@@ -6720,7 +6725,7 @@ Object.assign(BDESC,{
   universidade:'Eruditos estudam e geram conhecimento. Pesquisa a resistência dos prédios, das torres e das muralhas.',
   mercado:'Compra e venda de recursos, caravanas e mercadores. Pesquisa Guildas.'});
 // ---------- serraria = acampamento de lenhadores ----------
-campsOf=function(o){return G.B.filter(b=>!b.dead&&b.o===o&&(b.type==='serraria'||b.type==='deposito'||b.type==='tc')&&b.done>=1)};
+campsOf=function(o){return G.B.filter(b=>!b.dead&&b.o===o&&b.type==='deposito'&&b.done>=1)};
 // ---------- treinar: o prédio só oferece a tropa atual de cada linha ----------
 {const ct=canTrain;canTrain=function(b,t){const c=upCur(b.o,t);if(c!==t)return UPL[UPL_OF[t]].indexOf(t)<UPL[UPL_OF[t]].indexOf(c)?'Esta tropa já evoluiu para '+STAT[b.o][c].n:'Pesquise antes: '+TECH['up_'+t].n;return ct(b,t)}}
 // quem estiver na fila ou for treinado com o nome antigo sai já evoluído (vale para a IA também)
@@ -6772,7 +6777,209 @@ function arvAI(p){const P=G.P[p],res=P.res,nx=P.age<ENDAGE()?AGECOST[P.age+1]:{}
 {const cs=cmdShort;cmdShort=function(c){if(c&&c.up){const w=String(c.nm).replace(/^Evoluir: /,'').split(' ');return'→ '+w[w.length-1].slice(0,10)}return cs(c)}}
 // IA: Fundição perto do metal (reforço +30% e pesquisas de mineração)
 {const ra=ronAI;ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){ra(p,blds,has,any,build,htx,hty,toward,vills,army,res);
-  if(!any('fundicao')&&vills.length>=12&&afford(p,BT.fundicao.cost)){const hb={x:(htx+.5)*TS,y:(hty+.5)*TS};const m=findRes('gold',hb.x,hb.y,18,p);if(m)build('fundicao',m.tx,m.ty,1,4);else build('fundicao',htx,hty,3,9)}}}
+  if(G.P[p].age>=1&&!any('fundicao')&&vills.length>=12&&blds.some(b=>b.type==='mina')&&afford(p,BT.fundicao.cost))build('fundicao',htx,hty,3,9)}}
+// =========================================================
+// FRONTEIRAS, CIDADES E COLETA IGUAIS AO RISE OF NATIONS
+// (pesquisado: manual do Rise, wiki do Rise, guias da comunidade)
+//   FRONTEIRA
+//   · nada se constrói fora da sua fronteira (em terra aliada: só militares e pontos de coleta)
+//   · a fronteira cresce com Cidades e Fortes; a Torre NÃO mexe na fronteira
+//   · Cidade nova e Forte só dentro da fronteira; o Forte não pode ficar colado em cidade ou outro forte
+//   · cada Cidade tem o seu RAIO ECONÔMICO (o círculo): fazendas, Celeiro, Serraria, Fundição,
+//     Refinaria, Biblioteca, Mercado, Universidade e Templo só dentro dele, UM de cada por cidade;
+//     até 5 fazendas por cidade. Prédios militares e pontos de coleta: em qualquer lugar da fronteira
+//   COLETA (ninguém tira direto do recurso: trabalha num prédio de coleta)
+//   · Acampamento de lenhadores: perto das árvores; vagas conforme as árvores em volta (até 10)
+//   · Mina: encostada num monte de minério; vagas conforme o tamanho do monte (até 10);
+//     cada povo só faz UMA mina por monte; a partir da Era Clássica
+//   · Poço de Petróleo: ao lado da mancha de petróleo; 1 trabalhador que rende muito
+//   · Fazenda: 1 trabalhador. Nada disso acaba.
+//   · ao ficar pronto, cada prédio de coleta dá um bônus: +5 por vaga (fazenda +20, poço +50)
+//   · Celeiro/Serraria/Fundição reforçam só os pontos de coleta da MESMA cidade (+50%),
+//     e as 3 pesquisas de cada um sobem o reforço para +100%, +150% e +200%. A Refinaria vale para todos os poços.
+//   · cada Cidade rende sozinha um pouco de comida e madeira
+// =========================================================
+const CITY_R=11,FORT_GAP=10,CITY_INCOME=20;   // raio econômico; distância mínima do forte; comida e madeira por minuto por cidade
+const GSITE={deposito:'wood',mina:'gold',petro:'oil'};
+const SITE_SUB={deposito:'tree',mina:'gold',petro:'oil'};
+const SUB_SITE={tree:'deposito',gold:'mina',stone:'mina',oil:'petro'};
+const SITE_MUL={wood:1,gold:1,oil:4.5};
+const CITYB={fazenda:1,celeiro:1,serraria:1,fundicao:1,refinaria:1,biblioteca:1,mercado:1,universidade:1,templo:1};
+const ONE_CITY={celeiro:1,serraria:1,fundicao:1,refinaria:1,biblioteca:1,mercado:1,universidade:1,templo:1};
+const MILB={quartel:1,estabulo:1,oficina:1,fabrica:1,doca:1,torre:1,muralha:1,silo:1,arquearia:1,academia:1};
+const BOOST_OF={fazenda:'celeiro',deposito:'serraria',mina:'fundicao',petro:'refinaria'};
+const BOOST_TECH={celeiro:['enxada','arado','irrigacao'],serraria:['serra','machadoF','serraV'],fundicao:['picareta','poco','dinamite'],refinaria:['perfura','oleoduto']};
+// ---------- prédios de coleta ----------
+Object.assign(BT.deposito,{n:'Acampamento de lenhadores',cost:{food:50},t:20,age:0,drop:['wood']});delete BT.deposito.res;
+BT.mina={n:'Mina',sz:2,hp:400,cost:{wood:50},t:20,age:1,los:3,pg:0,h:40,drop:['gold']};
+BT.petro={n:'Poço de Petróleo',sz:1,hp:300,cost:{wood:100,gold:50},t:25,age:5,los:3,pg:0,h:50,drop:['oil']};
+BT.serraria.drop=null;BT.fundicao.drop=null;BT.refinaria.drop=null;BT.fundicao.age=1;
+for(const k in NEUTRAL_OK)delete NEUTRAL_OK[k];
+ECO.length=0;ECO.push('tc','fazenda','deposito','mina','petro','celeiro','serraria','fundicao','refinaria','doca','mercado');
+// ---------- pesquisas de reforço (3 níveis, como no Rise) ----------
+{const lv=[1,3,5];for(const k in BOOST_TECH)BOOST_TECH[k].forEach((id,i)=>{const T=TECH[id];T.age=k==='refinaria'?[6,7][i]:lv[i];T.req=i?BOOST_TECH[k][i-1]:null;
+  T.d=BT[k].n+': reforço sobe para +'+(50*(i+2))+'% nos pontos de coleta da cidade'+(k==='refinaria'?' (todos os poços)':'');T.fx=()=>{}})}
+BT.celeiro.res=['enxada','arado','irrigacao','rede'];
+Object.assign(BDESC,{
+  deposito:'Ponto de coleta de madeira. Construa perto das árvores: as vagas (até 10) dependem de quantas árvores há em volta. Ao ficar pronto, dá +5 de madeira por vaga.',
+  mina:'Ponto de coleta de metal. Encoste num monte de minério: o tamanho do monte dá as vagas (até 10). Cada povo só faz uma mina por monte. Era Clássica.',
+  petro:'Ponto de coleta de petróleo, ao lado da mancha. 1 trabalhador que rende muito. Era Industrial.',
+  celeiro:'Um por cidade, dentro do círculo. Reforça as fazendas da MESMA cidade em +50% (pesquisas: +100%, +150%, +200%).',
+  serraria:'Uma por cidade, dentro do círculo. Reforça os acampamentos de lenhadores da MESMA cidade em +50% (pesquisas até +200%).',
+  fundicao:'Uma por cidade, dentro do círculo. Reforça as minas da MESMA cidade em +50% (pesquisas até +200%). Era Clássica.',
+  refinaria:'Uma por cidade. Reforça TODOS os seus poços de petróleo em +50% (pesquisas até +150%).',
+  forte:'Defesa forte e treina Generais. Amplia a fronteira como uma cidade. Só dentro da sua fronteira e longe de cidades e de outros fortes.',
+  torre:'Defesa: atira flechas. Não amplia a fronteira.',
+  tc:'Coração da cidade: treina aldeões, amplia a fronteira e tem o círculo econômico onde ficam fazendas e prédios da cidade. Rende sozinho um pouco de comida e madeira.'});
+// ---------- cidade dona de um ponto (raio econômico) ----------
+cityOf=function(o,x,y){let best=null,bd=CITY_R*TS+.01;for(const b of G.B){if(b.dead||b.o!==o||b.type!=='tc')continue;const d=hyp(ctr(b).x-x,ctr(b).y-y);if(d<bd){bd=d;best=b}}return best};
+function cityOfB(b){const c=ctr(b);return cityOf(b.o,c.x,c.y)}
+// ---------- fronteira: cidades e fortes; torre não ----------
+infR=function(b){const cv=(G.P[b.o]&&G.P[b.o].cvc)||0;if(b.type==='forte')return 12+cv;if(b.type==='tc')return(b.id===G.P[b.o].capId?INF_CAP:INF_CITY+1)+cv;return 0};
+// ---------- onde pode construir ----------
+domWhy=function(type,tx,ty,o){
+  if(o>=NP||!G)return'';const T=BT[type],sz=T.sz,cx=tx+sz/2,cy=ty+sz/2;let ally2=false;
+  for(let y=ty;y<ty+sz;y++)for(let x=tx;x<tx+sz;x++){const d=DOM[y*MW+x];
+    if(d===o)continue;
+    if(d>=0&&d<NP&&!ally(d,o))return'⛔ Não dá para construir no território inimigo';
+    if(d>=0&&d<NP){ally2=true;continue}
+    return'🚩 Só dentro da sua fronteira (a linha '+(o===0?'azul':'da cor do seu reino')+')'}
+  if(ally2&&!MILB[type]&&!GSITE[type])return'🤝 Em terra aliada só prédios militares e pontos de coleta';
+  if(type==='tc'){let n=0;
+    for(const b of G.B){if(b.dead||b.type!=='tc')continue;const d=hyp(b.tx+b.sz/2-cx,b.ty+b.sz/2-cy);
+      if(b.o===o){n++;if(d<CITY_MIN_OWN)return'🏘 Cidade nova: pelo menos '+CITY_MIN_OWN+' quadrados longe das suas cidades'}
+      else if(b.o<NP&&d<CITY_MIN_EN)return'🏘 Cidade nova: pelo menos '+CITY_MIN_EN+' quadrados longe das outras cidades'}
+    if(n>=cityMax(o))return'🏘 Limite de '+cityMax(o)+' cidades · pesquise Cívica na Biblioteca para fundar mais'}
+  if(type==='forte'){for(const b of G.B){if(b.dead||(b.type!=='tc'&&b.type!=='forte'))continue;if(hyp(b.tx+b.sz/2-cx,b.ty+b.sz/2-cy)<FORT_GAP)return'🏰 O Forte precisa ficar a '+FORT_GAP+' quadrados de cidades e de outros fortes'}}
+  if(CITYB[type]){const c=cityOf(o,cx*TS,cy*TS);if(!c)return'🏘 Só dentro do círculo de uma cidade sua';
+    if(type==='fazenda'&&farmsOf(c)>=FARMS_CITY)return'🌾 Esta cidade já tem '+FARMS_CITY+' fazendas';
+    if(ONE_CITY[type]&&G.B.some(b=>!b.dead&&b.o===o&&b.type===type&&cityOfB(b)===c))return'🏘 Esta cidade já tem '+BT[type].n+' (um por cidade)'}
+  if(type==='mina'){const m=mineMtn(tx,ty,sz,o);if(m==null)return'⛏ Encoste a mina num monte de minério';if(m<0)return'⛏ Você já tem uma mina neste monte (uma por monte)'}
+  if(type==='petro'){if(!wellOil(tx,ty,sz))return'🛢 Construa ao lado de uma mancha de petróleo livre'}
+  if(type==='deposito'){if(treesNear(cx*TS,cy*TS)<2)return'🪓 Construa perto das árvores'}
+  return''};
+// ---------- montes de minério (grupos de pedras de metal) ----------
+function mtnInit(){G.mtn={};let id=0;const at=new Map();for(const r of G.R)if(!r.dead&&(r.sub==='gold'||r.sub==='stone')){r.mt=0;at.set(r.tx+','+r.ty,r)}
+  for(const r of at.values()){if(r.mt)continue;id++;let n=0;const st=[r];r.mt=id;
+    while(st.length){const a=st.pop();n++;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const b=at.get((a.tx+dx)+','+(a.ty+dy));if(b&&!b.mt){b.mt=id;st.push(b)}}}
+    G.mtn[id]={n}}
+  for(const b of G.B)if(b.type==='mina'&&!b.dead)b.mt=mineMtn(b.tx,b.ty,b.sz,-1)}
+function mtnSlots(id){const m=G.mtn&&G.mtn[id];return m?clamp(Math.round(m.n*.6),2,10):0}
+// devolve o monte encostado (id), null se nenhum, -1 se o povo já tem mina em todos os montes encostados
+function mineMtn(tx,ty,sz,o){let found=null;
+  for(let y=ty-1;y<=ty+sz;y++)for(let x=tx-1;x<=tx+sz;x++){if(!inMap(x,y))continue;const r=E.get(occ[idx(x,y)]);if(!r||r.k!=='r'||!r.mt)continue;
+    if(o>=0&&G.B.some(b=>!b.dead&&b.o===o&&b.type==='mina'&&b.mt===r.mt)){if(found==null)found=-1;continue}
+    if(found==null||found<0||mtnSlots(r.mt)>mtnSlots(found))found=r.mt}
+  return found}
+function wellOil(tx,ty,sz){for(let y=ty-1;y<=ty+sz;y++)for(let x=tx-1;x<=tx+sz;x++){if(!inMap(x,y))continue;const r=E.get(occ[idx(x,y)]);if(r&&r.k==='r'&&r.sub==='oil'&&!G.B.some(b=>!b.dead&&b.type==='petro'&&b.oil===r.id))return r}return null}
+function treesNear(x,y){let n=0;for(const r of G.R)if(!r.dead&&r.sub==='tree'&&hyp(ctr(r).x-x,ctr(r).y-y)<CAMP_R*TS)n++;return n}
+{const pb=placeBld;placeBld=function(type,o,tx,ty,done){const b=pb(type,o,tx,ty,done);if(type==='mina')b.mt=mineMtn(tx,ty,b.sz,-1);if(type==='petro'){const r=wellOil(tx,ty,b.sz);if(r)b.oil=r.id}return b}}
+// ---------- vagas ----------
+function siteCap(b){if(b.type==='petro')return 1;if(b.type==='mina')return mtnSlots(b.mt)||2;if(b.type==='deposito')return campCap(b);return 1}
+function siteFree(b,u){let n=0;for(const v of G.U)if(!v.dead&&v!==u&&v.st==='gather'&&v.tg===b.id)n++;return n<siteCap(b)}
+function siteSpots(b){if(b._spT>G.t-15)return b._sp;const c=ctr(b),L=[];
+  if(b.type==='deposito'){for(const r of G.R)if(!r.dead&&r.sub==='tree'&&hyp(ctr(r).x-c.x,ctr(r).y-c.y)<CAMP_R*TS)L.push(r)}
+  else if(b.type==='mina'){for(const r of G.R)if(!r.dead&&r.mt===b.mt&&hyp(ctr(r).x-c.x,ctr(r).y-c.y)<5*TS)L.push(r)}
+  else if(b.type==='petro'){const r=E.get(b.oil);if(r&&!r.dead)L.push(r)}
+  L.sort((a,d)=>hyp(ctr(a).x-c.x,ctr(a).y-c.y)-hyp(ctr(d).x-c.x,ctr(d).y-c.y));b._sp=L;b._spT=G.t;return L}
+function pickSpot(b,u){const L=siteSpots(b);if(!L.length)return null;const used=new Map();
+  for(const v of G.U)if(!v.dead&&v!==u&&v.st==='gather'&&v.tg===b.id&&v.ws)used.set(v.ws,(used.get(v.ws)||0)+1);
+  let best=null,bu=1e9;for(const r of L){const n=used.get(r.id)||0;if(n<bu){bu=n;best=r}}return best}
+// ---------- dar a ordem ----------
+function siteFor(o,r,x,y){const want=SUB_SITE[r?r.sub:null];if(!want)return null;let best=null,bd=1e9;
+  for(const b of G.B){if(b.dead||b.o!==o||b.type!==want||b.done<1||!siteFree(b,null))continue;
+    if(r){if(want==='mina'&&b.mt!==r.mt)continue;if(want==='petro'&&b.oil!==r.id)continue;if(want==='deposito'&&hyp(ctr(b).x-ctr(r).x,ctr(b).y-ctr(r).y)>CAMP_R*TS)continue}
+    const d=hyp(ctr(b).x-x,ctr(b).y-y);if(d<bd){bd=d;best=b}}return best}
+function siteWhy(r){return r.sub==='tree'?'🪓 Para cortar madeira, construa um Acampamento de lenhadores perto destas árvores (ou o que existe está cheio)':
+  r.sub==='oil'?'🛢 Construa um Poço de Petróleo ao lado da mancha (ou o poço já tem trabalhador)':'⛏ Para tirar metal, construa uma Mina encostada neste monte (ou a mina está cheia)'}
+{const og=orderGather;orderGather=function(u,r){
+  if(r&&u&&u.type==='vill'&&u.o<NP){
+    if(r.k==='b'&&GSITE[r.type]){if(r.o!==u.o||r.done<1){const c=ctr(r);orderMove(u,c.x,c.y);return false}
+      if(!siteFree(r,u)){if(u.o===0&&!(UI.siteT>G.t)){UI.siteT=G.t+3;toast('👥 '+BT[r.type].n+' cheio: '+siteCap(r)+' vagas')}return false}
+      reset(u);u.st='gather';u.tg=r.id;u.lastRes=r.id;u.lsub=SITE_SUB[r.type];u.ws=0;u.mv=false;u.fail=0;return true}
+    if(r.k==='r'&&SUB_SITE[r.sub]){const s=siteFor(u.o,r,u.x,u.y);if(s)return orderGather(u,s);
+      if(u.o===0&&!(UI.siteT>G.t)){UI.siteT=G.t+3;toast(siteWhy(r))}return false}}
+  return og(u,r)}}
+// achar trabalho de madeira/metal/petróleo = achar um prédio de coleta com vaga
+{const fr=findRes;findRes=function(sub,x,y,maxD,o){if(SUB_SITE[sub]&&o!=null&&o<NP){const want=SUB_SITE[sub];let best=null,bd=maxD*TS*1.5;
+    for(const b of G.B){if(b.dead||b.o!==o||b.type!==want||b.done<1||!siteFree(b,null))continue;const d=hyp(ctr(b).x-x,ctr(b).y-y);if(d<bd){bd=d;best=b}}return best}
+  return fr(sub,x,y,maxD,o)}}
+canGather=(cg=>function(u,r){if(r&&r.k==='b'&&GSITE[r.type])return u.type==='vill'&&r.o===u.o;return cg(u,r)})(canGather);
+// ---------- o trabalho no ponto de coleta ----------
+const SINC={};let SINCT=0;
+{const dg=doGather;doGather=function(u,T,dt){const b=E.get(u.tg);if(!(b&&b.k==='b'&&GSITE[b.type]))return dg(u,T,dt);
+  if(b.dead||b.done<1||b.o!==u.o){u.st='idle';return}
+  let s=u.ws&&E.get(u.ws);if(!s||s.dead||!siteSpots(b).includes(s)){s=pickSpot(b,u);u.ws=s?s.id:0}
+  if(!s){u.st='idle';return}
+  if(!approach(u,s,dt,24))return;
+  u.work=true;u.an+=dt*8;const c=ctr(s);faceTo(u,c.x,c.y);
+  const cat=GSITE[b.type],rt=cat;
+  const rate=GATH[cat]*MODS[u.o].gath[cat]*gmult(u.o)*seasonGath(cat)*ronGath(u.o,cat)*boostOf(u.o,cat,b)*SITE_MUL[cat];
+  const g=capAdd(u.o,rt,rate*dt);G.P[u.o].res[rt]+=g;G.st.gath[u.o]+=g;
+  if(u.o===0){SINC[rt]=(SINC[rt]||0)+g;if(G.t-SINCT>=1||G.t<SINCT){for(const k in SINC)if(SINC[k]>0){incAdd(k,SINC[k]);SINC[k]=0}SINCT=G.t}}
+  u.carry=0;const ph=(u.an/1.4|0)%3;if(ph!==u._ph&&ph===0)snd(cat==='wood'?'chop':cat==='gold'?'mine':'splash',u);u._ph=ph}}
+// ---------- reforço: só na mesma cidade (a Refinaria vale para todos os poços) ----------
+function boostLv(o,bt){return(BOOST_TECH[bt]||[]).filter(id=>G.P[o].techs.includes(id)).length}
+boostOf=function(o,cat,r){if(o>=NP||!r||r.k!=='b')return 1;const bt=BOOST_OF[r.type];if(!bt)return 1;
+  if(bt==='refinaria')return G.B.some(b=>!b.dead&&b.o===o&&b.type==='refinaria'&&b.done>=1)?1+.5*(1+boostLv(o,bt)):1;
+  const c=cityOfB(r);if(!c)return 1;
+  return G.B.some(b=>!b.dead&&b.o===o&&b.type===bt&&b.done>=1&&cityOfB(b)===c)?1+.5*(1+boostLv(o,bt)):1};
+// ---------- bônus ao ficar pronto ----------
+{const ob=onBuilt;onBuilt=function(b){ob(b);if(b.o>=NP)return;const P=G.P[b.o];let k=null,a=0;
+  if(b.type==='deposito'){k='wood';a=5*siteCap(b)}else if(b.type==='mina'){k='gold';a=5*siteCap(b)}else if(b.type==='petro'){k='oil';a=50}else if(b.type==='fazenda'){k='food';a=20}
+  if(k){P.res[k]+=a;if(b.o===0&&b.type!=='fazenda')toast('✅ '+BT[b.type].n+' pronto: '+siteCap(b)+(siteCap(b)>1?' vagas':' vaga')+' · +'+a+' de '+RNM[k])}
+  // aldeões que construíram já começam a trabalhar nele
+  if(GSITE[b.type])for(const v of G.U)if(!v.dead&&v.o===b.o&&v.type==='vill'&&v.st==='build'&&v.tg===b.id){if(orderGather(v,b)===false)v.st='idle'}}}
+// ---------- renda fixa de cada cidade (comida e madeira) ----------
+{let acc=0;const rt=ronTick;ronTick=function(dt){rt(dt);if(!G)return;acc+=dt;if(acc<2)return;const s=acc;acc=0;
+  for(let o=0;o<NP;o++){const n=G.B.filter(b=>!b.dead&&b.o===o&&b.type==='tc'&&b.done>=1&&!b.down).length;if(!n)continue;
+    for(const k of['food','wood']){const g=capAdd(o,k,n*CITY_INCOME/60*s);G.P[o].res[k]+=g;G.st.gath[o]+=g;if(o===0)incAdd(k,g)}}}}
+// ---------- tocar no prédio de coleta com aldeões ----------
+{const so=smartOrder;smartOrder=function(us,tgt,x,y,o){if(tgt&&tgt.k==='b'&&tgt.o===o&&GSITE[tgt.type]&&tgt.done>=1&&tgt.hp>=tgt.mhp){const vs=us.filter(u=>u.type==='vill'&&!isNav(u)),rest=us.filter(u=>!vs.includes(u));
+    let full=false;for(const u of vs){if(orderGather(u,tgt)===false){full=true;const p=freeAround(tgt,u,false);orderMove(u,p.x,p.y)}}
+    if(rest.length)so(rest,tgt,x,y,o);return vs.length?'res':so(us,tgt,x,y,o)}
+  return so(us,tgt,x,y,o)}}
+// ---------- novo jogo / jogo salvo ----------
+{const ng=newGame;newGame=function(o){ng(o);mtnInit()};window.__RA.newGame=newGame}
+{const lg=loadGame;loadGame=function(){const ok=lg();if(ok&&G)mtnInit();return ok}}
+// ---------- círculo da cidade ao posicionar prédio da cidade ----------
+{const dp=drawPlacingFlat;drawPlacingFlat=function(){dp();if(!placing)return;const t=placing.type;
+  if(CITYB[t]||t==='tc'||t==='forte'){ctx.save();ctx.setLineDash([TS*.5,TS*.35]);ctx.lineWidth=3;
+    for(const b of G.B){if(b.dead||b.o!==0||b.type!=='tc')continue;const c=ctr(b);
+      if(CITYB[t]){ctx.strokeStyle='rgba(255,226,140,.9)';ctx.beginPath();ctx.arc(c.x,c.y,CITY_R*TS,0,Math.PI*2);ctx.stroke()}
+      else{ctx.strokeStyle='rgba(255,120,100,.8)';ctx.beginPath();ctx.arc(c.x,c.y,(t==='tc'?CITY_MIN_OWN:FORT_GAP)*TS,0,Math.PI*2);ctx.stroke()}}
+    ctx.restore()}}}
+// ---------- desenhos da Mina e do Poço ----------
+{const pb7=paintBld;paintBld=function(g,P,type,st,C,S){const m=C.m;
+  if(type==='mina'){shadowB(g,P,4,4,60,60,30);ibox(g,P,4,4,60,60,0,4,'#6b5a45');
+    ibox(g,P,6,6,36,40,4,16,'#7d756a');ibox(g,P,9,9,33,37,20,7,'#8f877a');ibox(g,P,13,13,29,33,27,4,'#9d9588');
+    ibox(g,P,34,12,38,36,4,15,'#6a4222');ibox(g,P,30,12,40,16,19,3,'#5a3418');ibox(g,P,30,32,40,36,19,3,'#5a3418');ibox(g,P,35,16,37,32,4,13,'#120c08');
+    ibox(g,P,42,14,46,58,4,1,'#4a4a50');ibox(g,P,50,14,54,58,4,1,'#4a4a50');ibox(g,P,42,40,54,52,5,7,'#7a5230');ibox(g,P,43,41,53,51,12,3,'#c9a640');
+    ibox(g,P,8,44,24,58,4,5,'#b8963a');flagP(g,P,30,8,30,m,10);return}
+  if(type==='petro'){shadowB(g,P,4,4,60,60,46);ibox(g,P,6,6,58,58,0,4,'#4a4a4a');
+    ibox(g,P,26,26,38,38,4,36,'#7a5a3a');ibox(g,P,22,22,42,42,40,4,'#5a3a20');ibox(g,P,12,28,52,36,44,4,'#3a3a3e');
+    ibox(g,P,10,26,18,38,30,14,'#2a2a2e');ibox(g,P,44,40,56,54,4,10,'#a83a2a');band(g,P,26,26,38,38,24,m);return}
+  return pb7(g,P,type,st,C,S)}}
+// ---------- legenda e ajuda ----------
+{const p=[...document.querySelectorAll('p')].find(e=>/ECONOMIA \(como no Rise\)/.test(e.innerHTML));if(p)p.innerHTML='<b>ECONOMIA E FRONTEIRA (iguais ao Rise)</b><br>'+
+  'O aldeão trabalha num <b>prédio de coleta</b> e o recurso entra direto. Nada acaba (só caça e frutas).<br>'+
+  '🪓 <b>Acampamento de lenhadores</b> perto das árvores: até 10 vagas, conforme as árvores.<br>⛏ <b>Mina</b> encostada num monte de minério (Era Clássica): o tamanho do monte dá as vagas (até 10); uma mina por monte para cada povo.<br>'+
+  '🛢 <b>Poço de Petróleo</b> (Era Industrial): 1 vaga que rende muito.<br>🌾 Até <b>5 fazendas</b> por cidade, 1 aldeão em cada.<br>'+
+  '🏘 Cada cidade tem um <b>círculo econômico</b>: fazendas, Celeiro, Serraria, Fundição, Refinaria, Biblioteca, Mercado, Universidade e Templo ficam dentro dele, um de cada por cidade. Celeiro, Serraria e Fundição reforçam só a própria cidade (+50%, com pesquisas até +200%).<br>'+
+  '🚩 Nada se constrói fora da fronteira. A fronteira cresce com <b>Cidades</b> e <b>Fortes</b> (a Torre não mexe nela).'}
+// menu de construção: some o que ainda está a mais de uma era de distância (sobra lugar para Parar)
+{const g0=getCmds;getCmds=function(){const e=selEnts()[0];if(!e||e.o!==0||e.k!=='u')return g0();const P=G.P[0],sv=ECO.slice();
+  ECO.length=0;ECO.push(...sv.filter(t=>BT[t].age<=P.age+1));try{return g0()}finally{ECO.length=0;ECO.push(...sv)}}}
+// ---------- IA: minas nos montes da fronteira e poços no petróleo ----------
+{const ra=ronAI;ronAI=function(p,blds,has,any,build,htx,hty,toward,vills,army,res){ra(p,blds,has,any,build,htx,hty,toward,vills,army,res);const P=G.P[p];
+  if(P.age>=BT.mina.age){const mines=blds.filter(b=>b.type==='mina');
+    if(mines.length<1+Math.floor(vills.length/14)&&!mines.some(b=>b.done<1)&&afford(p,BT.mina.cost)){let best=null,bd=1e9;
+      for(const r of G.R){if(r.dead||!r.mt||DOM[idx(r.tx,r.ty)]!==p||(r.badMine&&G.t-r.badMine<90))continue;if(mines.some(b=>b.mt===r.mt))continue;const d=hyp(r.tx-htx,r.ty-hty)-mtnSlots(r.mt)*.6;if(d<bd){bd=d;best=r}}
+      if(best&&!build('mina',best.tx,best.ty,1,3))best.badMine=G.t}}
+  if(P.age>=BT.petro.age){const wells=blds.filter(b=>b.type==='petro');
+    if(wells.length<(P.age>=6?8:4)&&!wells.some(b=>b.done<1)&&afford(p,BT.petro.cost)){let best=null,bd=1e9;
+      for(const r of G.R){if(r.dead||r.sub!=='oil'||DOM[idx(r.tx,r.ty)]!==p||(r.badMine&&G.t-r.badMine<90))continue;if(G.B.some(b=>!b.dead&&b.type==='petro'&&b.oil===r.id))continue;const d=hyp(r.tx-htx,r.ty-hty);if(d<bd){bd=d;best=r}}
+      if(best&&!build('petro',best.tx,best.ty,1,2))best.badMine=G.t}}}}
 </script>
 </body>
 </html>

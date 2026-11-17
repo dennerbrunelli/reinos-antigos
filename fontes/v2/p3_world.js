@@ -45,20 +45,23 @@ function newGame(o){
   const put=(sub,x,y)=>{if(!canRes(x,y))return false;const i=idx(x,y);const r={id:G.nid++,k:'r',rt:RT[sub],sub,tx:x,ty:y,amt:AMT[sub],v:(RNG()*3)|0};
     if(sub==='tree'&&wdist[i]<=2&&RNG()<.75)r.v=3;G.R.push(r);E.set(r.id,r);occ[i]=r.id;pass[i]=0;return true};
   const cluster=(sub,cx,cy,n)=>{let c=0;for(const[dx,dy]of SPIRAL){if(c>=n)break;if(put(sub,Math.round(cx)+dx,Math.round(cy)+dy))c++}};
+  // monte de minério (Rise): um bloco de pedras de metal com forma irregular; a Mina encosta nele
+  const mountain=(cx,cy,n)=>{cx=Math.round(cx);cy=Math.round(cy);const fr=[[cx,cy]],done=new Set();let c=0;
+    while(fr.length&&c<n){const k=(RNG()*fr.length)|0,[x,y]=fr.splice(k,1)[0],key=x+','+y;if(done.has(key))continue;done.add(key);
+      if(put('gold',x,y)){c++;for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1]])fr.push([x+a,y+b])}}};
   const at=(s,ang,d)=>{for(let i=0;i<24;i++){const a=ang+i*.45;const x=s[0]+Math.cos(a)*d,y=s[1]+Math.sin(a)*d;if(x>3&&y>3&&x<MW-4&&y<MH-4&&!G.terr[idx(x|0,y|0)])return[x,y]}return[s[0]+d*.7,s[1]-d*.7]};
   for(const s of starts){
     const a0=RNG()*Math.PI*2;
     let p=at(s,a0,6.5);cluster('berry',p[0],p[1],6);
-    p=at(s,a0+1.9,9);cluster('gold',p[0],p[1],5);
-    p=at(s,a0+3.4,10);cluster('stone',p[0],p[1],4);// vira minério de metal (o Rise não tem pedra)
+    p=at(s,a0+1.9,11);mountain(p[0],p[1],10+((RNG()*5)|0));// monte de minério da cidade (Mina na Era Clássica)
     p=at(s,a0+4.8,9);blob(p[0],p[1],3,(x,y)=>{if(RNG()<.9)put('tree',x,y)});
     p=at(s,a0+2.7,14);blob(p[0],p[1],2.6,(x,y)=>{if(RNG()<.85)put('tree',x,y)});
-    p=at(s,a0+.9,17);cluster('gold',p[0],p[1],4);
+    p=at(s,a0+.9,22);mountain(p[0],p[1],8+((RNG()*6)|0));
   }
-  for(let k=0;k<Math.round(20*A*(MP.fo??1));k++)for(let tr=0;tr<40;tr++){const cx=3+RNG()*(MW-6),cy=3+RNG()*(MH-6);if(!far(cx,cy,10)||G.terr[idx(cx|0,cy|0)])continue;blob(cx,cy,2+RNG()*3.5,(x,y,d)=>{if(RNG()<1.05-d*.35)put('tree',x,y)});break}
+  for(let k=0;k<Math.round(13*A*(MP.fo??1));k++)for(let tr=0;tr<40;tr++){const cx=3+RNG()*(MW-6),cy=3+RNG()*(MH-6);if(!far(cx,cy,10)||G.terr[idx(cx|0,cy|0)])continue;blob(cx,cy,2+RNG()*3.5,(x,y,d)=>{if(RNG()<1.05-d*.35)put('tree',x,y)});break}
   for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){const e=Math.min(x,y,MW-1-x,MH-1-y);if(e===0&&RNG()<.85||e===1&&RNG()<.45||e===2&&RNG()<.12)put('tree',x,y)}
   const extra=(sub,cnt,n,d)=>{for(let k=0;k<cnt;k++)for(let tr=0;tr<50;tr++){const cx=5+RNG()*(MW-10),cy=5+RNG()*(MH-10);if(!far(cx,cy,d)||G.terr[idx(cx|0,cy|0)])continue;cluster(sub,cx,cy,n);break}};
-  extra('gold',Math.round(4*A*(MP.go??1)),4,15);extra('stone',Math.round(4*A*(MP.go??1)),3,15);extra('berry',Math.round(4*A*(MP.be??1)),5,13);
+  for(let k=0;k<Math.round(3.2*A*(MP.go??1));k++)for(let tr=0;tr<50;tr++){const cx=6+RNG()*(MW-12),cy=6+RNG()*(MH-12);if(!far(cx,cy,16)||G.terr[idx(cx|0,cy|0)])continue;mountain(cx,cy,10+((RNG()*14)|0));break}extra('berry',Math.round(4*A*(MP.be??1)),5,13);
   // peixes
   const fish=(x,y,deep)=>{const i=idx(x,y);if(!G.terr[i]||occ[i])return false;const r={id:G.nid++,k:'r',rt:'food',sub:'fish',tx:x,ty:y,amt:deep?300:200,deep:deep?1:0,v:(RNG()*2)|0};G.R.push(r);E.set(r.id,r);occ[i]=r.id;return true};
   const shore=[],deep=[];
@@ -79,7 +82,7 @@ function newGame(o){
     spawnUnit('bat',p,(s[0]+2.5)*TS,(s[1]+1.5)*TS);
   }
   // detalhes do mapa (florestas fechadas, anel de ouro, serras, muralhas da Arena) e caminho garantido entre as bases
-  if(MP.extra){MP.extra({put,cluster,blob,st:starts,far});for(let i=1;i<starts.length;i++)ensurePath(starts[0],starts[i])}
+  if(MP.extra){MP.extra({put,cluster,mountain,blob,st:starts,far});for(let i=1;i<starts.length;i++)ensurePath(starts[0],starts[i])}
   // times: 'ffa' todos contra todos · 't2' dois times (você + metade das IAs) · 'vs' todas as IAs juntas contra você
   G.rel=[];for(let p=0;p<NP;p++)G.rel.push(new Array(NP).fill(0));
   {const tm=o.times||'ffa',team=p=>tm==='vs'?(p?1:0):tm==='t2'?p%2:p;// 't2': você (0) com 2,4,6 contra 1,3,5,7
