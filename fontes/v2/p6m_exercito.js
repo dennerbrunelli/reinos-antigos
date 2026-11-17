@@ -20,7 +20,7 @@ const doAttackSab=doAttack;
 doAttack=function(u,T,dt){
   if(u.type!=='espia'){doAttackSab(u,T,dt);return}
   const t=E.get(u.tg);
-  if(t&&t.k==='b'&&!t.dead&&!ally(t.o,u.o)&&!t.inT){
+  if(t&&t.k==='b'&&!t.dead&&!calm(t.o,u.o)&&!t.inT){
     if(!approach(u,t,dt,24))return;
     u.work=true;const c=ctr(t);faceTo(u,c.x,c.y);
     if(u.cd<=0){u.cd=SABO_CD;t.sabo=G.t+SABO_T;G.fx.push({k:'glow',x:t.x,y:t.y,t:0});

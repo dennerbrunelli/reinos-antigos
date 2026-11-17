@@ -102,7 +102,7 @@ function updCities(dt){
   for(const t of G.B){if(t.dead||t.type!=='tc'||t.done<1)continue;
     if(!t.down){if(t.hp>0)continue;cityDown(t)}
     const c=ctr(t),R=(CAPT_R+t.sz/2)*TS;let att=0,ao=-1,def=0;
-    for(const u of G.U){if(u.dead||u.inT||u.o>=NP||!canCapture(u))continue;if(hyp(u.x-c.x,u.y-c.y)>R)continue;if(ally(u.o,t.o))def++;else{att++;ao=u.o}}
+    for(const u of G.U){if(u.dead||u.inT||u.o>=NP||!canCapture(u))continue;if(hyp(u.x-c.x,u.y-c.y)>R)continue;if(ally(u.o,t.o))def++;else if(!calm(u.o,t.o)){att++;ao=u.o}}
     if(att&&!def&&!(t.imm>G.t)){t.cp=(t.cp||0)+dt;t.cpo=ao;if(t.cp>=CAPT_T)captureCity(t,ao)}
     else{t.cp=Math.max(0,(t.cp||0)-dt*.5);
       if(!att){t.hp=Math.min(t.mhp,t.hp+t.mhp*.01*dt);if(t.hp>=t.mhp*.25){t.down=0;t.cp=0;if(t.o===0)toast('🏛 Seu Centro Urbano voltou a funcionar.')}}}}

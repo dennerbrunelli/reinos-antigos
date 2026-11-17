@@ -160,10 +160,13 @@ let UI={page:0,sig:'',idleIdx:0,lastAlert:null,alertT:-99,mk:null};
 let RNG=Math.random;
 let STAT=[],MODS=[];
 let NP=2;
-// diplomacia: G.rel[a][b]=1 quando a e b são aliados (sempre simétrico). GAIA nunca é aliado de ninguém.
-function ally(a,b){return a===b||!!(typeof G!=='undefined'&&G&&G.rel&&G.rel[a]&&G.rel[a][b])}
-function foe(a,b){return a!==b&&a<NP&&b<NP&&!ally(a,b)}
-function setRel(a,b,v){if(a===b||a>=NP||b>=NP)return;if(!G.rel)G.rel=[];for(let p=0;p<NP;p++)if(!G.rel[p])G.rel[p]=new Array(NP).fill(0);G.rel[a][b]=G.rel[b][a]=v?1:0;
+// diplomacia: G.rel[a][b] = 0 guerra · 1 aliança · 2 paz (sempre simétrico). GAIA nunca é aliado de ninguém.
+// paz: não se atacam, mas não dividem visão nem vitória. G.pz.on = trégua do começo da partida (todos em paz).
+function ally(a,b){return a===b||!!(typeof G!=='undefined'&&G&&G.rel&&G.rel[a]&&G.rel[a][b]===1)}
+function peace(a,b){if(a===b||a>=NP||b>=NP||typeof G==='undefined'||!G||ally(a,b))return false;if(G.pz&&G.pz.on)return true;return!!(G.rel&&G.rel[a]&&G.rel[a][b]===2)}
+function calm(a,b){return ally(a,b)||peace(a,b)}
+function foe(a,b){return a!==b&&a<NP&&b<NP&&!calm(a,b)}
+function setRel(a,b,v){if(a===b||a>=NP||b>=NP)return;if(!G.rel)G.rel=[];for(let p=0;p<NP;p++)if(!G.rel[p])G.rel[p]=new Array(NP).fill(0);G.rel[a][b]=G.rel[b][a]=v===2?2:v?1:0;
   if(v)for(const u of G.U){if(u.dead||u.st!=='attack'&&u.st!=='convert')continue;const t=E.get(u.tg);if(t&&((u.o===a&&t.o===b)||(u.o===b&&t.o===a))){u.st='idle';u.tg=0;u.mv=false}}}// número de jogadores reais nesta partida (2 a MAX_PLAYERS); bichos/ruínas usam GAIA, nunca um índice real
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const getE=id=>E.get(id);

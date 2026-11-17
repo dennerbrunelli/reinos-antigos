@@ -1,0 +1,14 @@
+const {chromium}=require('playwright');
+(async()=>{const b=await chromium.launch();const errs=[];
+ const pg=await b.newPage({viewport:{width:800,height:360}});
+ pg.on('pageerror',e=>errs.push(e.message));
+ await pg.goto('http://localhost:8765/index.html');await pg.evaluate(async()=>{await ARTP});await pg.waitForTimeout(400);
+ const r=await pg.evaluate(()=>{const out={};
+   __RA.newGame({civ:'gregos',map:'terra',diff:'dificil',size:'med',np:3,paz:'5',res:'muito'});__RA.startGame();running=true;paused=false;OPT.snd=false;
+   let dmgPeace=0;const dd=dealDmg;dealDmg=function(a,t,x){if(G.pz.on&&t&&t.o<NP&&a&&a.o<NP&&a.o!==t.o)dmgPeace++;return dd(a,t,x)};
+   for(let i=0;i<4*290;i++)step(.25);
+   out.t1=Math.round(G.t)+' on='+G.pz.on+' lost='+JSON.stringify(G.st.lost)+' dmgPeace='+dmgPeace+' army='+[0,1,2].map(dipStr);
+   for(let i=0;i<4*240;i++)step(.25);
+   out.t2=Math.round(G.t)+' on='+G.pz.on+' lost='+JSON.stringify(G.st.lost)+' kills='+JSON.stringify(G.st.kill);
+   return out});
+ console.log(JSON.stringify(r,null,1));console.log('ERROS',errs.slice(0,8));await b.close()})();

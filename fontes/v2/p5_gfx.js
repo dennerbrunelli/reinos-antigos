@@ -442,8 +442,8 @@ function render(){
   const selSet=new Set(SEL);
   for(const b of G.B){if(b.dead)continue;const X=b.tx*TS,Y=b.ty*TS,W=b.sz*TS;if(!inV(X,Y))continue;
     if(b.done<1&&b.type!=='fazenda'){ctx.fillStyle='rgba(120,90,50,.5)';ctx.fillRect(X+2,Y+2,W-4,W-4);ctx.strokeStyle='#e8c88a';ctx.setLineDash([5,4]);ctx.lineWidth=1.4;ctx.strokeRect(X+2,Y+2,W-4,W-4);ctx.setLineDash([])}
-    if(selSet.has(b.id)){ctx.strokeStyle=b.o===0?'#fff':ally(b.o,0)?'#7dffa0':'#ff6a5a';ctx.lineWidth=2;ctx.strokeRect(X,Y,W,W)}}
-  for(const id of SEL){const u=E.get(id);if(!u||u.k!=='u'||u.inT)continue;ctx.strokeStyle=u.o===0?'#fff':u.o===GAIA?'#ffe08a':ally(u.o,0)?'#7dffa0':'#ff6a5a';ctx.lineWidth=1.6;const r=isNav(u)?22:UT[u.type].cls==='elef'?16:10;ctx.beginPath();ctx.arc(u.x,u.y,r,0,7);ctx.stroke()}
+    if(selSet.has(b.id)){ctx.strokeStyle=b.o===0?'#fff':ally(b.o,0)?'#7dffa0':peace(b.o,0)?'#ffd36a':'#ff6a5a';ctx.lineWidth=2;ctx.strokeRect(X,Y,W,W)}}
+  for(const id of SEL){const u=E.get(id);if(!u||u.k!=='u'||u.inT)continue;ctx.strokeStyle=u.o===0?'#fff':u.o===GAIA?'#ffe08a':ally(u.o,0)?'#7dffa0':peace(u.o,0)?'#ffd36a':'#ff6a5a';ctx.lineWidth=1.6;const r=isNav(u)?22:UT[u.type].cls==='elef'?16:10;ctx.beginPath();ctx.arc(u.x,u.y,r,0,7);ctx.stroke()}
   for(const id of SEL){const r=E.get(id);if(!r||r.k!=='r')continue;ctx.strokeStyle='#ffe08a';ctx.lineWidth=1.6;ctx.strokeRect(r.walk?r.x-12:r.tx*TS,r.walk?r.y-12:r.ty*TS,24,24)}
   if(placing)drawPlacingFlat();
   if(UI.mk&&UI.mk.t<.6){const k=UI.mk;ctx.strokeStyle=k.c;ctx.lineWidth=2;ctx.beginPath();ctx.arc(k.x,k.y,14*(1-k.t)+2,0,7);ctx.stroke()}

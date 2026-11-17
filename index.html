@@ -662,10 +662,13 @@ let UI={page:0,sig:'',idleIdx:0,lastAlert:null,alertT:-99,mk:null};
 let RNG=Math.random;
 let STAT=[],MODS=[];
 let NP=2;
-// diplomacia: G.rel[a][b]=1 quando a e b são aliados (sempre simétrico). GAIA nunca é aliado de ninguém.
-function ally(a,b){return a===b||!!(typeof G!=='undefined'&&G&&G.rel&&G.rel[a]&&G.rel[a][b])}
-function foe(a,b){return a!==b&&a<NP&&b<NP&&!ally(a,b)}
-function setRel(a,b,v){if(a===b||a>=NP||b>=NP)return;if(!G.rel)G.rel=[];for(let p=0;p<NP;p++)if(!G.rel[p])G.rel[p]=new Array(NP).fill(0);G.rel[a][b]=G.rel[b][a]=v?1:0;
+// diplomacia: G.rel[a][b] = 0 guerra · 1 aliança · 2 paz (sempre simétrico). GAIA nunca é aliado de ninguém.
+// paz: não se atacam, mas não dividem visão nem vitória. G.pz.on = trégua do começo da partida (todos em paz).
+function ally(a,b){return a===b||!!(typeof G!=='undefined'&&G&&G.rel&&G.rel[a]&&G.rel[a][b]===1)}
+function peace(a,b){if(a===b||a>=NP||b>=NP||typeof G==='undefined'||!G||ally(a,b))return false;if(G.pz&&G.pz.on)return true;return!!(G.rel&&G.rel[a]&&G.rel[a][b]===2)}
+function calm(a,b){return ally(a,b)||peace(a,b)}
+function foe(a,b){return a!==b&&a<NP&&b<NP&&!calm(a,b)}
+function setRel(a,b,v){if(a===b||a>=NP||b>=NP)return;if(!G.rel)G.rel=[];for(let p=0;p<NP;p++)if(!G.rel[p])G.rel[p]=new Array(NP).fill(0);G.rel[a][b]=G.rel[b][a]=v===2?2:v?1:0;
   if(v)for(const u of G.U){if(u.dead||u.st!=='attack'&&u.st!=='convert')continue;const t=E.get(u.tg);if(t&&((u.o===a&&t.o===b)||(u.o===b&&t.o===a))){u.st='idle';u.tg=0;u.mv=false}}}// número de jogadores reais nesta partida (2 a MAX_PLAYERS); bichos/ruínas usam GAIA, nunca um índice real
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const getE=id=>E.get(id);
@@ -918,7 +921,7 @@ function farmTaken(b,u){const w=b.wk&&E.get(b.wk);if(!w||w.dead||w===u)return fa
 function releaseFarm(u){if(u.st==='gather'){const f=E.get(u.tg);if(f&&f.k==='b'&&f.wk===u.id)f.wk=0}}
 function reset(u){releaseFarm(u);u.cv=0}
 function orderMove(u,x,y){reset(u);u.st='move';u.tg=0;setGoal(u,{x,y})}
-function orderAttack(u,t){if(!t||t.dead||ally(t.o,u.o))return;reset(u);u.auto=0;u.st='attack';u.tg=t.id;u.mv=false;u.rp=0;u.fail=0}
+function orderAttack(u,t){if(!t||t.dead||calm(t.o,u.o))return;reset(u);u.auto=0;u.st='attack';u.tg=t.id;u.mv=false;u.rp=0;u.fail=0}
 function canGather(u,r){
   if(u.type==='pesc')return r.k==='r'&&r.sub==='fish';
   if(u.type!=='vill')return false;
@@ -936,7 +939,7 @@ function orderGather(u,r){
 function orderBuild(u,b){if(u.type!=='vill')return;reset(u);u.st='build';u.tg=b.id;u.mv=false;u.fail=0}
 function orderStop(u){reset(u);u.st='idle';u.tg=0;u.mv=false;u.path=null}
 function orderReturn(u,d){reset(u);u.st='return';u.tg=d.id;u.mv=false;u.fail=0}
-function orderConvert(u,t){if(!t||ally(t.o,u.o)||t.o===GAIA||t.k!=='u')return;reset(u);u.st='convert';u.tg=t.id;u.mv=false;u.fail=0}
+function orderConvert(u,t){if(!t||calm(t.o,u.o)||t.o===GAIA||t.k!=='u')return;reset(u);u.st='convert';u.tg=t.id;u.mv=false;u.fail=0}
 function orderHeal(u,t){reset(u);u.st='heal';u.tg=t.id;u.mv=false;u.fail=0}
 function orderBoard(u,boat){if(isNav(u))return;reset(u);u.st='board';u.tg=boat.id;u.mv=false;u.fail=0}
 function orderUnload(b,x,y){reset(b);b.st='unload';b.tg=0;b.ux=x;b.uy=y;setGoal(b,{rx:clamp(x/TS|0,0,MW-1),ry:clamp(y/TS|0,0,MH-1),rw:1,rh:1})}
@@ -953,9 +956,9 @@ function groupMove(us,x,y){
 function smartOrder(us,tgt,x,y,o){
   if(!us.length)return;
   const land=us.filter(u=>!isNav(u)),nav=us.filter(u=>isNav(u));
-  if(tgt&&tgt.k==='u'&&!ally(tgt.o,o)&&tgt.o!==GAIA){
+  if(tgt&&tgt.k==='u'&&!calm(tgt.o,o)&&tgt.o!==GAIA){
     for(const u of us){const T=ST(u);if(u.type==='sac')orderConvert(u,tgt);else if(T.atk>0&&!(isNav(u)&&!T.war))orderAttack(u,tgt);else if(!isNav(u))orderMove(u,tgt.x,tgt.y)}return'atk'}
-  if(tgt&&tgt.k==='b'&&!ally(tgt.o,o)){for(const u of us){const T=ST(u);if(T.atk>0&&u.type!=='sac'&&!(isNav(u)&&!T.war))orderAttack(u,tgt)}return'atk'}
+  if(tgt&&tgt.k==='b'&&!calm(tgt.o,o)){for(const u of us){const T=ST(u);if(T.atk>0&&u.type!=='sac'&&!(isNav(u)&&!T.war))orderAttack(u,tgt)}return'atk'}
   if(tgt&&tgt.k==='u'&&tgt.o===GAIA){for(const u of land){if(u.type==='vill'&&UT[tgt.type].food)orderGather(u,tgt);else if(ST(u).atk>0)orderAttack(u,tgt);else orderMove(u,tgt.x,tgt.y)}return'atk'}
   if(tgt&&tgt.k==='u'&&tgt.o===o){
     if(tgt.type==='trans'&&land.length){land.forEach(u=>orderBoard(u,tgt));return'own'}
@@ -1016,7 +1019,7 @@ function approach(u,e,dt,reach){
   else if(e.k==='u'){u.rp-=dt;if(u.rp<=0){u.rp=.8;const g=u.goal;if(g&&g.x!=null&&hyp(g.x-e.x,g.y-e.y)>TS*.8)setGoal(u,goalFor(e))}}
   if(moveAlong(u,dt)){u.mv=false;if(!inReach(u,e,reach)){u.fail++;
     // caminho bloqueado por muralha/prédio inimigo: ataca o que está no caminho
-    if(u.st==='attack'&&!u.pok&&u.o<NP&&ST(u).atk>0){let bb=null,bd=4*TS;for(const b of G.B){if(b.dead||ally(b.o,u.o))continue;const d=distTo(u,b);if(d<bd){bd=d;bb=b}}if(bb&&bb!==e){u.tg=bb.id;u.fail=0}}}}
+    if(u.st==='attack'&&!u.pok&&u.o<NP&&ST(u).atk>0){let bb=null,bd=4*TS;for(const b of G.B){if(b.dead||calm(b.o,u.o))continue;const d=distTo(u,b);if(d<bd){bd=d;bb=b}}if(bb&&bb!==e){u.tg=bb.id;u.fail=0}}}}
   return false;
 }
 function findRes(sub,x,y,maxD,o){
@@ -1144,7 +1147,7 @@ function doBuild(u,T,dt){
 }
 function doAttack(u,T,dt){
   const t=E.get(u.tg);
-  if(!t||t.dead||u.fail>4||t.inT||(t.k==='u'&&ally(t.o,u.o))||(t.k==='b'&&t.o!==u.o&&ally(t.o,u.o))){u.st='idle';u.scan=0;u.mv=false;return}
+  if(!t||t.dead||u.fail>4||t.inT||(t.k==='u'&&calm(t.o,u.o))||(t.k==='b'&&t.o!==u.o&&calm(t.o,u.o))){u.st='idle';u.scan=0;u.mv=false;return}
   if(u.o===0&&t.k==='u'&&!vis[tileOf(t.x,t.y)]&&distTo(u,t)>T.los*losMul()*TS){u.st='idle';return}
   if(u.o===GAIA&&(hyp(u.x-u.hx,u.y-u.hy)>8*TS||distTo(u,t)>6*TS)){u.hx=u.x;u.hy=u.y;u.st='idle';return}
   if(isNav(u)&&!T.war){u.st='idle';return}
@@ -1158,12 +1161,12 @@ function doAttack(u,T,dt){
       G.pj.push({x:u.x,y:u.y-12,sx:u.x,sy:u.y-12,tx:c.x,ty:c.y,tg:t.id,dmg:T.atk,att,t:0,T:Math.max(.25,hyp(c.x-u.x,c.y-u.y)/(kind==='s'?(UT[u.type].gun?380:220):kind==='b'?600:kind==='g'?900:420)),kind,home:kind!=='s'});
       snd(UT[u.type].gun?'shot':kind==='s'?'catapult':'arrow',u)}
     else{dealDmg(att,t,T.atk);snd(t.k==='b'?'hitb':t.o===GAIA?'flesh':T.cls==='elef'?'stomp':u.type==='vill'?'thud':'clash',u);
-      if(T.splash&&t.k==='u'){for(const v of G.U){if(v===t||v.dead||v.inT||ally(v.o,u.o)||v.o===GAIA)continue;if(hyp(v.x-t.x,v.y-t.y)<T.splash*TS)dealDmg(att,v,T.atk*.5)}}}
+      if(T.splash&&t.k==='u'){for(const v of G.U){if(v===t||v.dead||v.inT||calm(v.o,u.o)||v.o===GAIA)continue;if(hyp(v.x-t.x,v.y-t.y)<T.splash*TS)dealDmg(att,v,T.atk*.5)}}}
   }
 }
 function doConvert(u,T,dt){
   const t=E.get(u.tg);
-  if(!t||t.dead||t.inT||ally(t.o,u.o)||t.o===GAIA){u.st='idle';u.cv=0;return}
+  if(!t||t.dead||t.inT||calm(t.o,u.o)||t.o===GAIA){u.st='idle';u.cv=0;return}
   if(!approach(u,t,dt,T.rng*TS))return;
   faceTo(u,t.x,t.y);
   if(u.faith<100){u.cv=0;return}
@@ -1234,7 +1237,7 @@ function dealDmg(att,t,base){
   if(t.hp<=0){if(t.k==='b'&&t.type==='tc'&&t.done>=1){t.hp=0;if(!t.down)cityDown(t)}else kill(t,att.o)}
 }
 function onHit(t,att){
-  if(ally(t.o,att.o))return;
+  if(calm(t.o,att.o))return;
   const a=E.get(att.id);
   if(t.k==='u'&&t.o===GAIA){
     if(UT[t.type].flee&&a){const dx=t.x-a.x,dy=t.y-a.y,d=hyp(dx,dy)||1;let x=t.x+dx/d*5*TS,y=t.y+dy/d*5*TS;x=clamp(x,TS,(MW-1)*TS);y=clamp(y,TS,(MH-1)*TS);if(pass[tileOf(x,y)]){t.st='move';setGoal(t,{x,y});t.fleeT=3}}
@@ -1256,14 +1259,14 @@ function nearestEnemy(u,range,withBld,anyOwner){
   let best=null,bs=1e9;
   const x0=clamp((u.x-range)/BC|0,0,BW-1),x1=clamp((u.x+range)/BC|0,0,BW-1),y0=clamp((u.y-range)/BC|0,0,BH-1),y1=clamp((u.y+range)/BC|0,0,BH-1);
   for(let by=y0;by<=y1;by++)for(let bx=x0;bx<=x1;bx++)for(const e of buckets[by*BW+bx]){
-    if(ally(e.o,u.o)||e.dead)continue;
+    if(calm(e.o,u.o)||e.dead)continue;
     if(anyOwner){if(e.o===GAIA||isNav(e))continue}
     else if(e.o===GAIA&&e.type!=='leao')continue;
     if(u.o<NP&&isNav(u)!==isNav(e)&&!(ST(u).rng>0))continue;
     const d=hyp(e.x-u.x,e.y-u.y);if(d>range)continue;
     const sc=d+(UT[e.type].cls==='vill'?TS*3:0);if(sc<bs){bs=sc;best=e}
   }
-  if(!best&&withBld){for(const b of G.B){if(b.dead||ally(b.o,u.o))continue;const d=distTo(u,b);if(d<range&&d<bs){bs=d;best=b}}}
+  if(!best&&withBld){for(const b of G.B){if(b.dead||calm(b.o,u.o))continue;const d=distTo(u,b);if(d<range&&d<bs){bs=d;best=b}}}
   return best;
 }
 function separate(){
@@ -1309,8 +1312,8 @@ function updProj(dt){
     const f=Math.min(1,p.t/p.T);p.x=p.sx+(p.tx-p.sx)*f;p.y=p.sy+(p.ty-p.sy)*f;
     if(f>=1){p.done=true;
       if(p.kind==='s'){G.fx.push({k:'boom',x:p.tx,y:p.ty,t:0});snd('boom',p);
-        for(const u of G.U){if(u.dead||u.inT||ally(u.o,p.att.o)||u.o===GAIA)continue;if(hyp(u.x-p.tx,u.y-p.ty)<TS*1.1)dealDmg(p.att,u,p.dmg)}
-        for(const b of G.B){if(b.dead||ally(b.o,p.att.o))continue;if(distTo({x:p.tx,y:p.ty},b)<TS*.6)dealDmg(p.att,b,p.dmg)}}
+        for(const u of G.U){if(u.dead||u.inT||calm(u.o,p.att.o)||u.o===GAIA)continue;if(hyp(u.x-p.tx,u.y-p.ty)<TS*1.1)dealDmg(p.att,u,p.dmg)}
+        for(const b of G.B){if(b.dead||calm(b.o,p.att.o))continue;if(distTo({x:p.tx,y:p.ty},b)<TS*.6)dealDmg(p.att,b,p.dmg)}}
       else{const t=E.get(p.tg);if(t&&!t.dead&&!t.inT){dealDmg(p.att,t,p.dmg);if(p.kind!=='b')snd(t.k==='b'?'hitb':t.o===GAIA?'flesh':'hit',p)}}
     }
   }
@@ -1436,7 +1439,7 @@ function updCities(dt){
   for(const t of G.B){if(t.dead||t.type!=='tc'||t.done<1)continue;
     if(!t.down){if(t.hp>0)continue;cityDown(t)}
     const c=ctr(t),R=(CAPT_R+t.sz/2)*TS;let att=0,ao=-1,def=0;
-    for(const u of G.U){if(u.dead||u.inT||u.o>=NP||!canCapture(u))continue;if(hyp(u.x-c.x,u.y-c.y)>R)continue;if(ally(u.o,t.o))def++;else{att++;ao=u.o}}
+    for(const u of G.U){if(u.dead||u.inT||u.o>=NP||!canCapture(u))continue;if(hyp(u.x-c.x,u.y-c.y)>R)continue;if(ally(u.o,t.o))def++;else if(!calm(u.o,t.o)){att++;ao=u.o}}
     if(att&&!def&&!(t.imm>G.t)){t.cp=(t.cp||0)+dt;t.cpo=ao;if(t.cp>=CAPT_T)captureCity(t,ao)}
     else{t.cp=Math.max(0,(t.cp||0)-dt*.5);
       if(!att){t.hp=Math.min(t.mhp,t.hp+t.mhp*.01*dt);if(t.hp>=t.mhp*.25){t.down=0;t.cp=0;if(t.o===0)toast('🏛 Seu Centro Urbano voltou a funcionar.')}}}}
@@ -1779,8 +1782,8 @@ function findResLimited(sub,hb,maxD,tgc,lim){
 }
 function nearestFoe(p,from,naval){
   let best=null,bd=1e9;
-  for(const u of G.U){if(u.dead||u.inT||ally(u.o,p)||u.o===GAIA)continue;if(naval&&!isNav(u))continue;const d=hyp(u.x-from.x,u.y-from.y)*(naval?1:1.2);if(d<bd){bd=d;best=u}}
-  for(const b of G.B){if(b.dead||ally(b.o,p))continue;if(naval&&!BT[b.type].water)continue;const c=ctr(b);const d=hyp(c.x-from.x,c.y-from.y)*(b.type==='fazenda'||b.type==='muralha'?1.4:1);if(d<bd){bd=d;best=b}}
+  for(const u of G.U){if(u.dead||u.inT||calm(u.o,p)||u.o===GAIA)continue;if(naval&&!isNav(u))continue;const d=hyp(u.x-from.x,u.y-from.y)*(naval?1:1.2);if(d<bd){bd=d;best=u}}
+  for(const b of G.B){if(b.dead||calm(b.o,p))continue;if(naval&&!BT[b.type].water)continue;const c=ctr(b);const d=hyp(c.x-from.x,c.y-from.y)*(b.type==='fazenda'||b.type==='muralha'?1.4:1);if(d<bd){bd=d;best=b}}
   return best;
 }
 function intrNear(){return false}
@@ -1911,7 +1914,7 @@ function aiTick(p){
     for(const t of opts){const c=costOf(p,t);if(spend(c)){pay(p,c);b.q.push(t);break}}}
   // defesa
   let intr=null,id=1e9;
-  for(const u of G.U){if(u.dead||u.inT||ally(u.o,p)||u.o===GAIA||isNav(u))continue;let near=false;for(const b of blds){if(distTo(u,b)<9*TS){near=true;break}}if(near){const d=hyp(u.x-hb.x,u.y-hb.y);if(d<id){id=d;intr=u}}}
+  for(const u of G.U){if(u.dead||u.inT||calm(u.o,p)||u.o===GAIA||isNav(u))continue;let near=false;for(const b of blds){if(distTo(u,b)<9*TS){near=true;break}}if(near){const d=hyp(u.x-hb.x,u.y-hb.y);if(d<id){id=d;intr=u}}}
   if(!intr&&AI.threat){const t=E.get(AI.threat);if(t&&!t.dead&&t.k==='u'&&hyp(t.x-hb.x,t.y-hb.y)<18*TS)intr=t;AI.threat=0}
   if(intr){for(const u of army){if(u.st!=='attack')orderAttack(u,intr)}for(const s of priests){if(s.st==='idle'&&s.faith>=100)orderConvert(s,intr)}}
   // ataque em ondas
@@ -2367,8 +2370,8 @@ function render(){
   const selSet=new Set(SEL);
   for(const b of G.B){if(b.dead)continue;const X=b.tx*TS,Y=b.ty*TS,W=b.sz*TS;if(!inV(X,Y))continue;
     if(b.done<1&&b.type!=='fazenda'){ctx.fillStyle='rgba(120,90,50,.5)';ctx.fillRect(X+2,Y+2,W-4,W-4);ctx.strokeStyle='#e8c88a';ctx.setLineDash([5,4]);ctx.lineWidth=1.4;ctx.strokeRect(X+2,Y+2,W-4,W-4);ctx.setLineDash([])}
-    if(selSet.has(b.id)){ctx.strokeStyle=b.o===0?'#fff':ally(b.o,0)?'#7dffa0':'#ff6a5a';ctx.lineWidth=2;ctx.strokeRect(X,Y,W,W)}}
-  for(const id of SEL){const u=E.get(id);if(!u||u.k!=='u'||u.inT)continue;ctx.strokeStyle=u.o===0?'#fff':u.o===GAIA?'#ffe08a':ally(u.o,0)?'#7dffa0':'#ff6a5a';ctx.lineWidth=1.6;const r=isNav(u)?22:UT[u.type].cls==='elef'?16:10;ctx.beginPath();ctx.arc(u.x,u.y,r,0,7);ctx.stroke()}
+    if(selSet.has(b.id)){ctx.strokeStyle=b.o===0?'#fff':ally(b.o,0)?'#7dffa0':peace(b.o,0)?'#ffd36a':'#ff6a5a';ctx.lineWidth=2;ctx.strokeRect(X,Y,W,W)}}
+  for(const id of SEL){const u=E.get(id);if(!u||u.k!=='u'||u.inT)continue;ctx.strokeStyle=u.o===0?'#fff':u.o===GAIA?'#ffe08a':ally(u.o,0)?'#7dffa0':peace(u.o,0)?'#ffd36a':'#ff6a5a';ctx.lineWidth=1.6;const r=isNav(u)?22:UT[u.type].cls==='elef'?16:10;ctx.beginPath();ctx.arc(u.x,u.y,r,0,7);ctx.stroke()}
   for(const id of SEL){const r=E.get(id);if(!r||r.k!=='r')continue;ctx.strokeStyle='#ffe08a';ctx.lineWidth=1.6;ctx.strokeRect(r.walk?r.x-12:r.tx*TS,r.walk?r.y-12:r.ty*TS,24,24)}
   if(placing)drawPlacingFlat();
   if(UI.mk&&UI.mk.t<.6){const k=UI.mk;ctx.strokeStyle=k.c;ctx.lineWidth=2;ctx.beginPath();ctx.arc(k.x,k.y,14*(1-k.t)+2,0,7);ctx.stroke()}
@@ -3846,7 +3849,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 74';$('ver').textContent=VERSAO;
+const VERSAO='Versão 75';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -5195,7 +5198,7 @@ const doAttackSab=doAttack;
 doAttack=function(u,T,dt){
   if(u.type!=='espia'){doAttackSab(u,T,dt);return}
   const t=E.get(u.tg);
-  if(t&&t.k==='b'&&!t.dead&&!ally(t.o,u.o)&&!t.inT){
+  if(t&&t.k==='b'&&!t.dead&&!calm(t.o,u.o)&&!t.inT){
     if(!approach(u,t,dt,24))return;
     u.work=true;const c=ctr(t);faceTo(u,c.x,c.y);
     if(u.cd<=0){u.cd=SABO_CD;t.sabo=G.t+SABO_T;G.fx.push({k:'glow',x:t.x,y:t.y,t:0});
@@ -6448,6 +6451,180 @@ if(typeof HELP_CMD!=='undefined')HELP_CMD.push(
  ['Fazer portão','Transforma este trecho da muralha (e um vizinho de cada lado) num portão: os seus passam, o inimigo não.'],
  ['Trancar portão','Fecha o portão para todos, inclusive os seus.'],['Destrancar portão','Deixa os seus passarem de novo.'],
  ['Reparar','Chama os aldeões mais perto para consertar o prédio. Reparar não custa nada.']);
+// =========================================================
+// PAZ: o terceiro estado da diplomacia (como no Rise of Nations: Aliança · Paz · Guerra)
+// e a TRÉGUA DO COMEÇO (as "Regras de Ataque" do Rise / o "Tratado" do Age III):
+//   · Paz por tempo (2 a 30 min) ou até alguém chegar numa era escolhida.
+//   · Em paz ninguém ataca ninguém: tropas, torres, fortes e navios ignoram o outro povo.
+//   · Tropas no território de quem está em paz com você sofrem atrito forte e morrem em ~6 s
+//     (o batedor é a exceção: pode espiar). Aldeões e mercadores não sofrem.
+//   · Ninguém constrói no território do outro (já valia).
+// G.rel[a][b]: 0 guerra · 1 aliança · 2 paz. G.pz = trégua do começo {on,t,age,val}.
+// =========================================================
+const PZ_ATR_T=1.5,PZ_ATR_RATE=.18,PZ_GRACE=20,PZ_MIN_KEEP=420;
+const PZ_OPTS=[['0','⚔ Sem paz'],['2','2 min'],['5','5 min'],['10','10 min'],['15','15 min'],['20','20 min'],['30','30 min'],
+  ...AGES.slice(1).map((n,i)=>['a'+(i+1),'Até a '+n])];
+function pzLbl(v){const o=PZ_OPTS.find(x=>x[0]===String(v));return o?o[1]:'⚔ Sem paz'}
+// ---------- opção na Batalha Rápida ----------
+SOPT.partida.splice(1,0,{k:'paz',n:'Paz no início',v:PZ_OPTS});
+SDEF.paz='0';if(SETUP.paz==null)SETUP.paz='0';
+function pzValid(v,o){o=o||SETUP;v=String(v||'0');if(v[0]!=='a')return v;const a=+v.slice(1),ini=+o.era||0,fim=o.fim!=null?+o.fim:MAXAGE;return a>ini&&a<=fim?v:'0'}
+function pzPick(){let ov=$('pzpick');if(ov)ov.remove();ov=document.createElement('div');ov.id='pzpick';
+  const ini=+SETUP.era||0,fim=SETUP.fim!=null?+SETUP.fim:MAXAGE;
+  const bt=([v,l])=>{const ok=v[0]!=='a'||(+v.slice(1)>ini&&+v.slice(1)<=fim);return'<button class="mb'+(String(SETUP.paz)===v?' on':'')+'" data-v="'+v+'"'+(ok?'':' disabled')+'>'+l+'</button>'};
+  ov.innerHTML='<div class="pzbox"><div class="pzh">🕊 Paz no início</div>'
+    +'<p>Ninguém pode atacar ninguém até o tempo acabar ou até o primeiro povo chegar na era escolhida. Use a paz para crescer. Tropas que entram no território de outro povo durante a paz sofrem atrito e morrem em segundos (o batedor pode espiar).</p>'
+    +'<div class="pzs">Por tempo</div><div class="pzg">'+PZ_OPTS.slice(0,7).map(bt).join('')+'</div>'
+    +'<div class="pzs">Até uma era</div><div class="pzg">'+PZ_OPTS.slice(7).map(bt).join('')+'</div>'
+    +'<button class="mb pzok">Fechar</button></div>';
+  document.body.appendChild(ov);
+  ov.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{SETUP.paz=b.dataset.v;snd('click');ov.remove();updSetup()});
+  ov.querySelector('.pzok').onclick=()=>{snd('click');ov.remove()};ov.onclick=e=>{if(e.target===ov)ov.remove()}}
+{const css=document.createElement('style');css.textContent=`
+#pzpick{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:10px}
+#pzpick .pzbox{background:linear-gradient(#f3e4be,#d8c08c);color:#2a1a08;border:2px solid #8a6a2a;border-radius:8px;padding:10px 12px;max-width:520px;width:100%;max-height:92vh;overflow:auto;box-shadow:0 6px 20px #000c}
+#pzpick .pzh{font:700 18px Georgia,serif;margin-bottom:4px}
+#pzpick p{font-size:13px;margin:0 0 6px;line-height:1.35}
+#pzpick .pzs{font-weight:700;font-size:13px;margin:6px 0 3px}
+#pzpick .pzg{display:flex;flex-wrap:wrap;gap:5px}
+#pzpick .pzg .mb{flex:1 1 22%;min-width:90px;padding:7px 4px;font-size:13px;justify-content:center;text-align:center}
+#pzpick .mb[disabled]{opacity:.35}
+#pzpick .pzok{margin-top:8px;width:100%;justify-content:center}
+#pzc{position:absolute;top:36px;right:calc(8px + env(safe-area-inset-right));z-index:55;padding:3px 12px;border-radius:14px;font:700 13px Georgia,serif;color:#fff;
+  background:linear-gradient(#5b84c8,#2c4f8a);border:1.5px solid #f2d27a;box-shadow:0 2px 6px #000a;white-space:nowrap;pointer-events:auto;display:none}
+#pzc.fim{background:linear-gradient(#b8452e,#6e1d10)}
+#dipp .dr{padding:5px 0;border-top:1px solid #d8b46826}
+#dipp .dh{display:flex;align-items:center;gap:6px}
+#dipp .dbs{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+#dipp .dbs button{flex:1 1 auto;font-size:12px;padding:5px 6px;border-radius:4px;font-weight:700;color:#fff}
+#dipp .b-paz{border:1px solid #a9c8f0;background:linear-gradient(#4f7fc0,#284b80)}
+#dipp .b-ali{border:1px solid #c5dba0;background:linear-gradient(#6f8f45,#3f5a25)}
+#dipp .b-war{border:1px solid #d98a78;background:linear-gradient(#8f2a20,#4a120c)}
+#dipp .b-gift{flex:0 0 auto!important;border:1px solid #7d6233;background:linear-gradient(#30251a,#17110a);color:#efe3c4!important}
+#dipp .pzt{background:rgba(70,110,180,.2);border:1px solid #7fa3d8;border-radius:4px;padding:5px 6px;margin-bottom:6px;font-size:12px}`;document.head.appendChild(css)}
+// linha "Paz no início" nas regras da Batalha Rápida (abre a lista de escolhas)
+{const qb0=qbRender;qbRender=function(){qb0();const q=$('qb');if(!q)return;const t=q.querySelector('[data-k="times"]');if(!t)return;
+  SETUP.paz=pzValid(SETUP.paz);const row=document.createElement('div');row.className='qr';
+  row.innerHTML='<span>🕊 Paz no início</span><button class="mb qv" id="qbpz">'+pzLbl(SETUP.paz)+'</button>';
+  t.closest('.qr').after(row);$('qbpz').onclick=()=>{snd('click');pzPick()}}}
+{const us0=updSetup;updSetup=function(){us0();const s=$('sumr');if(s&&!s.querySelector('.pzsum')){const d=document.createElement('div');d.className='pzsum';s.appendChild(d)}
+  const d=s&&s.querySelector('.pzsum');if(d)d.innerHTML='<b>Paz no início:</b> '+pzLbl(pzValid(SETUP.paz))}}
+// ---------- começo da partida ----------
+function pzInit(v){v=String(v||'0');G.pz={on:0,t:0,age:-1,val:'0',w:0};
+  if(v[0]==='a'){let a=+v.slice(1);const fim=ENDAGE();a=Math.min(a,fim);if(a>(G.cfg&&G.cfg.era|0)){G.pz.on=1;G.pz.age=a;G.pz.val=v}}
+  else if(+v>0){G.pz.on=1;G.pz.t=(G.t||0)+(+v)*60;G.pz.val=v}}
+{const ng=newGame;newGame=function(o){ng(o);pzInit(o&&o.paz!=null?pzValid(o.paz,o):'0')};window.__RA.newGame=newGame}
+function pzLeft(){return G.pz&&G.pz.on&&G.pz.t?Math.max(0,G.pz.t-G.t):0}
+function pzTxt(){if(!G.pz||!G.pz.on)return'';return G.pz.t?'🕊 Paz · '+fmtT(pzLeft()):'🕊 Paz até a '+AGES[G.pz.age]}
+function pzEnd(why){if(!G.pz||!G.pz.on)return;G.pz.on=0;
+  // quem estava atacando e parou por causa da paz volta a procurar inimigo sozinho
+  if(running){toast('⚔️ A PAZ ACABOU! '+(why||'')+'<br>Agora os povos podem se atacar. Prepare as defesas!');snd('trumpet')}
+  domDirty=true;dipDraw()}
+function pzTick(){const P=G.pz;if(!P||!P.on)return;
+  if(P.t){const l=pzLeft();if(l<=0)return pzEnd('O tempo de paz terminou.');
+    if(l<=60&&P.w<1){P.w=1;if(running){toast('⏳ A paz acaba em 1 minuto!');snd('bell')}}
+    else if(l<=10&&P.w<2){P.w=2;if(running)toast('⏳ A paz acaba em 10 segundos!')}}
+  else if(P.age>=0){for(let p=0;p<NP;p++)if(dipAlive(p)&&G.P[p].age>=P.age)return pzEnd((p===0?'Você chegou':'Os '+civOf(p).n+' chegaram')+' na '+AGES[P.age]+'.');
+    if(P.w<1){for(let p=0;p<NP;p++){const b=G.B.find(b=>!b.dead&&b.o===p&&b.q&&b.q[0]==='age'&&G.P[p].age+1>=P.age);if(b){P.w=1;if(running){toast(p===0?'⏳ Você está subindo para a '+AGES[P.age]+': quando chegar, a paz acaba!':'⏳ Os '+civOf(p).n+' estão subindo para a '+AGES[P.age]+': a paz vai acabar!');snd('bell')}break}}}}}
+// ---------- aviso quando o jogador tenta atacar quem está em paz ----------
+let pzWarnT=-99;
+function pzWarn(o){if(G.t-pzWarnT<4)return;pzWarnT=G.t;
+  if(G.pz&&G.pz.on)toast('🕊 Ainda é tempo de paz: ninguém pode atacar. '+(G.pz.t?'Faltam '+fmtT(pzLeft())+'.':'Até alguém chegar na '+AGES[G.pz.age]+'.'));
+  else toast('🕊 Vocês estão em paz com os '+civOf(o).n+'. Para atacar, declare guerra no 🤝.');snd('click')}
+{const oa=orderAttack;orderAttack=function(u,t){if(u&&t&&!t.dead&&u.o===0&&t.o<NP&&peace(t.o,0)){pzWarn(t.o);return}return oa(u,t)}}
+{const so=smartOrder;smartOrder=function(us,tgt,x,y,o){if(o===0&&tgt&&(tgt.k==='u'||tgt.k==='b')&&tgt.o<NP&&peace(tgt.o,0)&&us.some(u=>ST(u).atk>0&&u.type!=='vill'))pzWarn(tgt.o);return so(us,tgt,x,y,o)}}
+// golpe que já estava no ar quando a paz foi assinada não machuca
+{const dd=dealDmg;dealDmg=function(att,t,base){if(att&&t&&att.o!=null&&att.o<NP&&t.o<NP&&peace(att.o,t.o))return;return dd(att,t,base)}}
+// ---------- atrito da paz: tropa no território de quem está em paz com você ----------
+const pzExempt=u=>u.type==='bat'||!isMil(u);
+let pzAtWarn=-99,pzAcc=0;
+function pzAttr(dt){
+  for(const u of G.U){if(u.dead||u.inT||u.o>=NP||pzExempt(u)){continue}
+    const d=DOM[tileOf(u.x,u.y)];
+    if(d>=0&&d<NP&&d!==u.o&&peace(d,u.o)&&!(u.pzg>G.t)){u.pza=(u.pza||0)+dt;
+      if(u.pza>PZ_ATR_T){const mh=ST(u).hp;u.hp-=mh*PZ_ATR_RATE*dt;
+        if(u.o===0&&G.t-pzAtWarn>8){pzAtWarn=G.t;toast('🕊 Suas tropas estão no território dos '+civOf(d).n+' durante a paz e morrem pelo atrito. Saia de lá!');snd('alert')}
+        if(u.hp<=0){u.hp=0;kill(u)}}}
+    else if(u.pza)u.pza=0}}
+// quem fica em paz recua: tropas dentro do território do outro voltam para casa e têm 20 s para sair
+function pzRetreat(a,b){const home=o=>{const t=G.B.find(x=>!x.dead&&x.o===o&&x.type==='tc');return t?ctr(t):null};
+  for(const u of G.U){if(u.dead||u.inT||(u.o!==a&&u.o!==b)||pzExempt(u))continue;const other=u.o===a?b:a;const d=DOM[tileOf(u.x,u.y)];
+    if(u.st==='attack'||u.st==='convert'){const t=E.get(u.tg);if(t&&t.o===other){u.st='idle';u.tg=0;u.mv=false}}
+    if(d===other){u.pzg=G.t+PZ_GRACE;const h=home(u.o);if(h)orderMove(u,h.x,h.y)}}}
+// ---------- diplomacia com três estados ----------
+function pzDipInit(){dipInit();const D=G.dip;if(!D.pt||D.pt.length!==NP)D.pt=new Array(NP).fill(-999);if(!D.gift||D.gift.length!==NP)D.gift=new Array(NP).fill(-999)}
+function relOf(p){return!G.rel||!G.rel[0]?0:G.rel[0][p]|0}
+// quem entra na sua aliança copia a sua postura: amigo dos seus amigos, em paz com quem você está em paz
+dipJoin=function(p){setRel(0,p,1);for(let q=1;q<NP;q++)if(q!==p)setRel(p,q,relOf(q));domDirty=true};
+{const g0=dipGift;dipGift=function(p){pzDipInit();const had=G.P[0].res.gold;g0(p);if(G.P[0].res.gold<had)G.dip.gift[p]=G.t}}
+// a IA aceita a paz? '' = aceita; senão, o motivo
+function dipPeaceWhyNot(p){pzDipInit();const D=G.dip;
+  if(!dipAlive(p))return'Esse reino já caiu.';
+  if(ally(p,0))return'Vocês são aliados. Para ficar só em paz, use 🕊 Só paz.';
+  if(relOf(p)===2)return'Vocês já estão em paz.';
+  if(G.t-D.ask[p]<DIP_CD)return'Eles ainda estão pensando na última proposta. Espere '+Math.ceil(DIP_CD-(G.t-D.ask[p]))+' s.';
+  if(G.t-D.war[p]<DIP_GRUDGE)return'Você rompeu um acordo com eles há pouco. Não confiam em você ainda.';
+  if(G.t-D.hit[p]<DIP_PEACE)return'Você atacou esse reino há pouco. Pare de atacar por '+Math.ceil(DIP_PEACE-(G.t-D.hit[p]))+' s.';
+  const me=dipStr(0),them=dipStr(p),gift=G.t-D.gift[p]<180;
+  if(them>me*(gift?2.6:1.6)+6)return gift?'Mesmo com o tributo, eles se acham fortes demais para a paz.':'Eles se acham mais fortes e querem a sua terra. Mande um tributo 🎁 ou mostre força.';
+  return''}
+function dipMakePeace(p,msg){pzDipInit();const was=ally(p,0);setRel(0,p,2);G.dip.pt[p]=G.t;
+  if(was)for(let q=1;q<NP;q++)if(q!==p&&ally(q,0)&&ally(q,p))setRel(p,q,2);
+  pzRetreat(0,p);toast(msg||'🕊 Acordo de paz firmado com os '+civOf(p).n+'! Ninguém ataca ninguém. Tirem as tropas do território do outro.');snd('bell');domDirty=true;dipDraw()}
+function dipProposePeace(p){const w=dipPeaceWhyNot(p);const D=G.dip;
+  if(w){toast('🕊 '+civOf(p).n+': '+w);snd('click');if(dipAlive(p)&&relOf(p)===0&&G.t-D.ask[p]>=DIP_CD)D.ask[p]=G.t;dipDraw();return false}
+  D.ask[p]=G.t;dipMakePeace(p);return true}
+// desfazer a aliança sem brigar: vira paz
+function dipUnally(p){if(!ally(p,0)||p===0)return;dipMakePeace(p,'🕊 A aliança com os '+civOf(p).n+' acabou, mas a paz continua: não dividem mais a visão.')}
+dipWar=function(p){if(p===0||!dipAlive(p))return;pzDipInit();
+  if(G.pz&&G.pz.on){toast('🕊 A paz do começo da partida ainda vale para todos. '+(G.pz.t?'Faltam '+fmtT(pzLeft())+'.':'Até alguém chegar na '+AGES[G.pz.age]+'.'));snd('click');return}
+  const r=relOf(p);if(r===0)return;
+  if(r===1)for(let q=1;q<NP;q++)if(q!==p&&ally(q,0))setRel(p,q,0);
+  setRel(0,p,0);G.dip.war[p]=G.t;
+  toast(r===2?'⚔ Você rompeu a paz e declarou guerra aos '+civOf(p).n+'!':'⚔ Você declarou guerra aos '+civOf(p).n+'!');snd('trumpet');domDirty=true;dipDraw()};
+// a IA também negocia: propõe aliança quando um terceiro ameaça, pede paz quando está perdendo e rompe a paz quando fica muito forte
+dipAITick=function(){if(NP<2||!G.dip)return;pzDipInit();const D=G.dip;
+  if(D.offer){const o=D.offer,done=o.k==='paz'?relOf(o.p)!==0:ally(o.p,0);if(G.t>o.until||!dipAlive(o.p)||done){D.offer=null;dipDraw()}}
+  // rompe a paz: só depois de 7 min de paz e se estiver muito mais forte que você
+  if(!(G.pz&&G.pz.on))for(let p=1;p<NP;p++){if(relOf(p)!==2||!dipAlive(p)||G.t-D.pt[p]<PZ_MIN_KEEP)continue;
+    if(dipStr(p)>dipStr(0)*2+8&&G.t-D.gift[p]>180&&RNG()<.05){setRel(0,p,0);D.war[p]=G.t-DIP_GRUDGE*.5;
+      if(running){toast('⚔ Os '+civOf(p).n+' romperam a paz e declararam guerra a você!');snd('trumpet')}domDirty=true;dipDraw();return}}
+  if(D.offer||G.t<240)return;
+  for(let p=1;p<NP;p++){if(ally(p,0)||!dipAlive(p)||G.t-D.off[p]<DIP_OFFER_CD||G.t-D.hit[p]<DIP_PEACE||G.t-D.war[p]<DIP_GRUDGE)continue;
+    const sp=dipStr(p);let thr=false;if(NP>2)for(let q=1;q<NP;q++)if(q!==p&&dipAlive(q)&&!ally(q,0)&&!ally(q,p)&&dipStr(q)>sp+2)thr=true;
+    if(thr){D.off[p]=G.t;D.offer={p,k:'ali',until:G.t+DIP_OFFER_T};if(running){toast('🤝 Os '+civOf(p).n+' propõem uma aliança! Toque no 🤝 para responder.');snd('alert')}dipDraw();return}
+    if(relOf(p)===0&&!(G.pz&&G.pz.on)&&G.t>=300&&sp*1.5+2<dipStr(0)){D.off[p]=G.t;D.offer={p,k:'paz',until:G.t+DIP_OFFER_T};
+      if(running){toast('🕊 Os '+civOf(p).n+' pedem um acordo de paz! Toque no 🤝 para responder.');snd('bell')}dipDraw();return}}};
+dipAnswer=function(yes){const D=G.dip;if(!D||!D.offer)return;const{p,k}=D.offer;D.offer=null;
+  if(yes){if(k==='paz')dipMakePeace(p);else{dipJoin(p);toast('🤝 Aliança firmada com os '+civOf(p).n+'!');snd('done')}}
+  else toast(k==='paz'?'✋ Você recusou a paz dos '+civOf(p).n:'✋ Você recusou a aliança dos '+civOf(p).n);dipDraw()};
+dipDraw=function(){const el=$('dipp');if(!el||el.style.display==='none')return;pzDipInit();
+  let h='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b>🤝 Diplomacia</b><button id="dipx" class="tb">✕</button></div>';
+  if(G.pz&&G.pz.on)h+='<div class="pzt"><b>🕊 Paz do começo</b> vale para todos '+(G.pz.t?'por mais <b>'+fmtT(pzLeft())+'</b>':'até alguém chegar na <b>'+AGES[G.pz.age]+'</b>')+'. Ninguém ataca; tropa em terra alheia sofre atrito.</div>';
+  const of=G.dip.offer;if(of)h+='<div style="background:rgba(111,143,69,.22);border:1px solid #c5dba0;border-radius:4px;padding:6px;margin-bottom:6px"><b>Os '+civOf(of.p).n+(of.k==='paz'?' pedem um acordo de paz':' propõem aliança')+'</b> <small>('+Math.max(0,Math.ceil(of.until-G.t))+' s)</small><div style="display:flex;gap:6px;margin-top:4px"><button id="dipy" style="flex:1;padding:5px;font-weight:700;border-radius:4px;border:1px solid #c5dba0;background:linear-gradient(#6f8f45,#3f5a25);color:#fff">Aceitar</button><button id="dipn" style="flex:1;padding:5px;font-weight:700;border-radius:4px;border:1px solid #7d6233;background:linear-gradient(#30251a,#17110a);color:#efe3c4">Recusar</button></div></div>';
+  for(let p=1;p<NP;p++){const al=dipAlive(p),r=relOf(p);
+    const st=!al?'☠ Derrotado':r===1?'🤝 Aliado':r===2?'🕊 Em paz'+(G.dip.pt[p]>0?' há '+fmtT(G.t-G.dip.pt[p]):''):'⚔ Em guerra';
+    const B=(c,a,t)=>'<button class="'+c+'" data-p="'+p+'" data-a="'+a+'">'+t+'</button>';
+    h+='<div class="dr"><div class="dh"><span style="width:14px;height:14px;border-radius:3px;border:1px solid #000;background:'+COL[p].m+';flex:none"></span><span style="flex:1;min-width:0"><b>'+civOf(p).n+'</b><br><small>'+st+'</small></span></div>';
+    if(al)h+='<div class="dbs">'+(r===0?B('b-paz','paz','🕊 Propor paz')+B('b-ali','ali','🤝 Aliança'):r===2?B('b-ali','ali','🤝 Aliança')+B('b-war','war','⚔ Romper a paz'):B('b-paz','unali','🕊 Só paz')+B('b-war','war','⚔ Guerra'))+B('b-gift','gift','🎁')+'</div>';
+    h+='</div>'}
+  h+='<small style="display:block;margin-top:6px;opacity:.85;line-height:1.3">🤝 <b>Aliança</b>: não se atacam, dividem a visão e vencem juntos.<br>🕊 <b>Paz</b>: não se atacam, mas cada um tem sua visão; tropa no território do outro morre pelo atrito (o batedor pode espiar). Para vencer, ainda precisa derrotar quem está só em paz.<br>⚔ <b>Guerra</b>: tudo liberado.<br>🎁 manda '+DIP_GIFT+' de metal: ajuda um aliado ou amolece um inimigo.</small>';
+  el.innerHTML=h;$('dipx').onclick=()=>{el.style.display='none'};
+  if($('dipy')){$('dipy').onclick=()=>dipAnswer(true);$('dipn').onclick=()=>dipAnswer(false)}
+  el.querySelectorAll('.dbs button').forEach(b=>b.onclick=()=>{const p=+b.dataset.p,a=b.dataset.a;
+    if(a==='paz')dipProposePeace(p);else if(a==='ali')dipPropose(p);else if(a==='war')dipWar(p);else if(a==='unali')dipUnally(p);else if(a==='gift')dipGift(p)})};
+// painel de diplomacia agora vale também no 1 contra 1 (dá para fazer paz)
+{const ds=dipSetup;dipSetup=function(){ds();pzDipInit();const b=$('bdip');if(b)b.style.display='';const el=$('dipp');if(el)el.style.width='270px';
+  let c=$('pzc');if(!c){c=document.createElement('div');c.id='pzc';$('hud').appendChild(c);c.onclick=()=>{snd('click');const d=$('dipp');d.style.display='block';dipDraw()}}pzHud()}}
+function pzHud(){const c=$('pzc');if(!c)return;const on=G&&G.pz&&G.pz.on;c.style.display=on?'block':'none';if(!on)return;
+  const t=pzTxt();if(c.textContent!==t)c.textContent=t;c.classList.toggle('fim',!!(G.pz.t&&pzLeft()<=60))}
+{const rt=ronTick;let acc=0,dacc=0;ronTick=function(dt){rt(dt);if(!G)return;pzAcc+=dt;if(pzAcc>=.25){pzAttr(pzAcc);pzAcc=0}
+  acc+=dt;if(acc>=1){acc=0;pzTick();pzHud()}
+  dacc+=dt;if(dacc>=1&&G.pz&&G.pz.on){dacc=0;const el=$('dipp');if(el&&el.style.display!=='none')dipDraw()}}}
+{const sg=startGame;startGame=function(){sg();pzHud()};window.__RA.startGame=startGame}
+// legendas ao segurar
+try{HELP_ID.bdip=['Diplomacia','Aliança, paz ou guerra com cada povo, e tributo de metal. Em paz ninguém ataca; aliados também dividem a visão e vencem juntos.'];
+  HELP_ID.pzc=['Paz do começo','Ninguém pode atacar até o tempo acabar ou até alguém chegar na era escolhida. Tropas no território de outro povo morrem pelo atrito.']}catch(e){}
 </script>
 </body>
 </html>
