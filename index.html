@@ -357,6 +357,7 @@ button{font-family:inherit;color:inherit}
   <div class="pn" id="pAl" data-p="al"><div class="ph"><span class="pt" id="alt">⚠️ Alertas</span><button class="pbn" data-a="min">—</button><button class="pbn" data-a="hide">✕</button></div><div class="pc" id="all"></div></div>
   <div class="pn" id="pSel" data-p="sel"><div class="ph"><span class="pt" id="selt">Seleção</span><button class="pbn" data-a="min">—</button><button class="pbn" data-a="hide">✕</button></div><div class="pc"><div id="info"></div></div></div>
   <div class="pn" id="pCmd" data-p="cmd"><div class="ph"><span class="pt" id="cmdt">Comandos</span><button class="pbn" data-a="min">—</button><button class="pbn" data-a="hide">✕</button></div><div class="pc"><div id="cmds"></div></div></div>
+  <div class="pn" id="pPts" data-p="pts"><div class="ph"><span class="pt">🏆 Nações</span><button class="pbn" data-a="min">—</button><button class="pbn" data-a="hide">✕</button></div><div class="pc" id="ptsl"></div></div>
   <div class="pn" id="pMap" data-p="map"><div class="ph"><span class="pt">🗺 Mapa</span><button class="pbn" data-a="min">—</button><button class="pbn" data-a="hide">✕</button></div><div class="pc mapc"><div id="mmw"><canvas id="mm" width="344" height="172"></canvas></div><div class="mzb"><button id="zin" class="cb">＋</button><button id="zout" class="cb">－</button><button id="mbig" class="cb">⛶</button></div></div></div>
   <div id="placebar"><button id="pok" class="cb">✔️</button><button id="pno" class="cb">✖️</button></div>
   <div id="card"></div>
@@ -1343,7 +1344,7 @@ function validSite(type,tx,ty,margin,o){
 //   FRONTEIRAS E CIDADES (a parte do Rise of Nations na fusão)
 // =========================================================
 const INF_CAP=17,INF_CITY=13,INF_TORRE=5;           // raio de influência em quadrados (com 8 não cabiam as fazendas)
-const CITY_MAX=4,CITY_MIN_OWN=22,CITY_MIN_EN=15;    // limite de cidades e distância entre elas
+const CITY_MAX=4,CITY_MIN_OWN=12,CITY_MIN_EN=14;    // limite de cidades e distância entre elas
 const CAPT_T=30,CAPT_R=5,CAPT_IMM=60;               // tomada: segundos, raio, proteção depois de tomada
 const ATTR_DELAY=15,ATTR_RATE=.005,ATTR_FLOOR=.25;  // atrito: espera, perda por segundo, vida mínima
 const TERR_WIN=.65,TERR_T=180,GRACE_T=120,CAP_PEN=120;
@@ -3852,7 +3853,7 @@ if('serviceWorker'in navigator&&location.protocol==='https:')navigator.serviceWo
 window.__RA={get G(){return G},step,aiTick,newGame,startGame,getE,cam:()=>({x:camX,y:camY,z:Z}),sel:()=>SEL,plc:()=>placing,setCam:(x,y,z)=>{camX=x;camY=y;if(z)Z=z},updVis,render,drawMM,w2s,recompute};
 window.__padState=()=>PAD;
 // ---------- botão de atualizar: limpa a cópia guardada e baixa a versão nova ----------
-const VERSAO='Versão 77';$('ver').textContent=VERSAO;
+const VERSAO='Versão 78';$('ver').textContent=VERSAO;
 $('bupd').onclick=async()=>{snd('click');const t=$('updt');
   if(!navigator.onLine){t.textContent='📶 Sem internet. Ligue os dados ou o Wi-Fi e tente de novo.';return}
   t.textContent='🔄 Procurando a versão nova...';
@@ -3870,18 +3871,18 @@ $('bmulti').onclick=()=>{snd('click');$('multit').textContent='🔒 Será libera
 //   3 modos prontos; tudo fica salvo no celular; "Restaurar" volta ao padrão.
 //   Esconder um painel não para nada no jogo: só tira da tela.
 // =========================================================
-const HUDK='imperio_ui2',PNL=['obj','al','sel','cmd','map'];
-const PNAME={obj:'🎯 Objetivos',al:'⚠️ Alertas',sel:'👤 Seleção',cmd:'⚡ Comandos',map:'🗺 Mapa'};
-const PEL={obj:'pObj',al:'pAl',sel:'pSel',cmd:'pCmd',map:'pMap'};
+const HUDK='imperio_ui2',PNL=['obj','al','sel','cmd','map','pts'];
+const PNAME={obj:'🎯 Objetivos',al:'⚠️ Alertas',sel:'👤 Seleção',cmd:'⚡ Comandos',map:'🗺 Mapa',pts:'🏆 Nações'};
+const PEL={obj:'pObj',al:'pAl',sel:'pSel',cmd:'pCmd',map:'pMap',pts:'pPts'};
 const PRESET={
-  rise:{nm:'Rise',p:{obj:[1,0],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0]},dock:1,big:0,one:0},
-  modern:{nm:'Moderno',p:{obj:[1,1],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0]},dock:0,big:0,one:0,clean:1},
-  equil:{nm:'Equilibrado',p:{obj:[1,0],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0]},dock:0,big:0,one:0},
-  classic:{nm:'Clássico',p:{obj:[1,0],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0]},dock:1,big:1,one:0},
+  rise:{nm:'Rise',p:{obj:[1,0],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0],pts:[1,0]},dock:1,big:0,one:0},
+  modern:{nm:'Moderno',p:{obj:[1,1],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0],pts:[1,0]},dock:0,big:0,one:0,clean:1},
+  equil:{nm:'Equilibrado',p:{obj:[1,0],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0],pts:[1,0]},dock:0,big:0,one:0},
+  classic:{nm:'Clássico',p:{obj:[1,0],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0],pts:[1,0]},dock:1,big:1,one:0},
   // Tela Livre: quase tudo é campo. Barra de recursos em cima, minimapa no canto, e a seleção e os
   // comandos só aparecem quando há algo selecionado, sem barras de título.
-  livre:{nm:'Tela Livre',p:{obj:[1,1],al:[1,1],sel:[1,0],cmd:[1,0],map:[1,0]},dock:0,big:0,one:1,free:1},
-  battle:{nm:'Campo de Batalha',p:{obj:[1,1],al:[1,0],sel:[0,0],cmd:[1,0],map:[1,1]},dock:0,big:0,one:1}};
+  livre:{nm:'Tela Livre',p:{obj:[1,1],al:[1,1],sel:[1,0],cmd:[1,0],map:[1,0],pts:[1,0]},dock:0,big:0,one:1,free:1},
+  battle:{nm:'Campo de Batalha',p:{obj:[1,1],al:[1,0],sel:[0,0],cmd:[1,0],map:[1,1],pts:[1,1]},dock:0,big:0,one:1}};
 function hudDefault(pre){pre=pre||'livre';const P=PRESET[pre],o={v:1,pre,size:1,p:{}};for(const k of PNL)o.p[k]={v:P.p[k][0],m:P.p[k][1],pos:null};return o}
 let HS=hudDefault();
 try{const s=JSON.parse(localStorage.getItem(HUDK)||'null');if(s&&s.v===1&&PRESET[s.pre]){HS=s;for(const k of PNL)if(!HS.p[k])HS.p[k]={v:1,m:0,pos:null}}
@@ -3894,6 +3895,10 @@ const hudScale=()=>HS.size*clamp(Math.min(innerWidth/914,innerHeight/411),.8,1.3
 // pos = {ax:'l'|'c'|'r', ay:'t'|'b', dx, dy} em pixels da tela, medidos a partir da borda escolhida
 function defPos(k){
   const pre=HS.pre,s=hudScale();
+  // placar das nações (como o painel do canto do Rise): logo acima do minimapa, do mesmo lado
+  if(k==='pts'){const m=$('pMap');if(HS.p.map.v&&m.offsetParent&&!m.classList.contains('big')){const r=m.getBoundingClientRect(),left=r.left+r.width/2<innerWidth/2,tab=m.classList.contains('tab')?22*s:0;
+    if(left)return{ax:'r',ay:'t',dx:4,dy:TOPH+34};// minimapa à esquerda (Rise, Moderno, Clássico): placar no alto à direita, longe dos objetivos
+    return{ax:'r',ay:'b',dx:innerWidth-r.right,dy:innerHeight-r.top+tab+6}}return{ax:'r',ay:'t',dx:4,dy:TOPH+34}}
   if(pre==='rise'){
     if(k==='obj')return{ax:'l',ay:'t',dx:6,dy:TOPH+8};
     if(k==='al'){const o=$('pObj');const below=HS.p.obj.v&&!HS.p.obj.pos&&o.offsetParent;return{ax:'l',ay:'t',dx:6,dy:below?o.getBoundingClientRect().bottom+6:TOPH+8}}
@@ -3937,7 +3942,7 @@ function layoutHUD(){
   if(HS.p.sel.v&&!HS.p.sel.pos){const c=$('pCmd'),cw=HS.p.cmd.v?c.offsetWidth*s:0,mw=HS.p.map.v?$('pMap').offsetWidth*s:0;
     const free=(innerWidth-(HS.pre==='battle'?0:cw+mw)-30)/s-16;si.style.width=Math.round(P.free?clamp(((innerWidth-cw)/2-14)/s-14,130,230):clamp(P.big?free:Math.min(free,P.clean?360:300),170,560))+'px'}
   $('objl').style.maxHeight=$('all').style.maxHeight='';
-  for(const k of['obj','al','map','cmd','sel']){const el=$(PEL[k]);if(!HS.p[k].v)continue;placeEl(el,HS.p[k].pos||defPos(k))}
+  for(const k of['obj','al','map','cmd','sel','pts']){const el=$(PEL[k]);if(!HS.p[k].v)continue;placeEl(el,HS.p[k].pos||defPos(k))}
   // altura livre embaixo: o centro da câmera fica no meio da parte que sobra do mapa
   let low=0;for(const k of['sel','cmd','map']){const el=$(PEL[k]);if(!HS.p[k].v||HS.p[k].m||el.classList.contains('big'))continue;const r=el.getBoundingClientRect();if(r.top>innerHeight*.45)low=Math.max(low,innerHeight-r.top+(el.classList.contains('tab')?22*s:0))}
   PANH=Math.round(clamp(low,0,innerHeight*.34));
@@ -6192,8 +6197,8 @@ const plN=x=>typeof x==='number'?Math.round(x).toLocaleString('pt-BR'):x;
 function plBody(){stInit();const S=G.st,ps=G.P.map((_,p)=>p);
   if(PL_TAB==='res'){const sc=ps.map(scoreOf);
     return'<div class="pmsg">'+PL_MSG+'</div><div class="pmeta">'+civOf(0).n+' · '+NP+' nações · '+DIFF[G.diff].n+' · ⏱ '+fmtT(G.t)+' · '+AGES[G.P[0].age]+'</div>'+
-      plTable(['Pontos','Militar','Economia','Tecnologia','Sociedade'],sc.map(s=>[s.tot,s.mil,s.eco,s.tec,s.soc]),plN)+
-      '<div class="pnote">Pontos: militar = abates e prédios derrubados · economia = recursos coletados · tecnologia = eras e pesquisas · sociedade = terra dominada e Maravilha</div>'}
+      plTable(['Pontos','Exército','Combate','Território','Cidades','Economia','Pesquisa','Maravilhas'],sc.map(s=>[s.tot,s.exe,s.cmb,s.ter,s.cid,s.eco,s.pes,s.mar]),plN)+
+      '<div class="pnote">Como no Rise, os pontos somam 7 partes: Exército (tropas vivas) · Combate (abates e prédios derrubados) · Território (terra dominada) · Cidades (cidades e prédios) · Economia (recursos coletados) · Pesquisa (eras e pesquisas) · Maravilhas</div>'}
   if(PL_TAB==='mil')return plTable(['Abates','Perdas','Prédios derrubados','Prédios perdidos','Maior exército'],ps.map(p=>[S.kill[p],S.lost[p],S.bk[p],S.bl[p],S.army[p]]),plN)+
       '<div class="pnote">Abates e perdas contam soldados e aldeões. "Maior exército" é o máximo de soldados que a nação teve ao mesmo tempo.</div>';
   if(PL_TAB==='eco')return plTable(['🍖 Comida','🪵 Madeira','🪨 Pedra','🪙 Ouro','🛢 Petróleo','Total','Aldeões (máx.)'],ps.map(p=>{const T=S.gt[p]||{};return[T.food|0,T.wood|0,T.stone|0,T.gold|0,T.oil|0,S.gath[p]|0,S.vmax[p]]}),plN)+
@@ -6895,10 +6900,10 @@ function siteWhy(r){return r.sub==='tree'?'🪓 Para cortar madeira, construa um
 {const og=orderGather;orderGather=function(u,r){
   if(r&&u&&u.type==='vill'&&u.o<NP){
     if(r.k==='b'&&GSITE[r.type]){if(r.o!==u.o||r.done<1){const c=ctr(r);orderMove(u,c.x,c.y);return false}
-      if(!siteFree(r,u)){if(u.o===0&&!(UI.siteT>G.t)){UI.siteT=G.t+3;toast('👥 '+BT[r.type].n+' cheio: '+siteCap(r)+' vagas')}return false}
+      if(!siteFree(r,u)){if(u.o===0&&UI._tap&&!(UI.siteT>G.t)){UI.siteT=G.t+3;toast('👥 '+BT[r.type].n+' cheio: '+siteCap(r)+' vagas')}return false}
       reset(u);u.st='gather';u.tg=r.id;u.lastRes=r.id;u.lsub=SITE_SUB[r.type];u.ws=0;u.mv=false;u.fail=0;return true}
     if(r.k==='r'&&SUB_SITE[r.sub]){const s=siteFor(u.o,r,u.x,u.y);if(s)return orderGather(u,s);
-      if(u.o===0&&!(UI.siteT>G.t)){UI.siteT=G.t+3;toast(siteWhy(r))}return false}}
+      if(u.o===0&&UI._tap&&!(UI.siteT>G.t)){UI.siteT=G.t+3;toast(siteWhy(r))}return false}}
   return og(u,r)}}
 // achar trabalho de madeira/metal/petróleo = achar um prédio de coleta com vaga
 {const fr=findRes;findRes=function(sub,x,y,maxD,o){if(SUB_SITE[sub]&&o!=null&&o<NP){const want=SUB_SITE[sub];let best=null,bd=maxD*TS*1.5;
@@ -6980,6 +6985,90 @@ boostOf=function(o,cat,r){if(o>=NP||!r||r.k!=='b')return 1;const bt=BOOST_OF[r.t
     if(wells.length<(P.age>=6?8:4)&&!wells.some(b=>b.done<1)&&afford(p,BT.petro.cost)){let best=null,bd=1e9;
       for(const r of G.R){if(r.dead||r.sub!=='oil'||DOM[idx(r.tx,r.ty)]!==p||(r.badMine&&G.t-r.badMine<90))continue;if(G.B.some(b=>!b.dead&&b.type==='petro'&&b.oil===r.id))continue;const d=hyp(r.tx-htx,r.ty-hty);if(d<bd){bd=d;best=r}}
       if(best&&!build('petro',best.tx,best.ty,1,2))best.badMine=G.t}}}}
+// o seu território fica sempre mapeado (dá para construir até a linha da fronteira, mesmo onde ninguém andou ainda)
+{const cd=calcDom;calcDom=function(){cd.apply(this,arguments);if(!G||!G.exp)return;let ch=false;for(let i=0;i<N;i++)if(DOM[i]===0&&!G.exp[i]){G.exp[i]=1;ch=true}if(ch){try{mmDirty=true}catch(e){}}}}
+
+// avisos de coleta só quando o jogador toca (não quando a ordem é automática)
+{const so0=smartOrder;smartOrder=function(us,tgt,x,y,o){UI._tap=o===0;try{return so0(us,tgt,x,y,o)}finally{UI._tap=false}}}
+// =========================================================
+// PONTUAÇÃO DAS NAÇÕES (como o Rise of Nations e o Age)
+//   · Rise: a pontuação total é a soma de 7 partes: Exército, Combate, Território, Cidades,
+//     Economia, Pesquisa e Maravilhas.
+//   · Rise: no canto de baixo à direita fica o "Data Display" com o nome, a cor, a era,
+//     a porcentagem de território e a pontuação de cada nação; dos outros só se vê o total.
+//   · Age: a pontuação de todos fica sempre à vista no canto da tela.
+// =========================================================
+const PT_ROM=['I','II','III','IV','V','VI','VII','VIII'];
+function armyVal(p){let v=0;for(const u of G.U){if(u.dead||u.o!==p||!isMil(u))continue;const c=UT[u.type]&&UT[u.type].cost||{};for(const k in c)v+=c[k]}return v/10}
+scoreOf=function(p){const S=G.st||{},P=G.P[p];if(!P)return{exe:0,cmb:0,ter:0,cid:0,eco:0,pes:0,mar:0,mil:0,tec:0,soc:0,tot:0};
+  const exe=Math.round(armyVal(p));
+  const cmb=Math.round(((S.kill&&S.kill[p])||0)*12+((S.bk&&S.bk[p])||0)*35);
+  const ter=Math.round(domShare(p)*1000);
+  const bl=G.B.filter(b=>!b.dead&&b.o===p&&b.done>=1);
+  const cid=Math.round(bl.filter(b=>b.type==='tc').length*150+bl.filter(b=>b.type!=='muralha'&&b.type!=='tc').length*4);
+  const eco=Math.round(((S.gath&&S.gath[p])||0)/10);
+  const pes=Math.round(P.age*150+(P.techs?P.techs.length:0)*20+((P.mil||0)+(P.cvc||0)+(P.com||0)+(P.sci||0))*25);
+  const mar=bl.filter(b=>b.type==='maravilha').length*400;
+  return{exe,cmb,ter,cid,eco,pes,mar,mil:exe+cmb,tec:pes,soc:ter+cid+mar,tot:exe+cmb+ter+cid+eco+pes+mar}};
+// ---------- DATA DISPLAY (como o do Rise): texto solto no canto, sem janela ----------
+// Tocar no texto (ou no botão 📊) troca o que aparece: Nações → Economia → Exército → Pesquisas → escondido.
+const DD_M=[['pol','Nações'],['eco','Economia'],['mil','Exército'],['pes','Pesquisas'],['off','']];
+let DDM=0;try{DDM=+(localStorage.getItem('imperio_dd')||0)%DD_M.length}catch(e){}
+{const css=document.createElement('style');css.textContent=`
+#pPts{background:none!important;border:none!important;box-shadow:none!important;min-width:0}
+#pPts>.ph{display:none!important}
+#ptsl{padding:0;font-size:11.5px;line-height:1.28;color:#fff;text-shadow:0 0 2px #000,0 1px 2px #000,1px 0 2px #000;cursor:pointer;user-select:none}
+#ptsl .pr{display:flex;align-items:center;gap:5px;white-space:nowrap;justify-content:flex-end}
+#ptsl .pr i{width:8px;height:8px;border-radius:50%;border:1px solid #000;flex:none;box-shadow:0 0 2px #000}
+#ptsl .pr .nm{max-width:96px;overflow:hidden;text-overflow:ellipsis}
+#ptsl .pr .ea{min-width:34px;text-align:center;color:#ffd96a;font-weight:700;font-size:10.5px}
+#ptsl .pr .tr{min-width:28px;text-align:right;color:#cfe6ff}
+#ptsl .pr b{min-width:40px;text-align:right}
+#ptsl .pr.eu .nm{color:#ffe9a8;font-weight:700}
+#ptsl .pr.mo{opacity:.45;text-decoration:line-through}
+#ptsl .ti{display:flex;justify-content:flex-end;align-items:center;gap:5px;font-size:10px;color:#ffd96a;font-weight:700;letter-spacing:.3px}
+#ptsl .ti u{text-decoration:none;display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;border-radius:50%;background:rgba(20,14,6,.7);border:1px solid #f2d27a99;font-size:11px;text-shadow:none}
+#ptsl .ek{display:flex;justify-content:flex-end;gap:6px;white-space:nowrap}
+#ptsl .ek span{min-width:34px;text-align:right}`;document.head.appendChild(css)}
+function ptsAging(p){return G.B.some(b=>!b.dead&&b.o===p&&b.q&&b.q[0]==='age')}
+function ddPol(){const rows=[];for(let p=0;p<NP;p++){if(!G.P[p])continue;rows.push({p,s:scoreOf(p).tot,dead:!G.B.some(b=>!b.dead&&b.o===p&&b.type==='tc')&&!G.U.some(u=>!u.dead&&u.o===p&&u.type==='vill')})}
+  rows.sort((a,b)=>(a.dead-b.dead)||(b.s-a.s));let h='';
+  for(const r of rows){const p=r.p,P=G.P[p],rel=p===0?'':ally(p,0)?' 🤝':peace(p,0)?' 🕊':'';
+    const era=PT_ROM[P.age]+(ptsAging(p)&&P.age<7?'▸'+PT_ROM[P.age+1]:'');
+    h+='<div class="pr'+(p===0?' eu':'')+(r.dead?' mo':'')+'"><span class="nm">'+civOf(p).n+rel+'</span><span class="ea">'+era+'</span><span class="tr">'+Math.round(domShare(p)*100)+'%</span><b>'+r.s.toLocaleString('pt-BR')+'</b><i style="background:'+COL[p].m+'"></i></div>'}
+  return h}
+const ddLine=(ic,nm,v,x)=>'<div class="pr"><span class="nm">'+ic+' '+nm+'</span><b>'+v+'</b>'+(x!=null?'<span class="tr">'+x+'</span>':'')+'</div>';
+function ddEco(){const c={food:0,wood:0,gold:0,oil:0,know:0,wealth:0,build:0,idle:0};
+  for(const u of G.U){if(u.dead||u.o!==0)continue;
+    if(u.type==='vill'){if(u.st==='gather'){const s=u.lsub;c[s==='tree'?'wood':s==='gold'||s==='stone'?'gold':s==='oil'?'oil':'food']++}else if(u.st==='build'||u.st==='repair')c.build++;else if(u.st==='idle')c.idle++;else c.food+=0}
+    else if(u.type==='pesc')c.food++;else if(u.type==='erudito')c.know++;else if(u.type==='mercador'||u.type==='caravana')c.wealth++}
+  const P=G.P[0];let R={};try{R=incRates()}catch(e){}const rate=k=>R[k]>0?'+'+R[k]+'/min':'';
+  const vills=G.U.filter(u=>!u.dead&&u.o===0&&u.type==='vill').length;
+  return ddLine('🌾','Comida',c.food,rate('food'))+ddLine('🪵','Madeira',c.wood,rate('wood'))+ddLine('⛏️','Metal',c.gold,rate('gold'))+(P.age>=5?ddLine('🛢️','Petróleo',c.oil,rate('oil')):'')+
+    ddLine('📚','Eruditos',c.know,rate('know'))+ddLine('💰','Comércio',c.wealth,rate('wealth'))+ddLine('🔨','Construindo',c.build)+ddLine('💤','Parados',c.idle)+ddLine('👥','Aldeões',vills)}
+function ddMil(){const c={inf:0,arq:0,cav:0,cerco:0,navio:0,tanque:0,sup:0};let n=0;
+  for(const u of G.U){if(u.dead||u.o!==0||!isMil(u))continue;n++;const k=UT[u.type].cls;
+    if(u.type==='general'||u.type==='espia')c.sup++;else if(k==='inf'&&ST(u).rng>1)c.arq++;else if(k==='inf')c.inf++;else if(k==='arq')c.arq++;else if(k==='cav'||k==='elef'||k==='arqcav')c.cav++;else if(k==='cerco')c.cerco++;else if(k==='navio')c.navio++;else if(k==='tanque')c.tanque++}
+  const P=G.P[0];let foes=0;for(const u of G.U)if(!u.dead&&u.o<NP&&foe(u.o,0)&&isMil(u)&&vis[idx(u.x/TS|0,u.y/TS|0)])foes++;
+  return ddLine('🗡️','Infantaria',c.inf)+ddLine('🏹','Atiradores',c.arq)+ddLine('🐎','Cavalaria',c.cav)+ddLine('🛞','Cerco',c.cerco)+(c.tanque?ddLine('🛡️','Blindados',c.tanque):'')+ddLine('⛵','Navios',c.navio)+(c.sup?ddLine('🎖️','Generais e espiões',c.sup):'')+
+    ddLine('⚔️','Total',n,'pop '+P.pop+'/'+P.cap)+(foes?ddLine('👁️','Inimigos à vista',foes):'')}
+function ddPes(){const P=G.P[0],L=[];
+  for(const b of G.B){if(b.dead||b.o!==0||b.done<1)continue;for(const id of(BT[b.type].res||[])){const T=TECH[id];if(!T||P.techs.includes(id)||T.age>P.age||(T.req&&!P.techs.includes(T.req))||L.some(x=>x.id===id))continue;if(G.B.some(x=>!x.dead&&x.o===0&&x.q.includes('t:'+id)))continue;L.push({id,T,b,ok:afford(0,T.cost)})}}
+  L.sort((a,b)=>(b.ok-a.ok));
+  const lab=[];for(const b of G.B)if(!b.dead&&b.o===0&&b.q&&b.q.length){const q=b.q[0];if(typeof q==='string'&&q.startsWith('t:')&&TECH[q.slice(2)])lab.push('⏳ '+TECH[q.slice(2)].n)}
+  let h=lab.slice(0,3).map(t=>'<div class="pr"><span class="nm" style="max-width:150px">'+t+'</span></div>').join('');
+  h+=L.slice(0,6).map(x=>'<div class="pr"'+(x.ok?'':' style="opacity:.6"')+'><span class="nm" style="max-width:118px">'+(x.T.ic||'🔬')+' '+x.T.n.replace('Evoluir: ','⏫ ')+'</span><span class="tr" style="min-width:0;color:#ffd96a">'+BT[x.b.type].n.split(' ')[0]+'</span></div>').join('');
+  if(!L.length&&!lab.length)h+='<div class="pr"><span class="nm" style="max-width:150px">Nada novo para pesquisar agora</span></div>';
+  else if(L.length>6)h+='<div class="pr"><span class="nm">+'+(L.length-6)+' outras</span></div>';return h}
+function ptsDraw(){const el=$('ptsl');if(!el||!G||!HS.p.pts||!HS.p.pts.v)return;const m=DD_M[DDM][0];
+  const ti='<div class="ti">'+(m==='off'?'':DD_M[DDM][1])+'<u>📊</u></div>';
+  const h=m==='pol'?ddPol()+ti:m==='eco'?ddEco()+ti:m==='mil'?ddMil()+ti:m==='pes'?ddPes()+ti:ti;
+  if(el._h!==h){el.innerHTML=h;el._h=h;try{layoutHUD()}catch(e){}}}
+{let acc=0;const rt=ronTick;ronTick=function(dt){rt(dt);acc+=dt;if(acc>=1){acc=0;try{ptsDraw()}catch(e){}}}}
+{const sg=startGame;startGame=function(){sg();try{const el=$('ptsl');if(el)el._h='';ptsDraw();layoutHUD()}catch(e){}};window.__RA.startGame=startGame}
+// tocar troca o modo (como o botão do Data Display do Rise)
+$('ptsl').addEventListener('click',ev=>{ev.stopPropagation();if(!G)return;DDM=(DDM+1)%DD_M.length;try{localStorage.setItem('imperio_dd',DDM)}catch(e){}snd('click');$('ptsl')._h='';ptsDraw()});
+try{HELP_ID.ptsl=['Painel de dados','Como no Rise: toque para trocar. Nações (era, % de terra e pontos), Economia (aldeões em cada trabalho), Exército (suas tropas por tipo), Pesquisas (o que dá para pesquisar) e escondido. Pontos = Exército + Combate + Território + Cidades + Economia + Pesquisa + Maravilhas.']}catch(e){}
 </script>
 </body>
 </html>

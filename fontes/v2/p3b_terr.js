@@ -3,7 +3,7 @@
 //   FRONTEIRAS E CIDADES (a parte do Rise of Nations na fusão)
 // =========================================================
 const INF_CAP=17,INF_CITY=13,INF_TORRE=5;           // raio de influência em quadrados (com 8 não cabiam as fazendas)
-const CITY_MAX=4,CITY_MIN_OWN=22,CITY_MIN_EN=15;    // limite de cidades e distância entre elas
+const CITY_MAX=4,CITY_MIN_OWN=12,CITY_MIN_EN=14;    // limite de cidades e distância entre elas
 const CAPT_T=30,CAPT_R=5,CAPT_IMM=60;               // tomada: segundos, raio, proteção depois de tomada
 const ATTR_DELAY=15,ATTR_RATE=.005,ATTR_FLOOR=.25;  // atrito: espera, perda por segundo, vida mínima
 const TERR_WIN=.65,TERR_T=180,GRACE_T=120,CAP_PEN=120;

@@ -6,18 +6,18 @@
 //   3 modos prontos; tudo fica salvo no celular; "Restaurar" volta ao padrão.
 //   Esconder um painel não para nada no jogo: só tira da tela.
 // =========================================================
-const HUDK='imperio_ui2',PNL=['obj','al','sel','cmd','map'];
-const PNAME={obj:'🎯 Objetivos',al:'⚠️ Alertas',sel:'👤 Seleção',cmd:'⚡ Comandos',map:'🗺 Mapa'};
-const PEL={obj:'pObj',al:'pAl',sel:'pSel',cmd:'pCmd',map:'pMap'};
+const HUDK='imperio_ui2',PNL=['obj','al','sel','cmd','map','pts'];
+const PNAME={obj:'🎯 Objetivos',al:'⚠️ Alertas',sel:'👤 Seleção',cmd:'⚡ Comandos',map:'🗺 Mapa',pts:'🏆 Nações'};
+const PEL={obj:'pObj',al:'pAl',sel:'pSel',cmd:'pCmd',map:'pMap',pts:'pPts'};
 const PRESET={
-  rise:{nm:'Rise',p:{obj:[1,0],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0]},dock:1,big:0,one:0},
-  modern:{nm:'Moderno',p:{obj:[1,1],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0]},dock:0,big:0,one:0,clean:1},
-  equil:{nm:'Equilibrado',p:{obj:[1,0],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0]},dock:0,big:0,one:0},
-  classic:{nm:'Clássico',p:{obj:[1,0],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0]},dock:1,big:1,one:0},
+  rise:{nm:'Rise',p:{obj:[1,0],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0],pts:[1,0]},dock:1,big:0,one:0},
+  modern:{nm:'Moderno',p:{obj:[1,1],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0],pts:[1,0]},dock:0,big:0,one:0,clean:1},
+  equil:{nm:'Equilibrado',p:{obj:[1,0],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0],pts:[1,0]},dock:0,big:0,one:0},
+  classic:{nm:'Clássico',p:{obj:[1,0],al:[1,0],sel:[1,0],cmd:[1,0],map:[1,0],pts:[1,0]},dock:1,big:1,one:0},
   // Tela Livre: quase tudo é campo. Barra de recursos em cima, minimapa no canto, e a seleção e os
   // comandos só aparecem quando há algo selecionado, sem barras de título.
-  livre:{nm:'Tela Livre',p:{obj:[1,1],al:[1,1],sel:[1,0],cmd:[1,0],map:[1,0]},dock:0,big:0,one:1,free:1},
-  battle:{nm:'Campo de Batalha',p:{obj:[1,1],al:[1,0],sel:[0,0],cmd:[1,0],map:[1,1]},dock:0,big:0,one:1}};
+  livre:{nm:'Tela Livre',p:{obj:[1,1],al:[1,1],sel:[1,0],cmd:[1,0],map:[1,0],pts:[1,0]},dock:0,big:0,one:1,free:1},
+  battle:{nm:'Campo de Batalha',p:{obj:[1,1],al:[1,0],sel:[0,0],cmd:[1,0],map:[1,1],pts:[1,1]},dock:0,big:0,one:1}};
 function hudDefault(pre){pre=pre||'livre';const P=PRESET[pre],o={v:1,pre,size:1,p:{}};for(const k of PNL)o.p[k]={v:P.p[k][0],m:P.p[k][1],pos:null};return o}
 let HS=hudDefault();
 try{const s=JSON.parse(localStorage.getItem(HUDK)||'null');if(s&&s.v===1&&PRESET[s.pre]){HS=s;for(const k of PNL)if(!HS.p[k])HS.p[k]={v:1,m:0,pos:null}}
@@ -30,6 +30,10 @@ const hudScale=()=>HS.size*clamp(Math.min(innerWidth/914,innerHeight/411),.8,1.3
 // pos = {ax:'l'|'c'|'r', ay:'t'|'b', dx, dy} em pixels da tela, medidos a partir da borda escolhida
 function defPos(k){
   const pre=HS.pre,s=hudScale();
+  // placar das nações (como o painel do canto do Rise): logo acima do minimapa, do mesmo lado
+  if(k==='pts'){const m=$('pMap');if(HS.p.map.v&&m.offsetParent&&!m.classList.contains('big')){const r=m.getBoundingClientRect(),left=r.left+r.width/2<innerWidth/2,tab=m.classList.contains('tab')?22*s:0;
+    if(left)return{ax:'r',ay:'t',dx:4,dy:TOPH+34};// minimapa à esquerda (Rise, Moderno, Clássico): placar no alto à direita, longe dos objetivos
+    return{ax:'r',ay:'b',dx:innerWidth-r.right,dy:innerHeight-r.top+tab+6}}return{ax:'r',ay:'t',dx:4,dy:TOPH+34}}
   if(pre==='rise'){
     if(k==='obj')return{ax:'l',ay:'t',dx:6,dy:TOPH+8};
     if(k==='al'){const o=$('pObj');const below=HS.p.obj.v&&!HS.p.obj.pos&&o.offsetParent;return{ax:'l',ay:'t',dx:6,dy:below?o.getBoundingClientRect().bottom+6:TOPH+8}}
@@ -73,7 +77,7 @@ function layoutHUD(){
   if(HS.p.sel.v&&!HS.p.sel.pos){const c=$('pCmd'),cw=HS.p.cmd.v?c.offsetWidth*s:0,mw=HS.p.map.v?$('pMap').offsetWidth*s:0;
     const free=(innerWidth-(HS.pre==='battle'?0:cw+mw)-30)/s-16;si.style.width=Math.round(P.free?clamp(((innerWidth-cw)/2-14)/s-14,130,230):clamp(P.big?free:Math.min(free,P.clean?360:300),170,560))+'px'}
   $('objl').style.maxHeight=$('all').style.maxHeight='';
-  for(const k of['obj','al','map','cmd','sel']){const el=$(PEL[k]);if(!HS.p[k].v)continue;placeEl(el,HS.p[k].pos||defPos(k))}
+  for(const k of['obj','al','map','cmd','sel','pts']){const el=$(PEL[k]);if(!HS.p[k].v)continue;placeEl(el,HS.p[k].pos||defPos(k))}
   // altura livre embaixo: o centro da câmera fica no meio da parte que sobra do mapa
   let low=0;for(const k of['sel','cmd','map']){const el=$(PEL[k]);if(!HS.p[k].v||HS.p[k].m||el.classList.contains('big'))continue;const r=el.getBoundingClientRect();if(r.top>innerHeight*.45)low=Math.max(low,innerHeight-r.top+(el.classList.contains('tab')?22*s:0))}
   PANH=Math.round(clamp(low,0,innerHeight*.34));

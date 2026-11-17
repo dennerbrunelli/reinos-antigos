@@ -67,8 +67,8 @@ const plN=x=>typeof x==='number'?Math.round(x).toLocaleString('pt-BR'):x;
 function plBody(){stInit();const S=G.st,ps=G.P.map((_,p)=>p);
   if(PL_TAB==='res'){const sc=ps.map(scoreOf);
     return'<div class="pmsg">'+PL_MSG+'</div><div class="pmeta">'+civOf(0).n+' · '+NP+' nações · '+DIFF[G.diff].n+' · ⏱ '+fmtT(G.t)+' · '+AGES[G.P[0].age]+'</div>'+
-      plTable(['Pontos','Militar','Economia','Tecnologia','Sociedade'],sc.map(s=>[s.tot,s.mil,s.eco,s.tec,s.soc]),plN)+
-      '<div class="pnote">Pontos: militar = abates e prédios derrubados · economia = recursos coletados · tecnologia = eras e pesquisas · sociedade = terra dominada e Maravilha</div>'}
+      plTable(['Pontos','Exército','Combate','Território','Cidades','Economia','Pesquisa','Maravilhas'],sc.map(s=>[s.tot,s.exe,s.cmb,s.ter,s.cid,s.eco,s.pes,s.mar]),plN)+
+      '<div class="pnote">Como no Rise, os pontos somam 7 partes: Exército (tropas vivas) · Combate (abates e prédios derrubados) · Território (terra dominada) · Cidades (cidades e prédios) · Economia (recursos coletados) · Pesquisa (eras e pesquisas) · Maravilhas</div>'}
   if(PL_TAB==='mil')return plTable(['Abates','Perdas','Prédios derrubados','Prédios perdidos','Maior exército'],ps.map(p=>[S.kill[p],S.lost[p],S.bk[p],S.bl[p],S.army[p]]),plN)+
       '<div class="pnote">Abates e perdas contam soldados e aldeões. "Maior exército" é o máximo de soldados que a nação teve ao mesmo tempo.</div>';
   if(PL_TAB==='eco')return plTable(['🍖 Comida','🪵 Madeira','🪨 Pedra','🪙 Ouro','🛢 Petróleo','Total','Aldeões (máx.)'],ps.map(p=>{const T=S.gt[p]||{};return[T.food|0,T.wood|0,T.stone|0,T.gold|0,T.oil|0,S.gath[p]|0,S.vmax[p]]}),plN)+

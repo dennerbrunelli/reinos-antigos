@@ -115,10 +115,10 @@ function siteWhy(r){return r.sub==='tree'?'🪓 Para cortar madeira, construa um
 {const og=orderGather;orderGather=function(u,r){
   if(r&&u&&u.type==='vill'&&u.o<NP){
     if(r.k==='b'&&GSITE[r.type]){if(r.o!==u.o||r.done<1){const c=ctr(r);orderMove(u,c.x,c.y);return false}
-      if(!siteFree(r,u)){if(u.o===0&&!(UI.siteT>G.t)){UI.siteT=G.t+3;toast('👥 '+BT[r.type].n+' cheio: '+siteCap(r)+' vagas')}return false}
+      if(!siteFree(r,u)){if(u.o===0&&UI._tap&&!(UI.siteT>G.t)){UI.siteT=G.t+3;toast('👥 '+BT[r.type].n+' cheio: '+siteCap(r)+' vagas')}return false}
       reset(u);u.st='gather';u.tg=r.id;u.lastRes=r.id;u.lsub=SITE_SUB[r.type];u.ws=0;u.mv=false;u.fail=0;return true}
     if(r.k==='r'&&SUB_SITE[r.sub]){const s=siteFor(u.o,r,u.x,u.y);if(s)return orderGather(u,s);
-      if(u.o===0&&!(UI.siteT>G.t)){UI.siteT=G.t+3;toast(siteWhy(r))}return false}}
+      if(u.o===0&&UI._tap&&!(UI.siteT>G.t)){UI.siteT=G.t+3;toast(siteWhy(r))}return false}}
   return og(u,r)}}
 // achar trabalho de madeira/metal/petróleo = achar um prédio de coleta com vaga
 {const fr=findRes;findRes=function(sub,x,y,maxD,o){if(SUB_SITE[sub]&&o!=null&&o<NP){const want=SUB_SITE[sub];let best=null,bd=maxD*TS*1.5;
@@ -200,3 +200,8 @@ boostOf=function(o,cat,r){if(o>=NP||!r||r.k!=='b')return 1;const bt=BOOST_OF[r.t
     if(wells.length<(P.age>=6?8:4)&&!wells.some(b=>b.done<1)&&afford(p,BT.petro.cost)){let best=null,bd=1e9;
       for(const r of G.R){if(r.dead||r.sub!=='oil'||DOM[idx(r.tx,r.ty)]!==p||(r.badMine&&G.t-r.badMine<90))continue;if(G.B.some(b=>!b.dead&&b.type==='petro'&&b.oil===r.id))continue;const d=hyp(r.tx-htx,r.ty-hty);if(d<bd){bd=d;best=r}}
       if(best&&!build('petro',best.tx,best.ty,1,2))best.badMine=G.t}}}}
+// o seu território fica sempre mapeado (dá para construir até a linha da fronteira, mesmo onde ninguém andou ainda)
+{const cd=calcDom;calcDom=function(){cd.apply(this,arguments);if(!G||!G.exp)return;let ch=false;for(let i=0;i<N;i++)if(DOM[i]===0&&!G.exp[i]){G.exp[i]=1;ch=true}if(ch){try{mmDirty=true}catch(e){}}}}
+
+// avisos de coleta só quando o jogador toca (não quando a ordem é automática)
+{const so0=smartOrder;smartOrder=function(us,tgt,x,y,o){UI._tap=o===0;try{return so0(us,tgt,x,y,o)}finally{UI._tap=false}}}
