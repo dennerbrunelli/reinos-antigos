@@ -16,6 +16,8 @@ Depois de três anos de seca em Pedra Alta, o barão expulsa cinco famílias. El
 - **Recursos:** marque árvores, pedras e ferro para os trabalhadores recolherem; silvicultor replanta a mata; pedreira e mina dão pedra e ferro sem acabar; ferreiro faz ferramentas
 - **Trabalho:** toque numa cabana e use − / + para escolher quantas pessoas trabalham nela (sempre ficam 2 livres para construir)
 - **Viajantes:** a partir do 2º ano, grupos de exilados pedem para morar no vale
+- **Primeiros passos guiados** no jogo novo (com botão piscando) e o objetivo do capítulo sempre no canto 🎯
+- Números sobem quando algo chega ao depósito; sons gravados de machado, martelo, sino e água
 - Salva sozinho todo dia de manhã
 
 ## Controles
@@ -27,4 +29,5 @@ Arrastar move o mapa · pinça dá zoom · tocar mostra detalhes · nas ferramen
 - `js/mundo.js` — mapa, recursos, prédios e caminhos
 - `js/gente.js` — moradores, trabalho, famílias, estações e o diário
 - `js/tela.js` — desenho, toque, painéis, música e salvar
-- `sw.js` — guarda o jogo no celular (ao atualizar, trocar `refugio-v1` → `refugio-v2`)
+- `sons/` — efeitos gravados (os mesmos do Império)
+- `sw.js` — guarda o jogo no celular (ao atualizar, trocar `refugio-v2` → `refugio-v3`)

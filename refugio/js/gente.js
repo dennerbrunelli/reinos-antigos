@@ -124,7 +124,7 @@ function think(v) {
 }
 function planDeposit(v) {
   const s = nearestStore(v.x, v.y);
-  const dep = fn(v => { for (const k in v.carry) addStock(k, v.carry[k]); v.carry = {}; });
+  const dep = fn(v => { let dy = 0; for (const k in v.carry) { addStock(k, v.carry[k]); floatTxt(v.x, v.y - dy, `+${Math.floor(v.carry[k])} ${RES[k].i}`); dy += .6; } v.carry = {}; });
   if (!s) return plan(v, [dep, wait(10)], null, 'Guardando');
   plan(v, [go(doorOf(s)), wait(8), dep], null, 'Levando ao depósito');
 }
@@ -195,7 +195,7 @@ function jobLab(v) {
     const b = best; b.builders++;
     plan(v, [go(nearTile(b, v.x, v.y)), wait(60 / eff(v), 'build'), fn(v => {
       if (!bget(b.id) || b.done) return false;
-      b.builders--; b.prog += 1; wear(v, 2);
+      b.builders--; b.prog += 1; wear(v, 2); if (Math.random() < .5) sfxAt(v.x, v.y, 'hammer');
       if (b.prog >= B[b.t].work) completeBuilding(b);
     })], () => { b.builders = Math.max(0, b.builders - 1); }, `Construindo: ${B[b.t].n}`);
     return true;
@@ -226,9 +226,9 @@ function planGather(v, i, lab) {
     claims.delete(i);
     if (G.obj[i] !== o) return false;
     wear(v, 3);
-    if (o === O_TREE) { v.carry = { tora: G.amt[i] || 10 }; clearObj(i); }
+    if (o === O_TREE) { v.carry = { tora: G.amt[i] || 10 }; clearObj(i); sfxAt(v.x, v.y, 'chop'); }
     else if (o === O_BUSH) { if (G.amt[i]) v.carry = { fruta: G.amt[i] }; clearObj(i); }
-    else { const k = o === O_IRON ? 'ferro' : 'pedra', n = Math.min(o === O_IRON ? 5 : 6, G.amt[i]); G.amt[i] -= n; v.carry = { [k]: n }; if (G.amt[i] <= 0) clearObj(i); }
+    else { sfxAt(v.x, v.y, 'mine'); const k = o === O_IRON ? 'ferro' : 'pedra', n = Math.min(o === O_IRON ? 5 : 6, G.amt[i]); G.amt[i] -= n; v.carry = { [k]: n }; if (G.amt[i] <= 0) clearObj(i); }
   })], () => claims.delete(i), act);
   return true;
 }
@@ -283,7 +283,7 @@ const JOBF = {
     const i = pick(b.spots);
     if (!walk(i)) { b.spots = null; return false; }
     plan(v, [go({ x: i % MW, y: (i / MW) | 0 }), fn(v => { const x = i % MW, y = (i / MW) | 0; for (const [dx, dy] of DIRS) if (inb(x + dx, y + dy) && G.tile[idx(x + dx, y + dy)] === T_WATER) { faceTo(v, idx(x + dx, y + dy)); break; } }),
-    wait(200 / eff(v), 'fish'), fn(v => { wear(v, 2); v.carry = { peixe: season() === 3 ? 2 : 5 }; })], null, season() === 3 ? 'Pescando no gelo' : 'Pescando');
+    wait(200 / eff(v), 'fish'), fn(v => { wear(v, 2); sfxAt(v.x, v.y, 'splash'); v.carry = { peixe: season() === 3 ? 2 : 5 }; })], null, season() === 3 ? 'Pescando no gelo' : 'Pescando');
     return true;
   },
   fazendeiro(v, b) {
@@ -560,15 +560,15 @@ function acceptNomads(n) {
 
 // ---------------- diário (história)
 const STORY = [
-  { t: 'A Chegada', txt: 'Fazia três verões que não chovia em Pedra Alta. Quando os celeiros do barão secaram, ele pôs a culpa nas famílias do vale baixo e mandou todas embora: uma carroça, algumas ferramentas e o que coubesse nos braços.<br><br>Depois de muitos dias pela serra, a velha Dona Cida apontou para um vale verde cortado por um rio. <i>“Aqui”</i>, disse ela. <i>“Aqui ninguém vai nos mandar embora.”</i><br><br>O inverno nesta terra é longo. A primeira coisa é ter um teto.', goal: 'Construa 2 casas', check: () => countDone('casa', 'casap') >= 2 },
+  { t: 'A Chegada', txt: 'Fazia três verões que não chovia em Pedra Alta. Quando os celeiros do barão secaram, ele pôs a culpa nas famílias do vale baixo e mandou todas embora: uma carroça, algumas ferramentas e o que coubesse nos braços.<br><br>Depois de muitos dias pela serra, a velha Dona Cida apontou para um vale verde cortado por um rio. <i>“Aqui”</i>, disse ela. <i>“Aqui ninguém vai nos mandar embora.”</i><br><br>O inverno nesta terra é longo. A primeira coisa é ter um teto.', goal: 'Construa 2 casas', p: () => `${countDone('casa', 'casap')}/2`, check: () => countDone('casa', 'casap') >= 2 },
   { t: 'O Primeiro Teto', txt: 'Na primeira noite debaixo de telhado, as crianças dormiram sem acordar. Os adultos ficaram em volta do fogo fazendo contas: a comida da carroça não dura até a neve.', goal: 'Ponha um coletor, caçador ou pescador para trabalhar', check: () => G.blds.some(b => b.done && ['coletor', 'cacador', 'pescador'].includes(b.t) && b.workers.length > 0) },
-  { t: 'Comida na Mesa', txt: 'Peixe, frutas do mato, carne de caça. Não é a mesa farta de antigamente, mas ninguém dorme com fome.<br><br>Dona Cida, porém, olha para as montanhas: <i>“Quando a neve chega aqui, chega para ficar. Casa sem lenha é casa fria.”</i>', goal: 'Construa um lenhador e guarde 60 de lenha', check: () => countDone('lenhador') >= 1 && G.stock.lenha >= 60 },
-  { t: 'Fogo Aceso', txt: 'As pilhas de lenha crescem encostadas nas paredes. O céu já tem cor de chumbo de manhã cedo. Agora é aguentar.', goal: 'Sobreviva ao primeiro inverno', check: () => year() >= 2 },
+  { t: 'Comida na Mesa', txt: 'Peixe, frutas do mato, carne de caça. Não é a mesa farta de antigamente, mas ninguém dorme com fome.<br><br>Dona Cida, porém, olha para as montanhas: <i>“Quando a neve chega aqui, chega para ficar. Casa sem lenha é casa fria.”</i>', goal: 'Construa um lenhador e guarde 60 de lenha', p: () => `🔥 ${Math.floor(G.stock.lenha)}/60`, check: () => countDone('lenhador') >= 1 && G.stock.lenha >= 60 },
+  { t: 'Fogo Aceso', txt: 'As pilhas de lenha crescem encostadas nas paredes. O céu já tem cor de chumbo de manhã cedo. Agora é aguentar.', goal: 'Sobreviva ao primeiro inverno', p: () => season() === 3 ? `❄️ dia ${dayInSeason()}/6` : `${SEASON_ICO[season()]} faltam ${(3 - season()) * DAYS_PER_SEASON - dayInSeason() + 1} dias`, check: () => year() >= 2 },
   { t: 'Degelo', txt: 'A neve derreteu e o rio voltou a correr forte. Sobrevivemos. Pela primeira vez, alguém falou em <i>ficar</i> — não em fugir.<br><br>Uma vila só vive de verdade quando nasce gente nela.', goal: 'Que nasça uma criança no vale', check: () => G.births >= 1 },
   { t: 'O Primeiro Choro', txt: 'O choro de um bebê acordou a vila inteira. Dona Cida riu como há muito tempo não ria.<br><br>Mais bocas, porém, pedem mais comida. Em Pedra Alta havia campos de trigo a perder de vista...', goal: 'Faça uma plantação e colha trigo', check: () => G.harvested > 0 },
-  { t: 'Pão de Trigo', txt: 'O primeiro pão saiu torto e queimado de um lado. Foi o pão mais gostoso que já comemos.<br><br>As ferramentas que trouxemos estão gastas. Sem ferro e um bom ferreiro, o trabalho vai ficar cada vez mais lento.', goal: 'Construa um ferreiro e guarde 25 ferramentas', check: () => countDone('ferreiro') >= 1 && G.stock.ferramenta >= 25 },
-  { t: 'Martelo e Bigorna', txt: 'O som do martelo agora marca as horas do vale. Viajantes que passam pela serra ouvem e descem para ver.', goal: 'Chegue a 30 moradores', check: () => G.vs.length >= 30 },
-  { t: 'A Vila', txt: 'Já são trinta, quarenta. Crianças que nasceram aqui nunca viram Pedra Alta e nem querem ver.<br><br>Dona Cida anda devagar agora, de bengala, contando as casas.', goal: 'Chegue ao 8º ano com 50 moradores', check: () => year() >= 8 && G.vs.length >= 50 },
+  { t: 'Pão de Trigo', txt: 'O primeiro pão saiu torto e queimado de um lado. Foi o pão mais gostoso que já comemos.<br><br>As ferramentas que trouxemos estão gastas. Sem ferro e um bom ferreiro, o trabalho vai ficar cada vez mais lento.', goal: 'Construa um ferreiro e guarde 25 ferramentas', p: () => `🔨 ${Math.floor(G.stock.ferramenta)}/25`, check: () => countDone('ferreiro') >= 1 && G.stock.ferramenta >= 25 },
+  { t: 'Martelo e Bigorna', txt: 'O som do martelo agora marca as horas do vale. Viajantes que passam pela serra ouvem e descem para ver.', goal: 'Chegue a 30 moradores', p: () => `👥 ${G.vs.length}/30`, check: () => G.vs.length >= 30 },
+  { t: 'A Vila', txt: 'Já são trinta, quarenta. Crianças que nasceram aqui nunca viram Pedra Alta e nem querem ver.<br><br>Dona Cida anda devagar agora, de bengala, contando as casas.', goal: 'Chegue ao 8º ano com 50 moradores', p: () => `👥 ${G.vs.length}/50 · ano ${year()}/8`, check: () => year() >= 8 && G.vs.length >= 50 },
   { t: 'O Vale do Refúgio', txt: 'Chegou um mensageiro de Pedra Alta. A seca voltou por lá, e o barão pergunta se o vale aceitaria receber algumas famílias.<br><br>Fizemos o que ninguém fez por nós: dissemos sim.<br><br><b>Fim do diário.</b> A vila é sua — continue cuidando dela pelo tempo que quiser.', goal: null, check: null },
 ];
 function checkStory() {

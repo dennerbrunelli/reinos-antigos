@@ -68,6 +68,13 @@ button{font-family:inherit;color:inherit;cursor:pointer}
 #mode.show{display:flex}
 #mode .mt{display:flex;flex-direction:column;font-size:13px;min-width:0}#mode .mt small{font-size:11px;opacity:.85}
 #mode .btn{white-space:nowrap;padding:8px 12px}
+#goal{position:absolute;left:calc(4px + env(safe-area-inset-left));top:calc(44px + env(safe-area-inset-top));display:none;align-items:center;gap:6px;padding:4px 8px;font-size:12px;max-width:min(340px,46vw);cursor:pointer}
+#goal.show{display:flex}#goal span{font-size:15px}#goal b{line-height:14px}#goal i{font-style:normal;background:var(--cream);border:1px solid #b8793a;border-radius:4px;padding:0 5px;white-space:nowrap}
+#tut{position:absolute;left:calc(4px + env(safe-area-inset-left));top:calc(84px + env(safe-area-inset-top));width:min(290px,46vw);display:none;padding:7px 10px;font-size:13px;background:linear-gradient(#fffbe8,#fbe7a8);animation:tutin .4s}
+#tut.show{display:block}#tut p{margin:3px 0 4px;line-height:1.35}#tut .tn{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#8a4a1a;font-weight:700}#tut .lnk{font-size:11px;font-weight:400;opacity:.7}
+@keyframes tutin{from{opacity:0;transform:translateX(-12px)}}
+.hl{position:relative;z-index:5;animation:hl .7s infinite alternate!important}
+@keyframes hl{from{box-shadow:0 0 0 3px #fff36a,0 0 6px 2px #ffd84a}to{box-shadow:0 0 0 5px #fff36a,0 0 18px 6px #ffd84a;filter:brightness(1.12)}}
 #toasts{position:absolute;top:calc(46px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:4px;align-items:center;pointer-events:none;width:min(520px,70vw)}
 .toast{background:#3a1c07e6;color:#fff4d8;border:2px solid #e9bd77;border-radius:6px;padding:5px 10px;font-size:13px;display:flex;gap:6px;align-items:center;box-shadow:0 2px 0 #0006;transition:opacity .6s,transform .6s;animation:tin .3s}
 .toast.bad{background:#6a1208ee;border-color:#ff9a7a}
@@ -102,6 +109,8 @@ table.jobs{width:100%;border-collapse:collapse;font-size:13px}table.jobs td{padd
 <canvas id="cv"></canvas>
 <div id="hud">
   <div id="top" class="pnl"></div>
+  <div id="goal" class="pnl" title="Objetivo do capítulo (toque para abrir o diário)"></div>
+  <div id="tut" class="pnl"></div>
   <div id="toasts"></div>
   <div id="info" class="pnl"></div>
   <div id="sub" class="pnl"></div>

@@ -65,7 +65,8 @@ function drawRoad(x, y, s) {
 // ---------------- desenho do quadro
 function s2w(sx, sy) { return { x: cam.x + sx / cam.z, y: cam.y + sy / cam.z }; }
 function nightAmt() { const h = hour(); if (h < 5) return 1; if (h < 7) return 1 - (h - 5) / 2; if (h < 18.5) return 0; if (h < 21) return (h - 18.5) / 2.5; return 1; }
-const parts = []; const weather = [];
+const parts = []; const weather = []; const floats = [];
+function floatTxt(x, y, txt) { if (!running) return; const sx = (x * TS - cam.x) * cam.z, sy = (y * TS - cam.y) * cam.z; if (sx < -30 || sy < -30 || sx > VW + 30 || sy > VH + 30 || floats.length > 40) return; floats.push({ x: x * TS, y: y * TS - 18, txt, life: 1.6 }); if (Math.random() < .3) sfx('coin'); }
 function render(now) {
   const s = season(), X = tex(s);
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#16241a'; ctx.fillRect(0, 0, cv.width, cv.height);
@@ -115,6 +116,11 @@ function render(now) {
   // fumaça
   for (const p of parts) { ctx.globalAlpha = Math.max(0, p.life / p.max) * .55; ctx.fillStyle = p.c; const r = p.r * (1.6 - p.life / p.max); ctx.fillRect(p.x - r / 2, p.y - r / 2, r, r); }
   ctx.globalAlpha = 1;
+  if (floats.length) {
+    ctx.font = 'bold 7px "Trebuchet MS",sans-serif'; ctx.textAlign = 'center'; ctx.lineWidth = 2; ctx.strokeStyle = '#3a1c07';
+    for (const f of floats) { ctx.globalAlpha = Math.min(1, f.life * 1.5); ctx.strokeText(f.txt, f.x, f.y); ctx.fillStyle = '#fff4d8'; ctx.fillText(f.txt, f.x, f.y); }
+    ctx.globalAlpha = 1;
+  }
   drawOverlays(now, x0, y0, x1, y1);
   // noite
   const na = nightAmt() * .62;
@@ -262,6 +268,8 @@ function updateParticles(rdt) {
   const sp = SPEEDS[G.speed] ? 1 : 0;
   for (const p of parts) { p.life -= rdt; p.x += p.vx * rdt; p.y += p.vy * rdt; p.vx += 2 * rdt; }
   for (let i = parts.length - 1; i >= 0; i--) if (parts[i].life <= 0) parts.splice(i, 1);
+  for (const f of floats) { f.life -= rdt; f.y -= 12 * rdt; }
+  for (let i = floats.length - 1; i >= 0; i--) if (floats[i].life <= 0) floats.splice(i, 1);
   const s = season();
   for (const w of weather) {
     w.p += rdt;
@@ -405,6 +413,48 @@ function uiTick() {
   const cap = storeCap(), used = stockTotal(); setChip('cap', `${Math.round(used / Math.max(1, cap) * 100)}%`, used > cap * .92, `Depósitos: ${Math.floor(used)} de ${cap}`);
   refreshInfo();
   refreshMode();
+  refreshGoal();
+  tutTick();
+}
+function refreshGoal() {
+  const st = STORY[G.storyI], el = $('goal'); if (!el) return;
+  if (!st || !st.goal) { el.classList.remove('show'); return; }
+  const h = `<span>🎯</span><b>${st.goal}</b>${st.p ? `<i>${st.p()}</i>` : ''}`;
+  if (el._h !== h) { el.innerHTML = h; el._h = h; }
+  el.classList.add('show');
+}
+// ---------------- primeiros passos (só no jogo novo)
+const TUT = [
+  { t: 'Toque em <b>🏠 Moradia</b>.', sel: '[data-cat="mor"]', ok: () => curCat === 'mor' || M.t === 'place' },
+  { t: 'Escolha a <b>Casa de madeira</b>.', sel: '[data-b="casa"]', ok: () => M.t === 'place' },
+  { t: 'Toque no mapa perto da carroça para escolher o lugar e aperte <b>✔ Construir</b>.', sel: '#m_ok', ok: () => G.blds.some(b => b.t === 'casa') },
+  { t: 'Faça mais uma casa ao lado. Depois aperte <b>✕</b>.', sel: '#m_ok', ok: () => G.blds.filter(b => b.t === 'casa').length >= 2 },
+  { t: 'Casas gastam toras. Toque em <b>🪓 Ações</b> e depois em <b>Recolher</b>.', sel: () => curCat === 'fer' ? '[data-act="mark"]' : M.t === 'mark' ? null : '[data-cat="fer"]', ok: () => M.t === 'mark' || G.marks.size >= 3 },
+  { t: 'Arraste o dedo por cima de umas <b>árvores</b> para marcar. Os trabalhadores vão cortar.', sel: null, go: () => panToTrees(), ok: () => G.marks.size >= 4 },
+  { t: 'Agora comida: <b>🍎 Comida</b> → <b>Cabana do pescador</b>, encostada na água (ou um coletor perto dos arbustos).', sel: () => curCat === 'com' ? '[data-b="pescador"]' : M.t === 'place' ? '#m_ok' : '[data-cat="com"]', ok: () => G.blds.some(b => ['pescador', 'coletor', 'cacador'].includes(b.t)) },
+  { t: 'Use <b>⏩</b> para o tempo passar mais rápido. O objetivo de cada capítulo fica no canto 🎯.', sel: '[data-sp="2"]', ok: () => G.speed >= 2 },
+];
+let hlEl = null, tutShown = -2, camGoal = null;
+function panToTrees() { // leva a câmera até a mata mais perto da carroça
+  const c = G.blds[0] ? bCenter(G.blds[0]) : { x: MW / 2, y: MH / 2 }; let best = null, bn = -1;
+  for (let y = 2; y < MH - 4; y++) for (let x = 2; x < MW - 4; x++) {
+    let n = 0; for (let yy = 0; yy < 3; yy++) for (let xx = 0; xx < 3; xx++) if (G.obj[idx(x + xx, y + yy)] === O_TREE) n++;
+    if (n < 5) continue; const sc = n * 3 - dist(x, y, c.x, c.y); if (sc > bn) { bn = sc; best = { x: x + 1.5, y: y + 1.5 }; }
+  }
+  if (best) camGoal = { x: best.x * TS - VW / cam.z / 2, y: best.y * TS - VH / cam.z / 2 };
+}
+function tutTick() {
+  const el = $('tut');
+  const step = G.tut === undefined || G.tut < 0 ? null : TUT[G.tut];
+  if (step && step.ok()) { G.tut++; sfx('done'); return tutTick(); }
+  const want = step && !dlgOpen ? (typeof step.sel === 'function' ? step.sel() : step.sel) : null;
+  const target = want ? document.querySelector(want) : null;
+  if (hlEl !== target) { if (hlEl) hlEl.classList.remove('hl'); if (target) target.classList.add('hl'); hlEl = target; }
+  if (step && tutShown !== G.tut) { tutShown = G.tut; if (step.go) step.go(); }
+  if (!step) { if (G.tut >= TUT.length) { G.tut = -1; toast('Pronto! Agora siga os objetivos do diário 📜. Boa sorte no vale!', '🌱'); } el.classList.remove('show'); return; }
+  const h = `<div class="tn">Primeiros passos ${G.tut + 1}/${TUT.length}</div><p>${step.t}</p><button class="lnk" id="tut_x">pular dicas</button>`;
+  if (el._h !== h) { el.innerHTML = h; el._h = h; }
+  el.classList.toggle('show', !dlgOpen);
 }
 function setChip(k, txt, bad, title) { const e = $('c_' + k); if (!e) return; const b = e.querySelector('b'); if (b.textContent !== txt) b.textContent = txt; e.classList.toggle('bad', !!bad); if (title) e.title = title; }
 
@@ -445,6 +495,11 @@ function setMode(t, type) {
   M = { t };
   if (t === 'place') {
     M.type = type; const c = s2w(VW / 2, VH / 2); M.x = Math.floor(c.x / TS) - (B[type].w >> 1); M.y = Math.floor(c.y / TS) - (B[type].h >> 1);
+    if (!canPlace(type, M.x, M.y)) { // procura o lugar bom mais perto e leva a câmera até lá
+      const d = B[type]; let found = null;
+      for (let r = 1; r < 26 && !found; r++) for (let dy = -r; dy <= r && !found; dy++) for (let dx = -r; dx <= r; dx++) { if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; if (canPlace(type, M.x + dx, M.y + dy)) { found = { x: M.x + dx, y: M.y + dy }; break; } }
+      if (found) { M.x = found.x; M.y = found.y; const wx = (M.x + d.w / 2) * TS, wy = (M.y + d.h / 2) * TS; const sx = (wx - cam.x) * cam.z, sy = (wy - cam.y) * cam.z; if (sx < 60 || sy < 60 || sx > VW - 60 || sy > VH - 120) camGoal = { x: wx - VW / cam.z / 2, y: wy - VH / cam.z / 2 }; }
+    }
     sel = null; openInfo();
   }
   hideSub(); refreshMode(true);
@@ -473,6 +528,7 @@ function confirmPlace() {
 }
 
 document.addEventListener('click', e => {
+  if (e.target.closest('#goal')) return showDiary();
   const t = e.target.closest('button'); if (!t) return;
   audioInit();
   if (t.dataset.cat) return openCat(t.dataset.cat);
@@ -484,6 +540,7 @@ document.addEventListener('click', e => {
   if (t.id === 'b_diary') return showDiary();
   if (t.id === 'b_people') return showPeople();
   if (t.id === 'b_menu') return showMenu();
+  if (t.id === 'tut_x') { G.tut = -1; return; }
   if (t.dataset.dlg !== undefined) return closeDlg(+t.dataset.dlg);
   const a = t.dataset.a, id = +t.dataset.id;
   if (a === 'w+' || a === 'w-') { const b = bget(id); if (!b) return; b.maxW = Math.max(0, Math.min(B[b.t].jobs, b.maxW + (a === 'w+' ? 1 : -1))); assignJobs(); sfx('click'); refreshInfo(true); if (dlgOpen && $('people')) showPeople(true); return; }
@@ -619,6 +676,7 @@ function audioInit() {
     sfxGain = AC.createGain(); sfxGain.gain.value = .9; sfxGain.connect(AC.destination);
     musGain = AC.createGain(); musGain.gain.value = .5; musGain.connect(AC.destination);
     setInterval(musicTick, 250);
+    for (const k in SND) if (!_snd[k]) { const a = _snd[k] = new Audio('sons/' + SND[k] + '.mp3'); a.preload = 'auto'; a.onerror = () => { a.bad = true; }; }
   } catch (e) { AC = null; }
 }
 function tone(f, t, dur, type = 'sine', vol = .1, out = sfxGain) {
@@ -626,8 +684,30 @@ function tone(f, t, dur, type = 'sine', vol = .1, out = sfxGain) {
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .015); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
   o.connect(g); g.connect(out); o.start(t); o.stop(t + dur + .05);
 }
+// efeitos gravados (mesmos arquivos do Império); se não carregar, usa o som sintetizado
+const SND = { click: 'fx_click1', place: 'fx_hammer1', done: 'fx_done1', story: 'fx_bell1', bad: 'fx_alert1', chop: 'fx_chop1', mine: 'fx_mine1', splash: 'fx_splash1', hammer: 'fx_hammer1', coin: 'fx_coin1' };
+const SVOL = { click: .35, place: .6, done: .7, story: .6, bad: .5, chop: .45, mine: .4, splash: .4, hammer: .3, coin: .4 };
+const _snd = {}, _sndLast = {};
+function playFile(k) {
+  if (!SND[k]) return false;
+  try {
+    let a = _snd[k]; if (!a) { a = _snd[k] = new Audio('sons/' + SND[k] + '.mp3'); a.preload = 'auto'; a.onerror = () => { a.bad = true; }; }
+    if (a.bad) return false;
+    const now = performance.now(); if (now - (_sndLast[k] || 0) < 90) return true; _sndLast[k] = now;
+    const c = a.cloneNode(); c.volume = SVOL[k] * (sfxOn ? 1 : 0); c.play().catch(() => { }); return true;
+  } catch (e) { return false; }
+}
+let sfxOn = true;
+function sfxAt(x, y, k) { // só toca se estiver na tela e em velocidade normal ou rápida
+  if (!running || G.speed === 3 || !AC) return;
+  const sx = (x * TS - cam.x) * cam.z, sy = (y * TS - cam.y) * cam.z;
+  if (sx < -20 || sy < -20 || sx > VW + 20 || sy > VH + 20) return;
+  sfx(k);
+}
 function sfx(k) {
-  if (!AC) return; const t = AC.currentTime;
+  if (!AC) return;
+  if (k !== 'birth' && playFile(k)) return;
+  const t = AC.currentTime;
   if (k === 'click') tone(660, t, .05, 'square', .025);
   else if (k === 'place') { tone(330, t, .08, 'square', .04); tone(440, t + .06, .1, 'square', .03); }
   else if (k === 'done') [523, 659, 784].forEach((f, i) => tone(f, t + i * .09, .3, 'triangle', .07));
@@ -664,7 +744,7 @@ function saveGame() {
       blds: G.blds.map(b => ({ ...b, spots: undefined, inc: {}, builders: 0, sup: 0 })),
       vs: G.vs.map(v => ({ ...v, q: undefined, path: undefined, cleanup: undefined, spr: undefined, anim: null, sack: false })),
       deer: G.deer.map(a => ({ x: a.x, y: a.y })), stock: G.stock, storyI: G.storyI, births: G.births, deaths: G.deaths, harvested: G.harvested, nextId: G.nextId,
-      harsh: G.harsh, nomadsJoined: G.nomadsJoined || 0, log: G.log, cam: { x: cam.x, y: cam.y, z: cam.z },
+      harsh: G.harsh, nomadsJoined: G.nomadsJoined || 0, log: G.log, tut: G.tut === undefined ? -1 : G.tut, cam: { x: cam.x, y: cam.y, z: cam.z },
     };
     localStorage.setItem(SAVE_KEY, JSON.stringify(d));
   } catch (e) { console.warn('não salvou', e); }
@@ -677,7 +757,7 @@ function loadGame() {
     t: d.t, seed: d.seed, speed: d.speed || 1, tile: unb64(d.tile, Uint8Array), obj: unb64(d.obj, Uint8Array), amt: unb64(d.amt, Uint8Array), road: unb64(d.road, Uint8Array),
     grow: Float32Array.from(unb64(d.grow, Uint8Array), x => x / 100), marks: new Set(d.marks), blds: d.blds, vs: d.vs,
     deer: d.deer.map(a => ({ x: a.x, y: a.y, tx: a.x, ty: a.y, wait: Math.random() * 60, hunted: 0, fr: 0 })), stock: d.stock, storyI: d.storyI, births: d.births, deaths: d.deaths,
-    harvested: d.harvested, nextId: d.nextId, harsh: d.harsh, nomadsJoined: d.nomadsJoined, log: d.log || [], follow: 0, over: false,
+    harvested: d.harvested, nextId: d.nextId, harsh: d.harsh, tut: d.tut === undefined ? -1 : d.tut, nomadsJoined: d.nomadsJoined, log: d.log || [], follow: 0, over: false,
   });
   for (const k in RES) if (G.stock[k] === undefined) G.stock[k] = 0;
   for (const v of G.vs) { v.q = []; v.path = []; v.cleanup = null; v.spr = null; }
@@ -692,7 +772,7 @@ function newGame() {
   for (const k in G) delete G[k];
   const seed = (Math.random() * 1e9) | 0;
   Object.assign(G, {
-    seed, t: 6 * 60 + 30, speed: 1, blds: [], vs: [], deer: [], marks: new Set(), nextId: 1, storyI: 0, births: 0, deaths: 0, harvested: 0, harsh: false, log: [], follow: 0, over: false,
+    seed, t: 6 * 60 + 30, speed: 1, tut: 0, blds: [], vs: [], deer: [], marks: new Set(), nextId: 1, storyI: 0, births: 0, deaths: 0, harvested: 0, harsh: false, log: [], follow: 0, over: false,
     stock: { fruta: 220, carne: 60, peixe: 0, trigo: 220, tora: 80, pedra: 40, ferro: 10, lenha: 40, couro: 0, ferramenta: 14, roupa: 14 },
   });
   genMap(seed);
@@ -741,6 +821,7 @@ function frame(now) {
   if (!running) { // tela de título: a câmera passeia pelo vale
     cam.z = Math.max(2, Math.min(VW, VH) / 160); cam.x = MW * TS / 2 - VW / cam.z / 2 + Math.sin(now / 9000) * 120; cam.y = MH * TS / 2 - VH / cam.z / 2 + Math.cos(now / 11000) * 80;
   }
+  if (camGoal && running) { cam.x += (camGoal.x - cam.x) * .08; cam.y += (camGoal.y - cam.y) * .08; clampCam(); if (Math.abs(camGoal.x - cam.x) + Math.abs(camGoal.y - cam.y) < 2 || ptr.size) camGoal = null; }
   if (G.follow) { const v = vget(G.follow); if (v) { cam.x += (v.x * TS - VW / cam.z / 2 - cam.x) * .1; cam.y += (v.y * TS - VH / cam.z / 2 - cam.y) * .1; } }
   updateParticles(rdt);
   if (G.tile) render(now);
@@ -750,7 +831,7 @@ function frame(now) {
 
 // fundo da tela de título: um vale de exemplo
 (function boot() {
-  Object.assign(G, { seed: 7, t: 2 * 1440 + 10 * 60, speed: 0, blds: [], vs: [], deer: [], marks: new Set(), nextId: 1, stock: {}, log: [] });
+  Object.assign(G, { seed: 7, t: 2 * 1440 + 10 * 60, speed: 0, tut: -1, blds: [], vs: [], deer: [], marks: new Set(), nextId: 1, stock: {}, log: [] });
   genMap(1234); rebuildIndex();
   placeBuilding('carroca', MW / 2 - 1, MH / 2 - 1, true);
   placeBuilding('casa', MW / 2 - 5, MH / 2 - 4, true); placeBuilding('casa', MW / 2 + 2, MH / 2 - 4, true);
