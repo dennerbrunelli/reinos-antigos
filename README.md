@@ -4,6 +4,10 @@ Jogo de estratégia em tempo real para celular (antes chamado *Reinos Antigos*),
 
 **Jogar:** https://dennerbrunelli.github.io/reinos-antigos/
 
+## 🏡 Outro jogo: Refúgio
+Jogo de sobrevivência de uma vila de exilados, com arte em pixel e estações do ano. Fica na pasta `refugio/`.
+**Jogar:** https://dennerbrunelli.github.io/reinos-antigos/refugio/
+
 ## Como instalar no celular
 1. Abra o link acima no Chrome (com internet).
 2. Toque no menu **⋮** → **Adicionar à tela inicial** (ou **Instalar app**).
